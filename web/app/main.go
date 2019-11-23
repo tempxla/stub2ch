@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
+	"html"
 	"html/template"
 	"log"
 	"net/http"
@@ -20,6 +21,8 @@ const (
 	projectID     = "stub2ch"
 	datDateLayout = "2006/01/02"
 	datTimeLayout = "15:04:05.000"
+	datFormat1    = "%s<>%s<>%s(%s) %s ID:%s<> %s <>%s"
+	datFormatN    = "\n" + datFormat1
 )
 
 var (
@@ -121,29 +124,34 @@ func createNewThread(boardName string, title string, name string, mail string, m
 	// }
 }
 
-func createDat(
-	name string, mail string, date time.Time,
-	id string, message string, title string) []byte {
-
-	d := date.Format(datDateLayout)
-	t := date.Format(datTimeLayout)
-	w := weekdaysJp[date.Weekday()]
-	wr := bytes.NewBuffer([]byte{})
-	fmt.Fprintf(wr, "%s<>%s<>%s(%s) %s ID:%s<> %s <>%s",
-		name, mail, d, w, t, id, message, title)
-	return wr.Bytes()
+// create dat. line: 1
+func createDat(name string, mail string, date time.Time, id string, message string, title string) []byte {
+	return writeDat([]byte{}, datFormat1, name, mail, date, id, message, title)
 }
 
+// append dat. line: 2..
 func appendDat(dat []byte,
-	name string, mail string, date time.Time,
-	id string, message string) {
+	name string, mail string, date time.Time, id string, message string) []byte {
+	return writeDat(dat, datFormatN, name, mail, date, id, message, "")
+}
 
-	d := date.Format(datDateLayout)
-	t := date.Format(datTimeLayout)
-	w := weekdaysJp[date.Weekday()]
+func writeDat(dat []byte, format string,
+	name string, mail string, date time.Time, id string, message string, title string) []byte {
+
 	wr := bytes.NewBuffer(dat)
-	fmt.Fprintf(wr, "\n%s<>%s<>%s(%s) %s ID:%s<> %s <>",
-		name, mail, d, w, t, id, message)
+	// 名前<>メール欄<>年/月/日(曜) 時:分:秒.ミリ秒 ID:hogehoge0<> 本文 <>スレタイ
+	// 2行目以降はスレタイは無し
+	fmt.Fprintf(wr, format,
+		html.EscapeString(name),               // 名前
+		html.EscapeString(mail),               // メール
+		date.Format(datDateLayout),            // 年月日
+		weekdaysJp[date.Weekday()],            // 曜
+		date.Format(datTimeLayout),            // 時分秒
+		id,                                    // ID
+		escapeDat(html.EscapeString(message)), // 本文
+		html.EscapeString(title))              // スレタイ
+
+	return wr.Bytes()
 }
 
 func escapeDat(str string) string {

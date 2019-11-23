@@ -88,3 +88,20 @@ func TestCreateDat(t *testing.T) {
 		t.Fatalf("fail \n actual: %v \n expect: %v", string(dat), string(excepted))
 	}
 }
+
+func TestAppendDat(t *testing.T) {
+	date1, _ := time.ParseInLocation("2006-01-02 15:04:05.000",
+		"2019-11-23 22:29:01.123", time.Local)
+	date2, _ := time.ParseInLocation("2006-01-02 15:04:05.000",
+		"2019-11-24 22:29:01.123", time.Local)
+
+	dat := createDat("名前", "メール", date1, "ABC", "本文", "スレタイ")
+
+	dat = appendDat(dat, "名前2", "メール2", date2, "XYZ", "本文2")
+
+	excepted := []byte("名前<>メール<>2019/11/23(土) 22:29:01.123 ID:ABC<> 本文 <>スレタイ" +
+		"\n名前2<>メール2<>2019/11/24(日) 22:29:01.123 ID:XYZ<> 本文2 <>")
+	if !bytes.Equal(dat, excepted) {
+		t.Fatalf("fail \n actual: %v \n expect: %v", string(dat), string(excepted))
+	}
+}
