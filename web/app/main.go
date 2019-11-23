@@ -1,6 +1,9 @@
 package main
 
 import (
+	"bytes"
+	"cloud.google.com/go/datastore"
+	"context"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
 	"html/template"
@@ -8,12 +11,22 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
+	"time"
+)
+
+const (
+	projectID     = "stub2ch"
+	datDateLayout = "2006/01/02"
+	datTimeLayout = "15:04:05.000"
 )
 
 var (
 	indexTmpl = template.Must(
 		template.ParseFiles(filepath.Join("..", "template", "index.html")),
 	)
+	weekdaysJp = [...]string{"日", "月", "火", "水", "木", "金", "土"}
 )
 
 func main() {
@@ -67,3 +80,91 @@ func handleSettingTxt(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 func handleDat(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	fmt.Fprintf(w, "dat, %s %s!\n", ps.ByName("board"), ps.ByName("dat"))
 }
+
+func createNewThread(boardName string, title string, name string, mail string, message string) {
+	ctx := context.Background()
+
+	client, err := datastore.NewClient(ctx, projectID)
+	if err != nil {
+		log.Fatalf("Failed to create client: %v", err)
+	}
+
+	// Get Board
+	key := datastore.NameKey("Board", boardName, nil)
+	board := new(BoardEntity)
+	if err := client.Get(ctx, key, board); err != nil {
+		log.Fatalf("Failed to get BoardEntity: %v", err)
+	}
+
+	// Add to subject
+	now := time.Now()
+	threadKey := strconv.FormatInt(now.Unix(), 10)
+	subject := Subject{
+		ThreadKey:    threadKey,
+		ThreadTitle:  title,
+		MessageCount: 1,
+		LastFloat:    now, // if sage case ?
+		LastModified: now,
+	}
+	board.Subjects = append(board.Subjects, subject)
+
+	if _, err := client.Put(ctx, key, board); err != nil {
+		log.Fatalf("Failed to save board: %v", err)
+	}
+
+	// // Create dat
+	// ancestor := datastore.NameKey("Board", boardName, nil)
+	// key = datastore.NameKey("Dat", threadKey, ancestor)
+	// var dat []byte
+	// if _, err := client.Put(ctx, key, dat); err != nil {
+	// 	log.Fatalf("Failed to save dat: %v", err)
+	// }
+}
+
+func createDat(
+	name string, mail string, date time.Time,
+	id string, message string, title string) []byte {
+
+	d := date.Format(datDateLayout)
+	t := date.Format(datTimeLayout)
+	w := weekdaysJp[date.Weekday()]
+	wr := bytes.NewBuffer([]byte{})
+	fmt.Fprintf(wr, "%s<>%s<>%s(%s) %s ID:%s<> %s <>%s",
+		name, mail, d, w, t, id, message, title)
+	return wr.Bytes()
+}
+
+func appendDat(dat []byte,
+	name string, mail string, date time.Time,
+	id string, message string) {
+
+	d := date.Format(datDateLayout)
+	t := date.Format(datTimeLayout)
+	w := weekdaysJp[date.Weekday()]
+	wr := bytes.NewBuffer(dat)
+	fmt.Fprintf(wr, "\n%s<>%s<>%s(%s) %s ID:%s<> %s <>",
+		name, mail, d, w, t, id, message)
+}
+
+func escapeDat(str string) string {
+	return strings.Replace(str, "\n", "<br>", -1) // ReplaceAll
+}
+
+// Kind=Board
+// Key=BoardName
+type BoardEntity struct {
+	Subjects []Subject `datastore:",noindex"`
+}
+
+type Subject struct {
+	ThreadKey    string
+	ThreadTitle  string
+	MessageCount int
+	LastFloat    time.Time
+	LastModified time.Time
+}
+
+// Kind=Dat
+// Ancestor=Board
+// Key=ThreadKey
+type DatEntity []byte
