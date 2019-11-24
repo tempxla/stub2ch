@@ -21,8 +21,9 @@ const (
 	projectID     = "stub2ch"
 	datDateLayout = "2006/01/02"
 	datTimeLayout = "15:04:05.000"
-	datFormat1    = "%s<>%s<>%s(%s) %s ID:%s<> %s <>%s"
-	datFormatN    = "\n" + datFormat1
+	// 名前<>メール欄<>年/月/日(曜) 時:分:秒.ミリ秒 ID:hogehoge0<> 本文 <>スレタイ
+	datFormat1 = "%s<>%s<>%s(%s) %s ID:%s<> %s <>%s"
+	datFormatN = "\n" + datFormat1
 )
 
 var (
@@ -155,7 +156,7 @@ func writeDat(dat []byte, format string,
 }
 
 func escapeDat(str string) string {
-	return strings.Replace(str, "\n", "<br>", -1) // ReplaceAll
+	return strings.ReplaceAll(str, "\n", "<br>")
 }
 
 // Kind=Board
