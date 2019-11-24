@@ -85,23 +85,23 @@ func handleDat(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	fmt.Fprintf(w, "dat, %s %s!\n", ps.ByName("board"), ps.ByName("dat"))
 }
 
-func createNewThread(boardName string, title string, name string, mail string, message string) {
-	ctx := context.Background()
+func createNewThread(boardName string,
+	name string, mail string, now time.Time, id string, message string, title string) {
 
+	ctx := context.Background()
 	client, err := datastore.NewClient(ctx, projectID)
 	if err != nil {
 		log.Fatalf("Failed to create client: %v", err)
 	}
 
 	// Get Board
-	key := datastore.NameKey("Board", boardName, nil)
+	boardKey := datastore.NameKey("Board", boardName, nil)
 	board := new(BoardEntity)
-	if err := client.Get(ctx, key, board); err != nil {
+	if err := client.Get(ctx, boardKey, board); err != nil {
 		log.Fatalf("Failed to get BoardEntity: %v", err)
 	}
 
 	// Add to subject
-	now := time.Now()
 	threadKey := strconv.FormatInt(now.Unix(), 10)
 	subject := Subject{
 		ThreadKey:    threadKey,
@@ -112,34 +112,34 @@ func createNewThread(boardName string, title string, name string, mail string, m
 	}
 	board.Subjects = append(board.Subjects, subject)
 
-	if _, err := client.Put(ctx, key, board); err != nil {
+	if _, err := client.Put(ctx, boardKey, board); err != nil {
 		log.Fatalf("Failed to save board: %v", err)
 	}
 
-	// // Create dat
-	// ancestor := datastore.NameKey("Board", boardName, nil)
-	// key = datastore.NameKey("Dat", threadKey, ancestor)
-	// var dat []byte
-	// if _, err := client.Put(ctx, key, dat); err != nil {
-	// 	log.Fatalf("Failed to save dat: %v", err)
-	// }
+	// Create dat
+	ancestor := datastore.NameKey("Board", boardName, nil)
+	datKey := datastore.NameKey("Dat", threadKey, ancestor)
+	dat := createDat(name, mail, now, id, message, title)
+	if _, err := client.Put(ctx, datKey, &dat); err != nil {
+		log.Fatalf("Failed to save dat: %v", err)
+	}
 }
 
 // create dat. line: 1
-func createDat(name string, mail string, date time.Time, id string, message string, title string) []byte {
-	return writeDat([]byte{}, datFormat1, name, mail, date, id, message, title)
+func createDat(name string, mail string, date time.Time, id string, message string, title string) DatEntity {
+	return writeDat(DatEntity{[]byte{}}, datFormat1, name, mail, date, id, message, title)
 }
 
 // append dat. line: 2..
-func appendDat(dat []byte,
-	name string, mail string, date time.Time, id string, message string) []byte {
+func appendDat(dat DatEntity,
+	name string, mail string, date time.Time, id string, message string) DatEntity {
 	return writeDat(dat, datFormatN, name, mail, date, id, message, "")
 }
 
-func writeDat(dat []byte, format string,
-	name string, mail string, date time.Time, id string, message string, title string) []byte {
+func writeDat(dat DatEntity, format string,
+	name string, mail string, date time.Time, id string, message string, title string) DatEntity {
 
-	wr := bytes.NewBuffer(dat)
+	wr := bytes.NewBuffer(dat.Dat)
 	// 名前<>メール欄<>年/月/日(曜) 時:分:秒.ミリ秒 ID:hogehoge0<> 本文 <>スレタイ
 	// 2行目以降はスレタイは無し
 	fmt.Fprintf(wr, format,
@@ -152,7 +152,8 @@ func writeDat(dat []byte, format string,
 		escapeDat(html.EscapeString(message)), // 本文
 		html.EscapeString(title))              // スレタイ
 
-	return wr.Bytes()
+	dat.Dat = wr.Bytes()
+	return dat
 }
 
 func escapeDat(str string) string {
@@ -176,4 +177,6 @@ type Subject struct {
 // Kind=Dat
 // Ancestor=Board
 // Key=ThreadKey
-type DatEntity []byte
+type DatEntity struct {
+	Dat []byte
+}
