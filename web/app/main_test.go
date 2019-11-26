@@ -41,6 +41,9 @@ func TestHandleBbsCgi_200(t *testing.T) {
 }
 
 func TestCreateNewThreadAtFirst(t *testing.T) {
+
+	// Setup
+	// ----------------------------------
 	ctx := context.Background()
 
 	// Creates a client.
@@ -69,12 +72,22 @@ func TestCreateNewThreadAtFirst(t *testing.T) {
 		t.Fatalf("Failed to save board: %v", err)
 	}
 
+	// Injection
+	sv := NewBoardService(&BoardStore{
+		ctx:    ctx,
+		client: client,
+	})
+
+	// Exercise
+	// ----------------------------------
 	// Create new thread.
 	now, _ := time.ParseInLocation("2006-01-02 15:04:05.000",
 		"2019-11-23 22:29:01.123", time.Local)
-	createNewThread("news4test",
+	sv.createNewThread("news4test",
 		"テスタ", "age", now, "ABC", "これはテストスレ", "スレ立てテスト")
 
+	// Verify
+	// ----------------------------------
 	// Get Board
 	key := datastore.NameKey("Board", "news4test", nil)
 	e := new(BoardEntity)
@@ -114,6 +127,9 @@ func TestCreateNewThreadAtFirst(t *testing.T) {
 }
 
 func TestCreateNewThreadMore(t *testing.T) {
+
+	// Setup
+	// ----------------------------------
 	ctx := context.Background()
 
 	// Creates a client.
@@ -142,18 +158,28 @@ func TestCreateNewThreadMore(t *testing.T) {
 		t.Fatalf("Failed to save board: %v", err)
 	}
 
+	// Injection
+	sv := NewBoardService(&BoardStore{
+		ctx:    ctx,
+		client: client,
+	})
+
+	// Exercise
+	// ----------------------------------
 	// Create new thread.
 	now, _ := time.ParseInLocation("2006-01-02 15:04:05.000",
 		"2019-11-23 22:29:01.123", time.Local)
-	createNewThread("news4test",
+	sv.createNewThread("news4test",
 		"テスタ", "age", now, "ABC", "これはテストスレ", "スレ立てテスト")
 
 	// Create another thread.
 	now2, _ := time.ParseInLocation("2006-01-02 15:04:05.000",
 		"2019-11-24 22:29:01.123", time.Local)
-	createNewThread("news4test",
+	sv.createNewThread("news4test",
 		"テスタ2", "age2", now2, "XYZ", "これはテストスレ2", "スレ立てテスト2")
 
+	// Verify
+	// ----------------------------------
 	// Get Board
 	key := datastore.NameKey("Board", "news4test", nil)
 	e := new(BoardEntity)
@@ -166,9 +192,12 @@ func TestCreateNewThreadMore(t *testing.T) {
 }
 
 func TestCreateDat(t *testing.T) {
+	// Exercise
 	date, _ := time.ParseInLocation("2006-01-02 15:04:05.000",
 		"2019-11-23 22:29:01.123", time.Local)
 	dat := createDat("名前", "メール", date, "ABC", "本文", "スレタイ")
+
+	// Verify
 	excepted := []byte("名前<>メール<>2019/11/23(土) 22:29:01.123 ID:ABC<> 本文 <>スレタイ")
 	if !bytes.Equal(dat.Dat, excepted) {
 		t.Fatalf("fail \n actual: %v \n expect: %v", string(dat.Dat), string(excepted))
@@ -176,15 +205,17 @@ func TestCreateDat(t *testing.T) {
 }
 
 func TestAppendDat(t *testing.T) {
+	// Setup
 	date1, _ := time.ParseInLocation("2006-01-02 15:04:05.000",
 		"2019-11-23 22:29:01.123", time.Local)
-	date2, _ := time.ParseInLocation("2006-01-02 15:04:05.000",
-		"2019-11-24 22:29:01.123", time.Local)
-
 	dat := createDat("名前", "メール", date1, "ABC", "本文", "スレタイ")
 
-	dat = appendDat(dat, "名前2", "メール2", date2, "XYZ", "本文2")
+	// Exercise
+	date2, _ := time.ParseInLocation("2006-01-02 15:04:05.000",
+		"2019-11-24 22:29:01.123", time.Local)
+	appendDat(dat, "名前2", "メール2", date2, "XYZ", "本文2")
 
+	// Verify
 	excepted := []byte("名前<>メール<>2019/11/23(土) 22:29:01.123 ID:ABC<> 本文 <>スレタイ" +
 		"\n名前2<>メール2<>2019/11/24(日) 22:29:01.123 ID:XYZ<> 本文2 <>")
 	if !bytes.Equal(dat.Dat, excepted) {
@@ -192,6 +223,7 @@ func TestAppendDat(t *testing.T) {
 	}
 }
 
+// Setup Utilitiy
 func cleanDatastore(t *testing.T, ctx context.Context, client *datastore.Client) {
 	// delete all Dat
 	query := datastore.NewQuery("Dat").KeysOnly()

@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -85,59 +86,86 @@ func handleDat(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	fmt.Fprintf(w, "dat, %s %s!\n", ps.ByName("board"), ps.ByName("dat"))
 }
 
-func createNewThread(boardName string,
-	name string, mail string, now time.Time, id string, message string, title string) {
-
+func makeSubjectTxt(boardName string) (string, error) {
 	ctx := context.Background()
+
+	// Creates a client.
 	client, err := datastore.NewClient(ctx, projectID)
 	if err != nil {
-		log.Fatalf("Failed to create client: %v", err)
+		return "", err
 	}
 
-	// Get Board
+	// Creates a Key instance.
+	key := datastore.NameKey("Board", boardName, nil)
+
+	// Gets a Board
+	e := new(BoardEntity)
+	if err := client.Get(ctx, key, e); err != nil {
+		return "", err
+	}
+
+	// Sort
+	sort.Sort(e.Subjects)
+
+	buf := new(bytes.Buffer)
+	for _, s := range e.Subjects {
+		fmt.Fprintf(buf, "%s.dat<>%s \t (%d)", s.ThreadKey, s.ThreadTitle, s.MessageCount)
+	}
+
+	return buf.String(), nil
+}
+
+// Creates a Thread
+func (sv *BoardService) createNewThread(boardName string,
+	name string, mail string, now time.Time, id string, message string, title string) (err error) {
+
+	// Gets a Board entity
 	boardKey := datastore.NameKey("Board", boardName, nil)
-	board := new(BoardEntity)
-	if err := client.Get(ctx, boardKey, board); err != nil {
-		log.Fatalf("Failed to get BoardEntity: %v", err)
+	board := &BoardEntity{}
+	if err = sv.GetBoard(boardKey, board); err != nil {
+		return
 	}
 
-	// Add to subject
+	// Adds to Subject
 	threadKey := strconv.FormatInt(now.Unix(), 10)
 	subject := Subject{
 		ThreadKey:    threadKey,
 		ThreadTitle:  title,
 		MessageCount: 1,
-		LastFloat:    now, // if sage case ?
+		LastFloat:    now,
 		LastModified: now,
 	}
 	board.Subjects = append(board.Subjects, subject)
 
-	if _, err := client.Put(ctx, boardKey, board); err != nil {
-		log.Fatalf("Failed to save board: %v", err)
+	if err = sv.PutBoard(boardKey, board); err != nil {
+		return
 	}
 
 	// Create dat
-	ancestor := datastore.NameKey("Board", boardName, nil)
-	datKey := datastore.NameKey("Dat", threadKey, ancestor)
+	datKey := datastore.NameKey("Dat", threadKey, boardKey)
 	dat := createDat(name, mail, now, id, message, title)
-	if _, err := client.Put(ctx, datKey, &dat); err != nil {
-		log.Fatalf("Failed to save dat: %v", err)
+	if err = sv.PutDat(datKey, dat); err != nil {
+		return
 	}
+	return nil
 }
 
 // create dat. line: 1
-func createDat(name string, mail string, date time.Time, id string, message string, title string) DatEntity {
-	return writeDat(DatEntity{[]byte{}}, datFormat1, name, mail, date, id, message, title)
+func createDat(name string, mail string, date time.Time, id string, message string, title string) *DatEntity {
+	dat := &DatEntity{}
+	writeDat(dat, datFormat1, name, mail, date, id, message, title)
+	return dat
 }
 
 // append dat. line: 2..
-func appendDat(dat DatEntity,
-	name string, mail string, date time.Time, id string, message string) DatEntity {
-	return writeDat(dat, datFormatN, name, mail, date, id, message, "")
+func appendDat(dat *DatEntity,
+	name string, mail string, date time.Time, id string, message string) {
+
+	writeDat(dat, datFormatN, name, mail, date, id, message, "")
 }
 
-func writeDat(dat DatEntity, format string,
-	name string, mail string, date time.Time, id string, message string, title string) DatEntity {
+func writeDat(dat *DatEntity, format string,
+	name string, mail string, date time.Time, id string, message string, title string) {
 
 	wr := bytes.NewBuffer(dat.Dat)
 	// 名前<>メール欄<>年/月/日(曜) 時:分:秒.ミリ秒 ID:hogehoge0<> 本文 <>スレタイ
@@ -153,30 +181,8 @@ func writeDat(dat DatEntity, format string,
 		html.EscapeString(title))              // スレタイ
 
 	dat.Dat = wr.Bytes()
-	return dat
 }
 
 func escapeDat(str string) string {
 	return strings.ReplaceAll(str, "\n", "<br>")
-}
-
-// Kind=Board
-// Key=BoardName
-type BoardEntity struct {
-	Subjects []Subject `datastore:",noindex"`
-}
-
-type Subject struct {
-	ThreadKey    string
-	ThreadTitle  string
-	MessageCount int
-	LastFloat    time.Time
-	LastModified time.Time
-}
-
-// Kind=Dat
-// Ancestor=Board
-// Key=ThreadKey
-type DatEntity struct {
-	Dat []byte
 }
