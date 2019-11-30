@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	datFormatN = "\n" + configs.DAT_DATE_FORMAT
+	datFormatN = "\n" + configs.DAT_FORMAT
 )
 
 // Dependency injection for Board
@@ -96,7 +96,7 @@ func (sv *BoardService) CreateNewThread(boardName string,
 // create dat. line: 1
 func createDat(name string, mail string, date time.Time, id string, message string, title string) *DatEntity {
 	dat := &DatEntity{}
-	writeDat(dat, configs.DAT_DATE_FORMAT, name, mail, date, id, message, title)
+	writeDat(dat, configs.DAT_FORMAT, name, mail, date, id, message, title)
 	return dat
 }
 
