@@ -1,7 +1,9 @@
-package services
+package service
 
 import (
-	"../configs"
+	"../config"
+	E "../entity"
+	"../testutil"
 	"bytes"
 	"cloud.google.com/go/datastore"
 	"context"
@@ -10,49 +12,14 @@ import (
 	"time"
 )
 
-// A injection for google datastore
-type BoardStub struct {
-	boardMap map[string]*BoardEntity
-	datMap   map[string]map[string]*DatEntity
-}
-
-func (repo *BoardStub) GetBoard(key *datastore.Key, entity *BoardEntity) (err error) {
-	if e, ok := repo.boardMap[key.Name]; ok {
-		entity.Subjects = e.Subjects
-		return
-	} else {
-		return datastore.ErrNoSuchEntity
-	}
-}
-
-func (repo *BoardStub) PutBoard(key *datastore.Key, entity *BoardEntity) (err error) {
-	repo.boardMap[key.Name] = entity
-	return
-}
-
-func (repo *BoardStub) GetDat(key *datastore.Key, entity *DatEntity) (err error) {
-	if board, ok := repo.datMap[key.Parent.Name]; !ok {
-		return datastore.ErrNoSuchEntity
-	} else if e, ok := board[key.Name]; ok {
-		entity.Dat = e.Dat
-		return
-	} else {
-		return datastore.ErrNoSuchEntity
-	}
-}
-
-func (repo *BoardStub) PutDat(key *datastore.Key, entity *DatEntity) (err error) {
-	repo.datMap[key.Parent.Name][key.Name] = entity
-	return
-}
-
 // Setup Utilitiy
 func cleanDatastore(t *testing.T, ctx context.Context, client *datastore.Client) {
+	t.Helper()
 	// delete all Dat
 	query := datastore.NewQuery("Dat").KeysOnly()
 	var keys []*datastore.Key
 	var err error
-	if keys, err = client.GetAll(ctx, query, []*DatEntity{}); err != nil {
+	if keys, err = client.GetAll(ctx, query, []*E.DatEntity{}); err != nil {
 		t.Fatalf("Failed clean dat. get dat  %v", err)
 	}
 	if err := client.DeleteMulti(ctx, keys); err != nil {
@@ -60,7 +27,7 @@ func cleanDatastore(t *testing.T, ctx context.Context, client *datastore.Client)
 	}
 	// delete all Board
 	query = datastore.NewQuery("Board").KeysOnly()
-	if keys, err = client.GetAll(ctx, query, []*BoardEntity{}); err != nil {
+	if keys, err = client.GetAll(ctx, query, []*E.BoardEntity{}); err != nil {
 		t.Fatalf("Failed clean board. get dat  %v", err)
 	}
 	if err := client.DeleteMulti(ctx, keys); err != nil {
@@ -71,22 +38,22 @@ func cleanDatastore(t *testing.T, ctx context.Context, client *datastore.Client)
 func TestMakeSubjectTxt(t *testing.T) {
 
 	// Setup
-	repo := &BoardStub{
-		boardMap: map[string]*BoardEntity{
-			"news4test": &BoardEntity{Subjects: []Subject{
-				Subject{
+	repo := &testutil.BoardStub{
+		BoardMap: map[string]*E.BoardEntity{
+			"news4test": &E.BoardEntity{Subjects: []E.Subject{
+				E.Subject{
 					ThreadKey:    "111",
 					ThreadTitle:  "XXX",
 					MessageCount: 100,
 					LastFloat:    time.Now().Add(time.Duration(2) * time.Hour),
 				},
-				Subject{
+				E.Subject{
 					ThreadKey:    "222",
 					ThreadTitle:  "YYY",
 					MessageCount: 200,
 					LastFloat:    time.Now().Add(time.Duration(3) * time.Hour),
 				},
-				Subject{
+				E.Subject{
 					ThreadKey:    "333",
 					ThreadTitle:  "ZZZ",
 					MessageCount: 300,
@@ -116,7 +83,7 @@ func TestCreateNewThreadAtFirst(t *testing.T) {
 	ctx := context.Background()
 
 	// Creates a client.
-	client, err := datastore.NewClient(ctx, configs.PROJECT_ID)
+	client, err := datastore.NewClient(ctx, config.PROJECT_ID)
 	if err != nil {
 		t.Fatalf("Failed to create client: %v", err)
 	}
@@ -132,8 +99,8 @@ func TestCreateNewThreadAtFirst(t *testing.T) {
 	boardKey := datastore.NameKey(kind, name, nil)
 
 	// Creates a Board instance.
-	board := BoardEntity{
-		Subjects: []Subject{},
+	board := E.BoardEntity{
+		Subjects: []E.Subject{},
 	}
 
 	// Saves the new entity.
@@ -143,8 +110,8 @@ func TestCreateNewThreadAtFirst(t *testing.T) {
 
 	// Injection
 	sv := NewBoardService(&BoardStore{
-		ctx:    ctx,
-		client: client,
+		Context: ctx,
+		Client:  client,
 	})
 
 	// Exercise
@@ -159,7 +126,7 @@ func TestCreateNewThreadAtFirst(t *testing.T) {
 	// ----------------------------------
 	// Get Board
 	key := datastore.NameKey("Board", "news4test", nil)
-	e := new(BoardEntity)
+	e := new(E.BoardEntity)
 	if err := client.Get(ctx, key, e); err != nil {
 		t.Fatalf("Failed to get board  %v", err)
 	}
@@ -168,7 +135,7 @@ func TestCreateNewThreadAtFirst(t *testing.T) {
 	}
 	// Verify Board
 	subject := e.Subjects[0]
-	expectedSubject := Subject{
+	expectedSubject := E.Subject{
 		ThreadKey:    strconv.FormatInt(now.Unix(), 10),
 		ThreadTitle:  "スレ立てテスト",
 		MessageCount: 1,
@@ -182,7 +149,7 @@ func TestCreateNewThreadAtFirst(t *testing.T) {
 	// Get Dat
 	ancestor := datastore.NameKey("Board", "news4test", nil)
 	query := datastore.NewQuery("Dat").Ancestor(ancestor)
-	var datList []*DatEntity
+	var datList []*E.DatEntity
 	if _, err := client.GetAll(ctx, query, &datList); err != nil {
 		t.Fatalf("Failed to get dat  %v", err)
 	}
@@ -202,7 +169,7 @@ func TestCreateNewThreadMore(t *testing.T) {
 	ctx := context.Background()
 
 	// Creates a client.
-	client, err := datastore.NewClient(ctx, configs.PROJECT_ID)
+	client, err := datastore.NewClient(ctx, config.PROJECT_ID)
 	if err != nil {
 		t.Fatalf("Failed to create client: %v", err)
 	}
@@ -218,8 +185,8 @@ func TestCreateNewThreadMore(t *testing.T) {
 	boardKey := datastore.NameKey(kind, name, nil)
 
 	// Creates a Board instance.
-	board := BoardEntity{
-		Subjects: []Subject{},
+	board := E.BoardEntity{
+		Subjects: []E.Subject{},
 	}
 
 	// Saves the new entity.
@@ -229,8 +196,8 @@ func TestCreateNewThreadMore(t *testing.T) {
 
 	// Injection
 	sv := NewBoardService(&BoardStore{
-		ctx:    ctx,
-		client: client,
+		Context: ctx,
+		Client:  client,
 	})
 
 	// Exercise
@@ -251,7 +218,7 @@ func TestCreateNewThreadMore(t *testing.T) {
 	// ----------------------------------
 	// Get Board
 	key := datastore.NameKey("Board", "news4test", nil)
-	e := new(BoardEntity)
+	e := new(E.BoardEntity)
 	if err := client.Get(ctx, key, e); err != nil {
 		t.Fatalf("Failed to get board  %v", err)
 	}

@@ -1,7 +1,8 @@
-package services
+package service
 
 import (
-	"../configs"
+	"../config"
+	E "../entity"
 	"bytes"
 	"cloud.google.com/go/datastore"
 	"fmt"
@@ -13,7 +14,7 @@ import (
 )
 
 const (
-	datFormatN = "\n" + configs.DAT_FORMAT
+	datFormatN = "\n" + config.DAT_FORMAT
 )
 
 // Dependency injection for Board
@@ -22,10 +23,10 @@ type BoardService struct {
 }
 
 type BoardRepository interface {
-	GetBoard(key *datastore.Key, entity *BoardEntity) (err error)
-	PutBoard(key *datastore.Key, entity *BoardEntity) (err error)
-	GetDat(key *datastore.Key, entity *DatEntity) (err error)
-	PutDat(key *datastore.Key, entity *DatEntity) (err error)
+	GetBoard(key *datastore.Key, entity *E.BoardEntity) (err error)
+	PutBoard(key *datastore.Key, entity *E.BoardEntity) (err error)
+	GetDat(key *datastore.Key, entity *E.DatEntity) (err error)
+	PutDat(key *datastore.Key, entity *E.DatEntity) (err error)
 }
 
 func NewBoardService(repo BoardRepository) *BoardService {
@@ -39,7 +40,7 @@ func (sv *BoardService) MakeSubjectTxt(boardName string) (_ string, err error) {
 	key := datastore.NameKey("Board", boardName, nil)
 
 	// Gets a Board
-	e := new(BoardEntity)
+	e := new(E.BoardEntity)
 	if err = sv.repo.GetBoard(key, e); err != nil {
 		return
 	}
@@ -64,14 +65,14 @@ func (sv *BoardService) CreateNewThread(boardName string,
 
 	// Gets a Board entity
 	boardKey := datastore.NameKey("Board", boardName, nil)
-	board := &BoardEntity{}
+	board := &E.BoardEntity{}
 	if err = sv.repo.GetBoard(boardKey, board); err != nil {
 		return
 	}
 
 	// Adds to Subject
 	threadKey := strconv.FormatInt(now.Unix(), 10)
-	subject := Subject{
+	subject := E.Subject{
 		ThreadKey:    threadKey,
 		ThreadTitle:  title,
 		MessageCount: 1,
@@ -94,20 +95,20 @@ func (sv *BoardService) CreateNewThread(boardName string,
 }
 
 // create dat. line: 1
-func createDat(name string, mail string, date time.Time, id string, message string, title string) *DatEntity {
-	dat := &DatEntity{}
-	writeDat(dat, configs.DAT_FORMAT, name, mail, date, id, message, title)
+func createDat(name string, mail string, date time.Time, id string, message string, title string) *E.DatEntity {
+	dat := &E.DatEntity{}
+	writeDat(dat, config.DAT_FORMAT, name, mail, date, id, message, title)
 	return dat
 }
 
 // append dat. line: 2..
-func appendDat(dat *DatEntity,
+func appendDat(dat *E.DatEntity,
 	name string, mail string, date time.Time, id string, message string) {
 
 	writeDat(dat, datFormatN, name, mail, date, id, message, "")
 }
 
-func writeDat(dat *DatEntity, format string,
+func writeDat(dat *E.DatEntity, format string,
 	name string, mail string, date time.Time, id string, message string, title string) {
 
 	wr := bytes.NewBuffer(dat.Dat)
@@ -116,9 +117,9 @@ func writeDat(dat *DatEntity, format string,
 	fmt.Fprintf(wr, format,
 		html.EscapeString(name),               // 名前
 		html.EscapeString(mail),               // メール
-		date.Format(configs.DAT_DATE_LAYOUT),  // 年月日
-		configs.WEEK_DAYS_JP[date.Weekday()],  // 曜
-		date.Format(configs.DAT_TIME_LAYOUT),  // 時分秒
+		date.Format(config.DAT_DATE_LAYOUT),   // 年月日
+		config.WEEK_DAYS_JP[date.Weekday()],   // 曜
+		date.Format(config.DAT_TIME_LAYOUT),   // 時分秒
 		id,                                    // ID
 		escapeDat(html.EscapeString(message)), // 本文
 		html.EscapeString(title))              // スレタイ
