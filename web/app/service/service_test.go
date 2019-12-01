@@ -252,6 +252,7 @@ func TestUpdateSubjectsWhenWriteDat_age(t *testing.T) {
 	// Setup
 	t1 := time.Now().Add(time.Duration(-1) * time.Hour)
 	t2 := time.Now().Add(time.Duration(-2) * time.Hour)
+	t3 := time.Now().Add(time.Duration(-3) * time.Hour)
 	board := &E.BoardEntity{
 		[]E.Subject{
 			E.Subject{
@@ -264,6 +265,11 @@ func TestUpdateSubjectsWhenWriteDat_age(t *testing.T) {
 				MessageCount: 200,
 				LastModified: t2,
 			},
+			E.Subject{
+				ThreadKey:    "456",
+				MessageCount: 300,
+				LastModified: t3,
+			},
 		},
 	}
 	threadKey := "999"
@@ -274,7 +280,7 @@ func TestUpdateSubjectsWhenWriteDat_age(t *testing.T) {
 	updateSubjectsWhenWriteDat(board, threadKey, mail, now)
 
 	// Verify
-	if len(board.Subjects) != 2 {
+	if len(board.Subjects) != 3 {
 		t.Errorf("board count: %v", len(board.Subjects))
 	}
 	if board.Subjects[0].ThreadKey != "999" ||
@@ -282,7 +288,10 @@ func TestUpdateSubjectsWhenWriteDat_age(t *testing.T) {
 		board.Subjects[0].LastModified != now ||
 		board.Subjects[1].ThreadKey != "123" ||
 		board.Subjects[1].MessageCount != 100 ||
-		board.Subjects[1].LastModified != t1 {
+		board.Subjects[1].LastModified != t1 ||
+		board.Subjects[2].ThreadKey != "456" ||
+		board.Subjects[2].MessageCount != 300 ||
+		board.Subjects[2].LastModified != t3 {
 		t.Errorf("board content: %v", board.Subjects)
 	}
 }
