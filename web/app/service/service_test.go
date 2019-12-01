@@ -277,7 +277,10 @@ func TestUpdateSubjectsWhenWriteDat_age(t *testing.T) {
 	now := time.Now()
 
 	// Exercise
-	updateSubjectsWhenWriteDat(board, threadKey, mail, now)
+	err := updateSubjectsWhenWriteDat(board, threadKey, mail, now)
+	if err != nil {
+		t.Errorf("%v", err)
+	}
 
 	// Verify
 	if len(board.Subjects) != 3 {
@@ -319,7 +322,10 @@ func TestUpdateSubjectsWhenWriteDat_sage(t *testing.T) {
 	now := time.Now()
 
 	// Exercise
-	updateSubjectsWhenWriteDat(board, threadKey, mail, now)
+	err := updateSubjectsWhenWriteDat(board, threadKey, mail, now)
+	if err != nil {
+		t.Errorf("%v", err)
+	}
 
 	// Verify
 	if len(board.Subjects) != 2 {
