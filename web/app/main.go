@@ -33,7 +33,7 @@ func main() {
 	router.GET("/:board/bbs.cgi", handleBbsCgi)
 	router.GET("/:board/subject.txt", handleSubjectTxt(sv))
 	router.GET("/:board/setting.txt", handleSettingTxt)
-	router.GET("/:board/dat/:dat", handleDat)
+	router.GET("/:board/dat/:dat", handleDat(sv))
 
 	// Serve static files out of the public directory.
 	// By configuring a static handler in app.yaml, App Engine serves all the

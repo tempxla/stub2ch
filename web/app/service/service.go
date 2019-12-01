@@ -35,6 +35,22 @@ func NewBoardService(repo BoardRepository) *BoardService {
 	}
 }
 
+// データストアからエンティティを取得しdatを返す
+func (sv *BoardService) MakeDat(boardName string, threadKey string) (_ string, err error) {
+	// Creates a Key instance.
+	key := datastore.NameKey("Dat", threadKey,
+		datastore.NameKey("Board", boardName, nil))
+
+	// Gets a Board
+	e := new(E.DatEntity)
+	if err = sv.repo.GetDat(key, e); err != nil {
+		return
+	}
+
+	return string(e.Dat), nil
+}
+
+// データストアからエンティティを取得しsubject.txtとして返す
 func (sv *BoardService) MakeSubjectTxt(boardName string) (_ string, err error) {
 	// Creates a Key instance.
 	key := datastore.NameKey("Board", boardName, nil)

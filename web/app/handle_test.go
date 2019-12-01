@@ -39,8 +39,66 @@ func TestHandleBbsCgi_200(t *testing.T) {
 	}
 }
 
-func TestHandleSubjectTxt_200(t *testing.T) {
+func TestHandleDat_200(t *testing.T) {
+	// Setup
+	repo := &testutil.BoardStub{
+		DatMap: map[string]map[string]*E.DatEntity{
+			"news4test": map[string]*E.DatEntity{
+				"123": &E.DatEntity{
+					Dat: []byte("1行目\n2行目"),
+				},
+			},
+		},
+	}
+	sv := service.NewBoardService(repo)
 
+	router := httprouter.New()
+	router.GET("/:board/dat/:dat", handleDat(sv))
+
+	// Exercise
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", "/news4test/dat/123.dat", nil)
+	router.ServeHTTP(writer, request)
+
+	// Verify
+	if writer.Code != 200 {
+		t.Errorf("Response code is %v", writer.Code)
+	}
+
+	txt := writer.Body.String()
+	if txt != "1行目\n2行目" {
+		t.Errorf("dat actual: %v", txt)
+	}
+}
+
+func TestHandleDat_400(t *testing.T) {
+	// Setup
+	repo := &testutil.BoardStub{
+		DatMap: map[string]map[string]*E.DatEntity{
+			"news4test": map[string]*E.DatEntity{
+				"123": &E.DatEntity{
+					Dat: []byte("1行目\n2行目"),
+				},
+			},
+		},
+	}
+	sv := service.NewBoardService(repo)
+
+	router := httprouter.New()
+	router.GET("/:board/dat/:dat", handleDat(sv))
+
+	// Exercise
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", "/news4test/dat/999.dat", nil)
+	router.ServeHTTP(writer, request)
+
+	// Verify
+	if writer.Code != 404 {
+		t.Errorf("Response code is %v", writer.Code)
+	}
+}
+
+func TestHandleSubjectTxt_200(t *testing.T) {
 	// Setup
 	repo := &testutil.BoardStub{
 		BoardMap: map[string]*E.BoardEntity{
@@ -88,7 +146,6 @@ func TestHandleSubjectTxt_200(t *testing.T) {
 }
 
 func TestHandleSubjectTxt_404(t *testing.T) {
-
 	// Setup
 	repo := &testutil.BoardStub{
 		BoardMap: map[string]*E.BoardEntity{
@@ -128,5 +185,4 @@ func TestHandleSubjectTxt_404(t *testing.T) {
 	if writer.Code != 404 {
 		t.Errorf("Response code is %v", writer.Code)
 	}
-
 }

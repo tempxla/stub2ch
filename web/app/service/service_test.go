@@ -35,6 +35,31 @@ func cleanDatastore(t *testing.T, ctx context.Context, client *datastore.Client)
 	}
 }
 
+func TestMakeDat(t *testing.T) {
+	// Setup
+	repo := &testutil.BoardStub{
+		DatMap: map[string]map[string]*E.DatEntity{
+			"news4test": map[string]*E.DatEntity{
+				"123": &E.DatEntity{
+					Dat: []byte("1行目\n2行目"),
+				},
+			},
+		},
+	}
+	sv := NewBoardService(repo)
+
+	// Exercise
+	dat, err := sv.MakeDat("news4test", "123")
+
+	// Verify
+	if err != nil {
+		t.Errorf("dat err: %v", err)
+	}
+	if dat != "1行目\n2行目" {
+		t.Errorf("dat content err. actual: %v", dat)
+	}
+}
+
 func TestMakeSubjectTxt(t *testing.T) {
 
 	// Setup
@@ -157,7 +182,8 @@ func TestCreateNewThreadAtFirst(t *testing.T) {
 		t.Fatalf("dat count  %d", len(datList))
 	}
 	// Verify Dat
-	if bytes.Equal(datList[0].Dat, []byte("名前<>メール<>2019/11/23(土) 22:29:01.123 ID:ABC<> 本文 <>スレタイ")) {
+	if bytes.Equal(datList[0].Dat,
+		[]byte("名前<>メール<>2019/11/23(土) 22:29:01.123 ID:ABC<> 本文 <>スレタイ")) {
 		t.Fatalf("content of dat  %v", datList[0].Dat)
 	}
 }
