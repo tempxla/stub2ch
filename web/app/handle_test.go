@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 )
 
 func TestHandleBbsCgi_404(t *testing.T) {
@@ -104,22 +103,19 @@ func TestHandleSubjectTxt_200(t *testing.T) {
 		BoardMap: map[string]*E.BoardEntity{
 			"news4test": &E.BoardEntity{Subjects: []E.Subject{
 				E.Subject{
-					ThreadKey:    "111",
-					ThreadTitle:  "XXX",
-					MessageCount: 100,
-					LastFloat:    time.Now().Add(time.Duration(2) * time.Hour),
-				},
-				E.Subject{
 					ThreadKey:    "222",
 					ThreadTitle:  "YYY",
 					MessageCount: 200,
-					LastFloat:    time.Now().Add(time.Duration(3) * time.Hour),
+				},
+				E.Subject{
+					ThreadKey:    "111",
+					ThreadTitle:  "XXX",
+					MessageCount: 100,
 				},
 				E.Subject{
 					ThreadKey:    "333",
 					ThreadTitle:  "ZZZ",
 					MessageCount: 300,
-					LastFloat:    time.Now().Add(time.Duration(1) * time.Hour),
 				},
 			}},
 		},
@@ -150,24 +146,7 @@ func TestHandleSubjectTxt_404(t *testing.T) {
 	repo := &testutil.BoardStub{
 		BoardMap: map[string]*E.BoardEntity{
 			"news4test": &E.BoardEntity{Subjects: []E.Subject{
-				E.Subject{
-					ThreadKey:    "111",
-					ThreadTitle:  "XXX",
-					MessageCount: 100,
-					LastFloat:    time.Now().Add(time.Duration(2) * time.Hour),
-				},
-				E.Subject{
-					ThreadKey:    "222",
-					ThreadTitle:  "YYY",
-					MessageCount: 200,
-					LastFloat:    time.Now().Add(time.Duration(3) * time.Hour),
-				},
-				E.Subject{
-					ThreadKey:    "333",
-					ThreadTitle:  "ZZZ",
-					MessageCount: 300,
-					LastFloat:    time.Now().Add(time.Duration(1) * time.Hour),
-				},
+				E.Subject{},
 			}},
 		},
 	}

@@ -7,7 +7,6 @@ import (
 	"cloud.google.com/go/datastore"
 	"fmt"
 	"html"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -61,9 +60,6 @@ func (sv *BoardService) MakeSubjectTxt(boardName string) (_ string, err error) {
 		return
 	}
 
-	// Sort
-	sort.Sort(e.Subjects)
-
 	buf := new(bytes.Buffer)
 	for i, s := range e.Subjects {
 		if i > 0 {
@@ -92,7 +88,6 @@ func (sv *BoardService) CreateNewThread(boardName string,
 		ThreadKey:    threadKey,
 		ThreadTitle:  title,
 		MessageCount: 1,
-		LastFloat:    now,
 		LastModified: now,
 	}
 	board.Subjects = append(board.Subjects, subject)
@@ -106,6 +101,71 @@ func (sv *BoardService) CreateNewThread(boardName string,
 	dat := createDat(name, mail, now, id, message, title)
 	if err = sv.repo.PutDat(datKey, dat); err != nil {
 		return
+	}
+	return nil
+}
+
+func (sv *BoardService) WriteDat(boardName string, threadKey string,
+	name string, mail string, now time.Time, id string, message string) (err error) {
+
+	// Creates a Key instance.
+	boardKey := datastore.NameKey("Board", boardName, nil)
+	datKey := datastore.NameKey("Dat", threadKey, boardKey)
+
+	// Get Entities
+	dat := new(E.DatEntity)
+	if err = sv.repo.GetDat(datKey, dat); err != nil {
+		return
+	}
+	board := new(E.BoardEntity)
+	if err = sv.repo.GetBoard(boardKey, board); err != nil {
+		return
+	}
+
+	// 書き込み
+	appendDat(dat, name, mail, now, id, message)
+
+	// subject.txtの更新
+	err = updateSubjectsWhenWriteDat(board, threadKey, mail, now)
+	if err != nil {
+		return
+	}
+
+	// Push Entities
+	if err = sv.repo.PutDat(datKey, dat); err != nil {
+		return
+	}
+	if err = sv.repo.PutBoard(boardKey, board); err != nil {
+		return
+	}
+	return nil
+}
+
+func updateSubjectsWhenWriteDat(board *E.BoardEntity,
+	threadKey string, mail string, now time.Time) error {
+
+	sbjLen := len(board.Subjects)
+	pos := -1
+	for i, sbj := range board.Subjects {
+		if sbj.ThreadKey == threadKey {
+			pos = i
+			break
+		}
+	}
+	if pos == -1 {
+		return fmt.Errorf("fail update subjects. len:%v key:%v", sbjLen, threadKey)
+	}
+	board.Subjects[pos].MessageCount++
+	board.Subjects[pos].LastModified = now
+
+	// (´∀`∩)↑age↑
+	if sbjLen > 1 && mail != "sage" {
+		sbj := board.Subjects[pos]
+		// 切り出し
+		board.Subjects = append(board.Subjects[:pos], board.Subjects[pos+1:]...)
+		// 先頭に追加
+		board.Subjects, board.Subjects[0] =
+			append(board.Subjects[0:1], board.Subjects[0:]...), sbj
 	}
 	return nil
 }

@@ -14,7 +14,9 @@ import (
 
 // Setup Utilitiy
 func cleanDatastore(t *testing.T, ctx context.Context, client *datastore.Client) {
+
 	t.Helper()
+
 	// delete all Dat
 	query := datastore.NewQuery("Dat").KeysOnly()
 	var keys []*datastore.Key
@@ -61,28 +63,24 @@ func TestMakeDat(t *testing.T) {
 }
 
 func TestMakeSubjectTxt(t *testing.T) {
-
 	// Setup
 	repo := &testutil.BoardStub{
 		BoardMap: map[string]*E.BoardEntity{
 			"news4test": &E.BoardEntity{Subjects: []E.Subject{
 				E.Subject{
-					ThreadKey:    "111",
-					ThreadTitle:  "XXX",
-					MessageCount: 100,
-					LastFloat:    time.Now().Add(time.Duration(2) * time.Hour),
-				},
-				E.Subject{
 					ThreadKey:    "222",
 					ThreadTitle:  "YYY",
 					MessageCount: 200,
-					LastFloat:    time.Now().Add(time.Duration(3) * time.Hour),
+				},
+				E.Subject{
+					ThreadKey:    "111",
+					ThreadTitle:  "XXX",
+					MessageCount: 100,
 				},
 				E.Subject{
 					ThreadKey:    "333",
 					ThreadTitle:  "ZZZ",
 					MessageCount: 300,
-					LastFloat:    time.Now().Add(time.Duration(1) * time.Hour),
 				},
 			}},
 		},
@@ -102,7 +100,6 @@ func TestMakeSubjectTxt(t *testing.T) {
 }
 
 func TestCreateNewThreadAtFirst(t *testing.T) {
-
 	// Setup
 	// ----------------------------------
 	ctx := context.Background()
@@ -164,7 +161,6 @@ func TestCreateNewThreadAtFirst(t *testing.T) {
 		ThreadKey:    strconv.FormatInt(now.Unix(), 10),
 		ThreadTitle:  "スレ立てテスト",
 		MessageCount: 1,
-		LastFloat:    now,
 		LastModified: now,
 	}
 	if subject != expectedSubject {
@@ -189,7 +185,6 @@ func TestCreateNewThreadAtFirst(t *testing.T) {
 }
 
 func TestCreateNewThreadMore(t *testing.T) {
-
 	// Setup
 	// ----------------------------------
 	ctx := context.Background()
@@ -250,6 +245,102 @@ func TestCreateNewThreadMore(t *testing.T) {
 	}
 	if len(e.Subjects) != 2 {
 		t.Fatalf("subject count  %d", len(e.Subjects))
+	}
+}
+
+func TestUpdateSubjectsWhenWriteDat_age(t *testing.T) {
+	// Setup
+	t1 := time.Now().Add(time.Duration(-1) * time.Hour)
+	t2 := time.Now().Add(time.Duration(-2) * time.Hour)
+	board := &E.BoardEntity{
+		[]E.Subject{
+			E.Subject{
+				ThreadKey:    "123",
+				MessageCount: 100,
+				LastModified: t1,
+			},
+			E.Subject{
+				ThreadKey:    "999",
+				MessageCount: 200,
+				LastModified: t2,
+			},
+		},
+	}
+	threadKey := "999"
+	mail := ""
+	now := time.Now()
+
+	// Exercise
+	updateSubjectsWhenWriteDat(board, threadKey, mail, now)
+
+	// Verify
+	if len(board.Subjects) != 2 {
+		t.Errorf("board count: %v", len(board.Subjects))
+	}
+	if board.Subjects[0].ThreadKey != "999" ||
+		board.Subjects[0].MessageCount != 201 ||
+		board.Subjects[0].LastModified != now ||
+		board.Subjects[1].ThreadKey != "123" ||
+		board.Subjects[1].MessageCount != 100 ||
+		board.Subjects[1].LastModified != t1 {
+		t.Errorf("board content: %v", board.Subjects)
+	}
+}
+
+func TestUpdateSubjectsWhenWriteDat_sage(t *testing.T) {
+	// Setup
+	t1 := time.Now().Add(time.Duration(-1) * time.Hour)
+	t2 := time.Now().Add(time.Duration(-2) * time.Hour)
+	board := &E.BoardEntity{
+		[]E.Subject{
+			E.Subject{
+				ThreadKey:    "123",
+				MessageCount: 100,
+				LastModified: t1,
+			},
+			E.Subject{
+				ThreadKey:    "999",
+				MessageCount: 200,
+				LastModified: t2,
+			},
+		},
+	}
+	threadKey := "999"
+	mail := "sage"
+	now := time.Now()
+
+	// Exercise
+	updateSubjectsWhenWriteDat(board, threadKey, mail, now)
+
+	// Verify
+	if len(board.Subjects) != 2 {
+		t.Errorf("board count: %v", len(board.Subjects))
+	}
+	if board.Subjects[1].ThreadKey != "999" ||
+		board.Subjects[1].MessageCount != 201 ||
+		board.Subjects[1].LastModified != now ||
+		board.Subjects[0].ThreadKey != "123" ||
+		board.Subjects[0].MessageCount != 100 ||
+		board.Subjects[0].LastModified != t1 {
+		t.Errorf("board content: %v", board.Subjects)
+	}
+}
+
+func TestUpdateSubjectsWhenWriteDat_fail(t *testing.T) {
+	// Setup
+	board := &E.BoardEntity{
+		[]E.Subject{},
+	}
+	threadKey := "888"
+	mail := "sage"
+	now := time.Now()
+
+	// Exercise
+	err := updateSubjectsWhenWriteDat(board, threadKey, mail, now)
+
+	// Verify
+	if err == nil {
+		t.Errorf("error is nil")
 	}
 }
 
