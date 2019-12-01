@@ -89,7 +89,7 @@ func TestHandleDat_400(t *testing.T) {
 
 	// Exercise
 	writer := httptest.NewRecorder()
-	request, _ := http.NewRequest("GET", "/news4test2/dat/123.dat", nil)
+	request, _ := http.NewRequest("GET", "/news4test/dat/999.dat", nil)
 	router.ServeHTTP(writer, request)
 
 	// Verify
