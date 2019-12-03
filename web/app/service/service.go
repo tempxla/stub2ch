@@ -18,7 +18,8 @@ const (
 
 // Dependency injection for Board
 type BoardService struct {
-	repo BoardRepository
+	repo   BoardRepository
+	sysEnv SystemEnvironment
 }
 
 type BoardRepository interface {
@@ -28,9 +29,14 @@ type BoardRepository interface {
 	PutDat(key *datastore.Key, entity *E.DatEntity) (err error)
 }
 
-func NewBoardService(repo BoardRepository) *BoardService {
+type SystemEnvironment interface {
+	Now() time.Time
+}
+
+func NewBoardService(repo BoardRepository, sysEnv SystemEnvironment) *BoardService {
 	return &BoardService{
-		repo: repo,
+		repo:   repo,
+		sysEnv: sysEnv,
 	}
 }
 
@@ -105,8 +111,8 @@ func (sv *BoardService) CreateNewThread(boardName string,
 	return nil
 }
 
-func (sv *BoardService) WriteDat(boardName string, threadKey string,
-	name string, mail string, now time.Time, id string, message string) (err error) {
+func (sv *BoardService) WriteDat(boardName, threadKey,
+	name, mail, id, message string) (err error) {
 
 	// Creates a Key instance.
 	boardKey := datastore.NameKey("Board", boardName, nil)
@@ -123,10 +129,10 @@ func (sv *BoardService) WriteDat(boardName string, threadKey string,
 	}
 
 	// 書き込み
-	appendDat(dat, name, mail, now, id, message)
+	appendDat(dat, name, mail, sv.sysEnv.Now(), id, message)
 
 	// subject.txtの更新
-	err = updateSubjectsWhenWriteDat(board, threadKey, mail, now)
+	err = updateSubjectsWhenWriteDat(board, threadKey, mail, sv.sysEnv.Now())
 	if err != nil {
 		return
 	}

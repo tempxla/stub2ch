@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 )
 
 func main() {
@@ -26,11 +27,14 @@ func main() {
 		Context: ctx,
 		Client:  client,
 	}
-	sv := service.NewBoardService(repo)
+	sysInfo := &service.SysInfo{
+		CurrentTime: time.Now(),
+	}
+	sv := service.NewBoardService(repo, sysInfo)
 
 	router := httprouter.New()
 	router.GET("/", handleIndex)
-	router.GET("/:board/bbs.cgi", handleBbsCgi)
+	router.GET("/:board/bbs.cgi", handleBbsCgi(sv))
 	router.GET("/:board/subject.txt", handleSubjectTxt(sv))
 	router.GET("/:board/setting.txt", handleSettingTxt)
 	router.GET("/:board/dat/:dat", handleDat(sv))
