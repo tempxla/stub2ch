@@ -223,7 +223,7 @@ func (sv *BoardService) ComputeId(ipAddr, boardName string) string {
 	ipmd5 := fmt.Sprintf("%x", md5.Sum([]byte(ipAddr)))
 	ipmd5 = ipmd5[len(ipmd5)-4:]
 	ipmd5 += boardName
-	//ipmd5 += strconv.Itoa(sv.env.Now().Day())
+	// ipmd5 += strconv.Itoa(sv.env.Now().Day())
 	ipmd5 += sv.env.Now().Format("2006/01/02")
 	ipmd5 += sv.env.SaltComputeId()
 
