@@ -416,7 +416,7 @@ func TestComputeId(t *testing.T) {
 	id := sv.ComputeId(ipAddr, boardName)
 
 	// if id != "0hGpPuA0" {
-	if id != "+xRCU1Cw" {
+	if id != "WmvlSQ2M" {
 		t.Errorf("value: %v", id)
 	}
 }
