@@ -5,6 +5,9 @@ import (
 	E "../entity"
 	"bytes"
 	"cloud.google.com/go/datastore"
+	"crypto/md5"
+	"crypto/sha256"
+	"encoding/base64"
 	"fmt"
 	"html"
 	"strconv"
@@ -18,8 +21,8 @@ const (
 
 // Dependency injection for Board
 type BoardService struct {
-	repo   BoardRepository
-	sysEnv SystemEnvironment
+	repo BoardRepository
+	env  BoardEnvironment
 }
 
 type BoardRepository interface {
@@ -29,14 +32,16 @@ type BoardRepository interface {
 	PutDat(key *datastore.Key, entity *E.DatEntity) (err error)
 }
 
-type SystemEnvironment interface {
+type BoardEnvironment interface {
 	Now() time.Time
+	SaltComputeId() string
+	SaltAdminMail() string
 }
 
-func NewBoardService(repo BoardRepository, sysEnv SystemEnvironment) *BoardService {
+func NewBoardService(repo BoardRepository, env BoardEnvironment) *BoardService {
 	return &BoardService{
-		repo:   repo,
-		sysEnv: sysEnv,
+		repo: repo,
+		env:  env,
 	}
 }
 
@@ -129,10 +134,10 @@ func (sv *BoardService) WriteDat(boardName, threadKey,
 	}
 
 	// 書き込み
-	appendDat(dat, name, mail, sv.sysEnv.Now(), id, message)
+	appendDat(dat, name, mail, sv.env.Now(), id, message)
 
 	// subject.txtの更新
-	err = updateSubjectsWhenWriteDat(board, threadKey, mail, sv.sysEnv.Now())
+	err = updateSubjectsWhenWriteDat(board, threadKey, mail, sv.env.Now())
 	if err != nil {
 		return
 	}
@@ -211,4 +216,17 @@ func writeDat(dat *E.DatEntity, format string,
 
 func escapeDat(str string) string {
 	return strings.ReplaceAll(str, "\n", "<br>")
+}
+
+func (sv *BoardService) ComputeId(ipAddr, boardName string) string {
+	// http://age.s22.xrea.com/talk2ch/id.txt
+	ipmd5 := fmt.Sprintf("%x", md5.Sum([]byte(ipAddr)))
+	ipmd5 = ipmd5[len(ipmd5)-4:]
+	ipmd5 += boardName
+	ipmd5 += strconv.Itoa(sv.env.Now().Day())
+	ipmd5 += sv.env.SaltComputeId()
+
+	// full := md5.Sum([]byte(ipmd5))
+	full := sha256.Sum256([]byte(ipmd5))
+	return string(base64.StdEncoding.EncodeToString(full[:])[0:8])
 }

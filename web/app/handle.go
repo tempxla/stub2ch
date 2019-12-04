@@ -164,7 +164,9 @@ func handleWriteDat(sv *service.BoardService, w http.ResponseWriter, r *http.Req
 		// 存在しない
 		// 1001
 		// dat落ち
+		// 容量オーバー
 	}
+	// 書き込み完了 200 OK
 }
 
 func handleDat(sv *service.BoardService) httprouter.Handle {
@@ -200,8 +202,4 @@ func handleSubjectTxt(sv *service.BoardService) httprouter.Handle {
 		}
 		fmt.Fprintf(w, subjectTxt)
 	}
-}
-
-func handleSettingTxt(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	fmt.Fprintf(w, "setting.txt, %s!\n", ps.ByName("board"))
 }

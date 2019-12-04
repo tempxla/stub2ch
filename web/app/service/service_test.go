@@ -48,7 +48,8 @@ func TestMakeDat(t *testing.T) {
 			},
 		},
 	}
-	sv := NewBoardService(repo)
+	env := &SysEnv{}
+	sv := NewBoardService(repo, env)
 
 	// Exercise
 	dat, err := sv.MakeDat("news4test", "123")
@@ -85,7 +86,8 @@ func TestMakeSubjectTxt(t *testing.T) {
 			}},
 		},
 	}
-	sv := NewBoardService(repo)
+	env := &SysEnv{}
+	sv := NewBoardService(repo, env)
 
 	// Exercise
 	txt, err := sv.MakeSubjectTxt("news4test")
@@ -131,10 +133,13 @@ func TestCreateNewThreadAtFirst(t *testing.T) {
 	}
 
 	// Injection
-	sv := NewBoardService(&BoardStore{
-		Context: ctx,
-		Client:  client,
-	})
+	sv := NewBoardService(
+		&BoardStore{
+			Context: ctx,
+			Client:  client,
+		},
+		&SysEnv{},
+	)
 
 	// Exercise
 	// ----------------------------------
@@ -216,10 +221,13 @@ func TestCreateNewThreadMore(t *testing.T) {
 	}
 
 	// Injection
-	sv := NewBoardService(&BoardStore{
-		Context: ctx,
-		Client:  client,
-	})
+	sv := NewBoardService(
+		&BoardStore{
+			Context: ctx,
+			Client:  client,
+		},
+		&SysEnv{},
+	)
 
 	// Exercise
 	// ----------------------------------
@@ -388,5 +396,27 @@ func TestAppendDat(t *testing.T) {
 		"\n名前2<>メール2<>2019/11/24(日) 22:29:01.123 ID:XYZ<> 本文2 <>")
 	if !bytes.Equal(dat.Dat, excepted) {
 		t.Fatalf("fail \n actual: %v \n expect: %v", string(dat.Dat), string(excepted))
+	}
+}
+
+func TestComputeId(t *testing.T) {
+	// http://age.s22.xrea.com/talk2ch/id.txt
+	now, _ := time.ParseInLocation("2006/01/02", "2019/12/26", time.Local)
+	sv := NewBoardService(
+		&BoardStore{},
+		&SysEnv{
+			CurrentTime:   now,
+			ComputeIdSalt: "1385643578654298",
+		},
+	)
+
+	ipAddr := "110.111.112.113"
+	boardName := "newsplus"
+
+	id := sv.ComputeId(ipAddr, boardName)
+
+	// if id != "0hGpPuA0" {
+	if id != "+xRCU1Cw" {
+		t.Errorf("value: %v", id)
 	}
 }

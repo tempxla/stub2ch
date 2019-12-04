@@ -27,16 +27,15 @@ func main() {
 		Context: ctx,
 		Client:  client,
 	}
-	sysInfo := &service.SysInfo{
+	sysEnv := &service.SysEnv{
 		CurrentTime: time.Now(),
 	}
-	sv := service.NewBoardService(repo, sysInfo)
+	sv := service.NewBoardService(repo, sysEnv)
 
 	router := httprouter.New()
 	router.GET("/", handleIndex)
 	router.GET("/:board/bbs.cgi", handleBbsCgi(sv))
 	router.GET("/:board/subject.txt", handleSubjectTxt(sv))
-	router.GET("/:board/setting.txt", handleSettingTxt)
 	router.GET("/:board/dat/:dat", handleDat(sv))
 
 	// Serve static files out of the public directory.
