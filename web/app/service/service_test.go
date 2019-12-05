@@ -405,7 +405,7 @@ func TestComputeId(t *testing.T) {
 	sv := NewBoardService(
 		&BoardStore{},
 		&SysEnv{
-			CurrentTime:   now,
+			StartedTime:   now,
 			ComputeIdSalt: "1385643578654298",
 		},
 	)

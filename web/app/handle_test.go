@@ -233,7 +233,7 @@ func TestHandleDat_200(t *testing.T) {
 		},
 	}
 	env := &service.SysEnv{
-		CurrentTime: time.Now(),
+		StartedTime: time.Now(),
 	}
 	sv := service.NewBoardService(repo, env)
 
@@ -268,7 +268,7 @@ func TestHandleDat_400(t *testing.T) {
 		},
 	}
 	env := &service.SysEnv{
-		CurrentTime: time.Now(),
+		StartedTime: time.Now(),
 	}
 	sv := service.NewBoardService(repo, env)
 
@@ -310,7 +310,7 @@ func TestHandleSubjectTxt_200(t *testing.T) {
 		},
 	}
 	env := &service.SysEnv{
-		CurrentTime: time.Now(),
+		StartedTime: time.Now(),
 	}
 	sv := service.NewBoardService(repo, env)
 
@@ -343,7 +343,7 @@ func TestHandleSubjectTxt_404(t *testing.T) {
 		},
 	}
 	env := &service.SysEnv{
-		CurrentTime: time.Now(),
+		StartedTime: time.Now(),
 	}
 	sv := service.NewBoardService(repo, env)
 

@@ -33,7 +33,7 @@ type BoardRepository interface {
 }
 
 type BoardEnvironment interface {
-	Now() time.Time
+	StartedAt() time.Time
 	SaltComputeId() string
 	SaltAdminMail() string
 }
@@ -117,7 +117,7 @@ func (sv *BoardService) CreateNewThread(boardName string,
 }
 
 func (sv *BoardService) WriteDat(boardName, threadKey,
-	name, mail, id, message string) (err error) {
+	name, mail, id, message string) (resnum int, err error) {
 
 	// Creates a Key instance.
 	boardKey := datastore.NameKey("Board", boardName, nil)
@@ -134,10 +134,10 @@ func (sv *BoardService) WriteDat(boardName, threadKey,
 	}
 
 	// 書き込み
-	appendDat(dat, name, mail, sv.env.Now(), id, message)
+	appendDat(dat, name, mail, sv.env.StartedAt(), id, message)
 
 	// subject.txtの更新
-	err = updateSubjectsWhenWriteDat(board, threadKey, mail, sv.env.Now())
+	resnum, err = updateSubjectsWhenWriteDat(board, threadKey, mail, sv.env.StartedAt())
 	if err != nil {
 		return
 	}
@@ -149,11 +149,11 @@ func (sv *BoardService) WriteDat(boardName, threadKey,
 	if err = sv.repo.PutBoard(boardKey, board); err != nil {
 		return
 	}
-	return nil
+	return
 }
 
 func updateSubjectsWhenWriteDat(board *E.BoardEntity,
-	threadKey string, mail string, now time.Time) error {
+	threadKey string, mail string, now time.Time) (resnum int, err error) {
 
 	sbjLen := len(board.Subjects)
 	pos := -1
@@ -164,9 +164,11 @@ func updateSubjectsWhenWriteDat(board *E.BoardEntity,
 		}
 	}
 	if pos == -1 {
-		return fmt.Errorf("fail update subjects. len:%v key:%v", sbjLen, threadKey)
+		err = fmt.Errorf("fail update subjects. len:%v key:%v", sbjLen, threadKey)
+		return
 	}
-	board.Subjects[pos].MessageCount++
+	resnum = board.Subjects[pos].MessageCount + 1
+	board.Subjects[pos].MessageCount = resnum
 	board.Subjects[pos].LastModified = now
 
 	// (´∀`∩)↑age↑
@@ -178,7 +180,7 @@ func updateSubjectsWhenWriteDat(board *E.BoardEntity,
 		board.Subjects, board.Subjects[0] =
 			append(board.Subjects[0:1], board.Subjects[0:]...), sbj
 	}
-	return nil
+	return
 }
 
 // create dat. line: 1
@@ -224,10 +226,14 @@ func (sv *BoardService) ComputeId(ipAddr, boardName string) string {
 	ipmd5 = ipmd5[len(ipmd5)-4:]
 	ipmd5 += boardName
 	// ipmd5 += strconv.Itoa(sv.env.Now().Day())
-	ipmd5 += sv.env.Now().Format("2006/01/02")
+	ipmd5 += sv.env.StartedAt().Format("2006/01/02")
 	ipmd5 += sv.env.SaltComputeId()
 
 	// full := md5.Sum([]byte(ipmd5))
 	full := sha256.Sum256([]byte(ipmd5))
 	return string(base64.StdEncoding.EncodeToString(full[:])[0:8])
+}
+
+func (sv *BoardService) StartedAt() time.Time {
+	return sv.env.StartedAt()
 }

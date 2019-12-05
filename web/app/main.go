@@ -28,7 +28,7 @@ func main() {
 		Client:  client,
 	}
 	sysEnv := &service.SysEnv{
-		CurrentTime: time.Now(),
+		StartedTime: time.Now(),
 	}
 	sv := service.NewBoardService(repo, sysEnv)
 

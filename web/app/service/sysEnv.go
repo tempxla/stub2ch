@@ -5,13 +5,13 @@ import (
 )
 
 type SysEnv struct {
-	CurrentTime   time.Time
+	StartedTime   time.Time
 	ComputeIdSalt string
 	AdminMailSalt string
 }
 
-func (env *SysEnv) Now() time.Time {
-	return env.CurrentTime
+func (env *SysEnv) StartedAt() time.Time {
+	return env.StartedTime
 }
 
 func (env *SysEnv) SaltComputeId() string {

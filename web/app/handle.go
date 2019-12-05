@@ -10,7 +10,9 @@ import (
 	"net/http"
 	"net/url"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"time"
 )
 
 const (
@@ -20,6 +22,9 @@ const (
 var (
 	indexTmpl = template.Must(
 		template.ParseFiles(filepath.Join("..", "template", "index.html")),
+	)
+	writeDatDoneTmpl = template.Must(
+		template.ParseFiles(filepath.Join("..", "template", "writeDatDone.html")),
 	)
 )
 
@@ -124,10 +129,6 @@ func processParam(src func() (string, error),
 	return
 }
 
-func computeId(ipAddr string) string {
-	return ""
-}
-
 func handleWriteDat(sv *service.BoardService, w http.ResponseWriter, r *http.Request) {
 	boardName, err := processParam(require(r, "bbs"), betweenStr("0", "zzzzzzzzzz"))
 	if err != nil {
@@ -159,14 +160,39 @@ func handleWriteDat(sv *service.BoardService, w http.ResponseWriter, r *http.Req
 		fmt.Fprintf(w, param_error_format, "MESSAGE", err)
 		return
 	}
-	err = sv.WriteDat(boardName, threadKey, name, mail, computeId(r.RemoteAddr), message)
+	id := sv.ComputeId(r.RemoteAddr, boardName)
+	resnum, err := sv.WriteDat(boardName, threadKey, name, mail, id, message)
 	if err != nil {
-		// 存在しない
-		// 1001
-		// dat落ち
-		// 容量オーバー
+		// 存在しない or dat落ち or 1001 or 容量オーバー
+
+		w.Header().Add("Content-Type", "text/html; charset=Shift_JIS")
+		// Date:[Thu, 05 Dec 2019 13:38:58 GMT]
+		// Set-Cookie:[yuki=akari; expires=Thu, 12-Dec-2019 00:00:00 GMT; path=/; domain=.5ch.net]
+		// //hebi.5ch.net/test/read.cgi/news4vip/1575543566/
+		view := fmt.Sprintf("//%s/test/read.cgi/%s/%s/", r.Host, boardName, threadKey)
+		writeDatDoneTmpl.Execute(w, view)
+		return
 	}
-	// 書き込み完了 200 OK
+	// 書き込み完了
+	// Header
+	//Date: Thu, 05 Dec 2019 11:49:05 GMT
+	w.Header().Add("Date", "TODO")
+	w.Header().Add("Content-Type", "text/html; charset=Shift_JIS")
+	w.Header().Add("x-Resnum", strconv.Itoa(resnum))
+	//                              12345678901234567890
+	mills := sv.StartedAt().Format("2006-01-02 15:04:05.000")[20:]
+	w.Header().Add("x-PostDate", strconv.FormatInt(sv.StartedAt().Unix(), 10)+"."+mills)
+	w.Header().Add("x-PosterID", id)
+	// Body
+	view := struct {
+		URL string
+		Sec float64
+	}{
+		// //leia.2ch.net/test/read.cgi/poverty/1575541744/l50
+		URL: fmt.Sprintf("//%s/test/read.cgi/%s/%s/l50", r.Host, boardName, threadKey),
+		Sec: time.Now().Sub(sv.StartedAt()).Seconds(),
+	}
+	writeDatDoneTmpl.Execute(w, view)
 }
 
 func handleDat(sv *service.BoardService) httprouter.Handle {
