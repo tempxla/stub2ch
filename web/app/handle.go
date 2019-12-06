@@ -26,6 +26,9 @@ var (
 	writeDatDoneTmpl = template.Must(
 		template.ParseFiles(filepath.Join("..", "template", "writeDatDone.html")),
 	)
+	writeDatConfirmTmpl = template.Must(
+		template.ParseFiles(filepath.Join("..", "template", "writeDatConfirm.html")),
+	)
 )
 
 // handleIndex uses a template to create an index.html.
@@ -160,39 +163,79 @@ func handleWriteDat(sv *service.BoardService, w http.ResponseWriter, r *http.Req
 		fmt.Fprintf(w, param_error_format, "MESSAGE", err)
 		return
 	}
+	// クッキー確認
+	if executeWriteDatConfirmTmpl(w, r, boardName, threadKey, name, mail, message, sv.StartedAt()) {
+		return
+	}
+	// 書き込み
 	id := sv.ComputeId(r.RemoteAddr, boardName)
 	resnum, err := sv.WriteDat(boardName, threadKey, name, mail, id, message)
 	if err != nil {
 		// 存在しない or dat落ち or 1001 or 容量オーバー
-
-		w.Header().Add("Content-Type", "text/html; charset=Shift_JIS")
-		// Date:[Thu, 05 Dec 2019 13:38:58 GMT]
-		// Set-Cookie:[yuki=akari; expires=Thu, 12-Dec-2019 00:00:00 GMT; path=/; domain=.5ch.net]
-		// //hebi.5ch.net/test/read.cgi/news4vip/1575543566/
-		view := fmt.Sprintf("//%s/test/read.cgi/%s/%s/", r.Host, boardName, threadKey)
-		writeDatDoneTmpl.Execute(w, view)
+		executeWriteDatNotFoundTmpl(w, r, boardName, threadKey, sv.StartedAt())
 		return
 	}
 	// 書き込み完了
-	// Header
-	//Date: Thu, 05 Dec 2019 11:49:05 GMT
-	w.Header().Add("Date", "TODO")
+	executeWriteDoneTmpl(w, r, boardName, threadKey, id, resnum, sv.StartedAt())
+}
+
+func executeWriteDoneTmpl(w http.ResponseWriter, r *http.Request,
+	boardName, threadKey, id string, resnum int, startedAt time.Time) bool {
+
+	w.Header().Add("Date", startedAt.UTC().Format(http.TimeFormat))
 	w.Header().Add("Content-Type", "text/html; charset=Shift_JIS")
 	w.Header().Add("x-Resnum", strconv.Itoa(resnum))
 	//                              12345678901234567890
-	mills := sv.StartedAt().Format("2006-01-02 15:04:05.000")[20:]
-	w.Header().Add("x-PostDate", strconv.FormatInt(sv.StartedAt().Unix(), 10)+"."+mills)
+	mills := startedAt.Format("2006-01-02 15:04:05.000")[20:]
+	w.Header().Add("x-PostDate", strconv.FormatInt(startedAt.Unix(), 10)+"."+mills)
 	w.Header().Add("x-PosterID", id)
 	// Body
-	view := struct {
-		URL string
-		Sec float64
-	}{
+	view := map[string]string{
 		// //leia.2ch.net/test/read.cgi/poverty/1575541744/l50
-		URL: fmt.Sprintf("//%s/test/read.cgi/%s/%s/l50", r.Host, boardName, threadKey),
-		Sec: time.Now().Sub(sv.StartedAt()).Seconds(),
+		"URL": fmt.Sprintf("//%s/test/read.cgi/%s/%s/l50", r.Host, boardName, threadKey),
+		"Sec": fmt.Sprintf("%f", time.Now().Sub(startedAt).Seconds()),
 	}
 	writeDatDoneTmpl.Execute(w, view)
+	return true
+}
+
+func executeWriteDatNotFoundTmpl(w http.ResponseWriter, r *http.Request,
+	boardName, threadKey string, startedAt time.Time) bool {
+
+	w.Header().Add("Content-Type", "text/html; charset=Shift_JIS")
+	w.Header().Add("Date", startedAt.UTC().Format(http.TimeFormat))
+	// //hebi.5ch.net/test/read.cgi/news4vip/1575543566/
+	view := fmt.Sprintf("//%s/test/read.cgi/%s/%s/", r.Host, boardName, threadKey)
+	writeDatDoneTmpl.Execute(w, view)
+	return true
+}
+
+func executeWriteDatConfirmTmpl(w http.ResponseWriter, r *http.Request,
+	boardName, threadKey, name, mail, message string, startedAt time.Time) bool {
+
+	if c, err := r.Cookie("PON"); err == nil && c.Value != "" {
+		if c, err := r.Cookie("yuki"); err == nil && c.Value == "akari" {
+			// Cookie Found. Need not to forward Confirm page.
+			return false
+		}
+	}
+	w.Header().Add("Content-Type", "text/html; charset=Shift_JIS")
+	w.Header().Add("Date", startedAt.UTC().Format(http.TimeFormat))
+	// Domain属性を指定しないCookieは、Cookieを発行したホストのみに送信される
+	expires := startedAt.Add(time.Duration(7*24) * time.Hour)
+	w.Header().Add("Set-Cookie", fmt.Sprintf("PON=%s; expires=%s; path=/", r.RemoteAddr, expires))
+	w.Header().Add("Set-Cookie", fmt.Sprintf("yuki=akari; expires=%s; path=/", expires))
+	// Body
+	view := map[string]string{
+		"Name":      name,
+		"Mail":      mail,
+		"Message":   message,
+		"BoardName": boardName,
+		"Time":      strconv.FormatInt(startedAt.Unix(), 10),
+		"ThreadKey": threadKey,
+	}
+	writeDatConfirmTmpl.Execute(w, view)
+	return true
 }
 
 func handleDat(sv *service.BoardService) httprouter.Handle {
