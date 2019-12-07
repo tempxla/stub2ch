@@ -1,17 +1,18 @@
 package testutil
 
 import (
-	E "../entity"
+	. "../entity"
 	"cloud.google.com/go/datastore"
+	"time"
 )
 
 // A injection for google datastore
 type BoardStub struct {
-	BoardMap map[string]*E.BoardEntity
-	DatMap   map[string]map[string]*E.DatEntity
+	BoardMap map[string]*BoardEntity
+	DatMap   map[string]map[string]*DatEntity
 }
 
-func (repo *BoardStub) GetBoard(key *datastore.Key, entity *E.BoardEntity) (err error) {
+func (repo *BoardStub) GetBoard(key *datastore.Key, entity *BoardEntity) (err error) {
 	if e, ok := repo.BoardMap[key.Name]; ok {
 		entity.Subjects = e.Subjects
 		return
@@ -20,12 +21,12 @@ func (repo *BoardStub) GetBoard(key *datastore.Key, entity *E.BoardEntity) (err 
 	}
 }
 
-func (repo *BoardStub) PutBoard(key *datastore.Key, entity *E.BoardEntity) (err error) {
+func (repo *BoardStub) PutBoard(key *datastore.Key, entity *BoardEntity) (err error) {
 	repo.BoardMap[key.Name] = entity
 	return
 }
 
-func (repo *BoardStub) GetDat(key *datastore.Key, entity *E.DatEntity) (err error) {
+func (repo *BoardStub) GetDat(key *datastore.Key, entity *DatEntity) (err error) {
 	if board, ok := repo.DatMap[key.Parent.Name]; !ok {
 		return datastore.ErrNoSuchEntity
 	} else if e, ok := board[key.Name]; ok {
@@ -36,7 +37,46 @@ func (repo *BoardStub) GetDat(key *datastore.Key, entity *E.DatEntity) (err erro
 	}
 }
 
-func (repo *BoardStub) PutDat(key *datastore.Key, entity *E.DatEntity) (err error) {
+func (repo *BoardStub) PutDat(key *datastore.Key, entity *DatEntity) (err error) {
 	repo.DatMap[key.Parent.Name][key.Name] = entity
 	return
+}
+
+type ThreadStub struct {
+	ThreadKey    string
+	ThreadTitle  string
+	MessageCount int
+	LastModified time.Time
+	Dat          string
+}
+
+func EmptyBoardStub() *BoardStub {
+	return &BoardStub{
+		BoardMap: make(map[string]*BoardEntity),
+		DatMap:   make(map[string]map[string]*DatEntity),
+	}
+}
+
+func NewBoardStub(boardName string, threads []ThreadStub) *BoardStub {
+	stub := &BoardStub{
+		BoardMap: map[string]*BoardEntity{
+			boardName: &BoardEntity{
+				Subjects: []Subject{},
+			},
+		},
+		DatMap: map[string]map[string]*DatEntity{
+			boardName: make(map[string]*DatEntity),
+		},
+	}
+	board := stub.BoardMap[boardName]
+	for _, v := range threads {
+		board.Subjects = append(board.Subjects, Subject{
+			ThreadKey:    v.ThreadKey,
+			ThreadTitle:  v.ThreadTitle,
+			MessageCount: v.MessageCount,
+			LastModified: v.LastModified,
+		})
+		stub.DatMap[boardName][v.ThreadKey] = &DatEntity{Dat: []byte(v.Dat)}
+	}
+	return stub
 }

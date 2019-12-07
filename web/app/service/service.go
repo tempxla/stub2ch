@@ -2,7 +2,7 @@ package service
 
 import (
 	"../config"
-	E "../entity"
+	. "../entity"
 	"bytes"
 	"cloud.google.com/go/datastore"
 	"crypto/md5"
@@ -26,10 +26,10 @@ type BoardService struct {
 }
 
 type BoardRepository interface {
-	GetBoard(key *datastore.Key, entity *E.BoardEntity) (err error)
-	PutBoard(key *datastore.Key, entity *E.BoardEntity) (err error)
-	GetDat(key *datastore.Key, entity *E.DatEntity) (err error)
-	PutDat(key *datastore.Key, entity *E.DatEntity) (err error)
+	GetBoard(key *datastore.Key, entity *BoardEntity) (err error)
+	PutBoard(key *datastore.Key, entity *BoardEntity) (err error)
+	GetDat(key *datastore.Key, entity *DatEntity) (err error)
+	PutDat(key *datastore.Key, entity *DatEntity) (err error)
 }
 
 type BoardEnvironment interface {
@@ -52,7 +52,7 @@ func (sv *BoardService) MakeDat(boardName string, threadKey string) (_ string, e
 		datastore.NameKey("Board", boardName, nil))
 
 	// Gets a Board
-	e := new(E.DatEntity)
+	e := new(DatEntity)
 	if err = sv.repo.GetDat(key, e); err != nil {
 		return
 	}
@@ -66,7 +66,7 @@ func (sv *BoardService) MakeSubjectTxt(boardName string) (_ string, err error) {
 	key := datastore.NameKey("Board", boardName, nil)
 
 	// Gets a Board
-	e := new(E.BoardEntity)
+	e := new(BoardEntity)
 	if err = sv.repo.GetBoard(key, e); err != nil {
 		return
 	}
@@ -88,14 +88,14 @@ func (sv *BoardService) CreateNewThread(boardName string,
 
 	// Gets a Board entity
 	boardKey := datastore.NameKey("Board", boardName, nil)
-	board := &E.BoardEntity{}
+	board := &BoardEntity{}
 	if err = sv.repo.GetBoard(boardKey, board); err != nil {
 		return
 	}
 
 	// Adds to Subject
 	threadKey := strconv.FormatInt(now.Unix(), 10)
-	subject := E.Subject{
+	subject := Subject{
 		ThreadKey:    threadKey,
 		ThreadTitle:  title,
 		MessageCount: 1,
@@ -124,11 +124,11 @@ func (sv *BoardService) WriteDat(boardName, threadKey,
 	datKey := datastore.NameKey("Dat", threadKey, boardKey)
 
 	// Get Entities
-	dat := new(E.DatEntity)
+	dat := new(DatEntity)
 	if err = sv.repo.GetDat(datKey, dat); err != nil {
 		return
 	}
-	board := new(E.BoardEntity)
+	board := new(BoardEntity)
 	if err = sv.repo.GetBoard(boardKey, board); err != nil {
 		return
 	}
@@ -152,7 +152,7 @@ func (sv *BoardService) WriteDat(boardName, threadKey,
 	return
 }
 
-func updateSubjectsWhenWriteDat(board *E.BoardEntity,
+func updateSubjectsWhenWriteDat(board *BoardEntity,
 	threadKey string, mail string, now time.Time) (resnum int, err error) {
 
 	sbjLen := len(board.Subjects)
@@ -184,20 +184,20 @@ func updateSubjectsWhenWriteDat(board *E.BoardEntity,
 }
 
 // create dat. line: 1
-func createDat(name string, mail string, date time.Time, id string, message string, title string) *E.DatEntity {
-	dat := &E.DatEntity{}
+func createDat(name string, mail string, date time.Time, id string, message string, title string) *DatEntity {
+	dat := &DatEntity{}
 	writeDat(dat, config.DAT_FORMAT, name, mail, date, id, message, title)
 	return dat
 }
 
 // append dat. line: 2..
-func appendDat(dat *E.DatEntity,
+func appendDat(dat *DatEntity,
 	name string, mail string, date time.Time, id string, message string) {
 
 	writeDat(dat, datFormatN, name, mail, date, id, message, "")
 }
 
-func writeDat(dat *E.DatEntity, format string,
+func writeDat(dat *DatEntity, format string,
 	name string, mail string, date time.Time, id string, message string, title string) {
 
 	wr := bytes.NewBuffer(dat.Dat)

@@ -2,7 +2,7 @@ package service
 
 import (
 	"../config"
-	E "../entity"
+	. "../entity"
 	"../testutil"
 	"bytes"
 	"cloud.google.com/go/datastore"
@@ -21,7 +21,7 @@ func cleanDatastore(t *testing.T, ctx context.Context, client *datastore.Client)
 	query := datastore.NewQuery("Dat").KeysOnly()
 	var keys []*datastore.Key
 	var err error
-	if keys, err = client.GetAll(ctx, query, []*E.DatEntity{}); err != nil {
+	if keys, err = client.GetAll(ctx, query, []*DatEntity{}); err != nil {
 		t.Fatalf("Failed clean dat. get dat  %v", err)
 	}
 	if err := client.DeleteMulti(ctx, keys); err != nil {
@@ -29,7 +29,7 @@ func cleanDatastore(t *testing.T, ctx context.Context, client *datastore.Client)
 	}
 	// delete all Board
 	query = datastore.NewQuery("Board").KeysOnly()
-	if keys, err = client.GetAll(ctx, query, []*E.BoardEntity{}); err != nil {
+	if keys, err = client.GetAll(ctx, query, []*BoardEntity{}); err != nil {
 		t.Fatalf("Failed clean board. get dat  %v", err)
 	}
 	if err := client.DeleteMulti(ctx, keys); err != nil {
@@ -49,9 +49,9 @@ func TestNewBoardService(t *testing.T) {
 func TestMakeDat_ok(t *testing.T) {
 	// Setup
 	repo := &testutil.BoardStub{
-		DatMap: map[string]map[string]*E.DatEntity{
-			"news4test": map[string]*E.DatEntity{
-				"123": &E.DatEntity{
+		DatMap: map[string]map[string]*DatEntity{
+			"news4test": map[string]*DatEntity{
+				"123": &DatEntity{
 					Dat: []byte("1行目\n2行目"),
 				},
 			},
@@ -75,9 +75,9 @@ func TestMakeDat_ok(t *testing.T) {
 func TestMakeDat_err(t *testing.T) {
 	// Setup
 	repo := &testutil.BoardStub{
-		DatMap: map[string]map[string]*E.DatEntity{
-			"news4test": map[string]*E.DatEntity{
-				"123": &E.DatEntity{
+		DatMap: map[string]map[string]*DatEntity{
+			"news4test": map[string]*DatEntity{
+				"123": &DatEntity{
 					Dat: []byte("1行目\n2行目"),
 				},
 			},
@@ -101,19 +101,19 @@ func TestMakeDat_err(t *testing.T) {
 func TestMakeSubjectTxt_ok(t *testing.T) {
 	// Setup
 	repo := &testutil.BoardStub{
-		BoardMap: map[string]*E.BoardEntity{
-			"news4test": &E.BoardEntity{Subjects: []E.Subject{
-				E.Subject{
+		BoardMap: map[string]*BoardEntity{
+			"news4test": &BoardEntity{Subjects: []Subject{
+				Subject{
 					ThreadKey:    "222",
 					ThreadTitle:  "YYY",
 					MessageCount: 200,
 				},
-				E.Subject{
+				Subject{
 					ThreadKey:    "111",
 					ThreadTitle:  "XXX",
 					MessageCount: 100,
 				},
-				E.Subject{
+				Subject{
 					ThreadKey:    "333",
 					ThreadTitle:  "ZZZ",
 					MessageCount: 300,
@@ -139,19 +139,19 @@ func TestMakeSubjectTxt_ok(t *testing.T) {
 func TestMakeSubjectTxt_err(t *testing.T) {
 	// Setup
 	repo := &testutil.BoardStub{
-		BoardMap: map[string]*E.BoardEntity{
-			"news4test": &E.BoardEntity{Subjects: []E.Subject{
-				E.Subject{
+		BoardMap: map[string]*BoardEntity{
+			"news4test": &BoardEntity{Subjects: []Subject{
+				Subject{
 					ThreadKey:    "222",
 					ThreadTitle:  "YYY",
 					MessageCount: 200,
 				},
-				E.Subject{
+				Subject{
 					ThreadKey:    "111",
 					ThreadTitle:  "XXX",
 					MessageCount: 100,
 				},
-				E.Subject{
+				Subject{
 					ThreadKey:    "333",
 					ThreadTitle:  "ZZZ",
 					MessageCount: 300,
@@ -193,8 +193,8 @@ func TestCreateNewThread_AtFirst(t *testing.T) {
 	boardKey := datastore.NameKey(kind, name, nil)
 
 	// Creates a Board instance.
-	board := E.BoardEntity{
-		Subjects: []E.Subject{},
+	board := BoardEntity{
+		Subjects: []Subject{},
 	}
 
 	// Saves the new entity.
@@ -226,7 +226,7 @@ func TestCreateNewThread_AtFirst(t *testing.T) {
 	}
 	// Get Board
 	key := datastore.NameKey("Board", "news4test", nil)
-	e := new(E.BoardEntity)
+	e := new(BoardEntity)
 	if err := client.Get(ctx, key, e); err != nil {
 		t.Fatalf("Failed to get board  %v", err)
 	}
@@ -235,7 +235,7 @@ func TestCreateNewThread_AtFirst(t *testing.T) {
 	}
 	// Verify Board
 	subject := e.Subjects[0]
-	expectedSubject := E.Subject{
+	expectedSubject := Subject{
 		ThreadKey:    strconv.FormatInt(now.Unix(), 10),
 		ThreadTitle:  "スレ立てテスト",
 		MessageCount: 1,
@@ -248,7 +248,7 @@ func TestCreateNewThread_AtFirst(t *testing.T) {
 	// Get Dat
 	ancestor := datastore.NameKey("Board", "news4test", nil)
 	query := datastore.NewQuery("Dat").Ancestor(ancestor)
-	var datList []*E.DatEntity
+	var datList []*DatEntity
 	if _, err := client.GetAll(ctx, query, &datList); err != nil {
 		t.Fatalf("Failed to get dat  %v", err)
 	}
@@ -284,8 +284,8 @@ func TestCreateNewThread_More(t *testing.T) {
 	boardKey := datastore.NameKey(kind, name, nil)
 
 	// Creates a Board instance.
-	board := E.BoardEntity{
-		Subjects: []E.Subject{},
+	board := BoardEntity{
+		Subjects: []Subject{},
 	}
 
 	// Saves the new entity.
@@ -324,7 +324,7 @@ func TestCreateNewThread_More(t *testing.T) {
 	// ----------------------------------
 	// Get Board
 	key := datastore.NameKey("Board", "news4test", nil)
-	e := new(E.BoardEntity)
+	e := new(BoardEntity)
 	if err := client.Get(ctx, key, e); err != nil {
 		t.Fatalf("Failed to get board  %v", err)
 	}
@@ -377,19 +377,19 @@ func TestUpdateSubjectsWhenWriteDat_age(t *testing.T) {
 	t1 := time.Now().Add(time.Duration(-1) * time.Hour)
 	t2 := time.Now().Add(time.Duration(-2) * time.Hour)
 	t3 := time.Now().Add(time.Duration(-3) * time.Hour)
-	board := &E.BoardEntity{
-		[]E.Subject{
-			E.Subject{
+	board := &BoardEntity{
+		[]Subject{
+			Subject{
 				ThreadKey:    "123",
 				MessageCount: 100,
 				LastModified: t1,
 			},
-			E.Subject{
+			Subject{
 				ThreadKey:    "999",
 				MessageCount: 200,
 				LastModified: t2,
 			},
-			E.Subject{
+			Subject{
 				ThreadKey:    "456",
 				MessageCount: 300,
 				LastModified: t3,
@@ -430,14 +430,14 @@ func TestUpdateSubjectsWhenWriteDat_sage(t *testing.T) {
 	// Setup
 	t1 := time.Now().Add(time.Duration(-1) * time.Hour)
 	t2 := time.Now().Add(time.Duration(-2) * time.Hour)
-	board := &E.BoardEntity{
-		[]E.Subject{
-			E.Subject{
+	board := &BoardEntity{
+		[]Subject{
+			Subject{
 				ThreadKey:    "123",
 				MessageCount: 100,
 				LastModified: t1,
 			},
-			E.Subject{
+			Subject{
 				ThreadKey:    "999",
 				MessageCount: 200,
 				LastModified: t2,
@@ -473,8 +473,8 @@ func TestUpdateSubjectsWhenWriteDat_sage(t *testing.T) {
 
 func TestUpdateSubjectsWhenWriteDat_fail(t *testing.T) {
 	// Setup
-	board := &E.BoardEntity{
-		[]E.Subject{},
+	board := &BoardEntity{
+		[]Subject{},
 	}
 	threadKey := "888"
 	mail := "sage"

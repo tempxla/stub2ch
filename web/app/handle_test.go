@@ -1,7 +1,7 @@
 package main
 
 import (
-	E "./entity"
+	. "./entity"
 	"./service"
 	"./testutil"
 	"./util"
@@ -213,16 +213,108 @@ func TestWriteDat_CookieMissing(t *testing.T) {
 	// body
 	body := string(util.SJIStoUTF8(writer.Body.Bytes()))
 	if !strings.Contains(body, "<title>■ 書き込み確認 ■</title>") {
-		t.Errorf("not confirm page: %v", body)
+		t.Errorf("NOT writeDatConfirm.html: %v", body)
+	}
+}
+
+func TestWriteDat_NotFound(t *testing.T) {
+	// Setup
+	repo := testutil.EmptyBoardStub()
+	sysEnv := &service.SysEnv{
+		StartedTime: time.Now(),
+	}
+	sv := service.NewBoardService(repo, sysEnv)
+
+	param := map[string]string{
+		"bbs":     "news4test",
+		"key":     "1234567890",
+		"time":    "1",
+		"FROM":    "xxxx",
+		"mail":    "yyyy",
+		"MESSAGE": "aaaa",
+	}
+
+	// request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest("POST", "/test/bbs.cgi", nil)
+	request.AddCookie(&http.Cookie{Name: "PON", Value: "1.1.1.1"})
+	request.AddCookie(&http.Cookie{Name: "yuki", Value: "akari"})
+
+	// Exercise
+	request.PostForm = make(map[string][]string)
+	for k, v := range param {
+		request.PostForm.Add(k, v)
+	}
+	handleWriteDat(sv, writer, request)
+
+	// Verify
+	if writer.Code != 200 {
+		t.Errorf("Response code is %v", writer.Code)
+	}
+	// body
+	body := string(util.SJIStoUTF8(writer.Body.Bytes()))
+	if !strings.Contains(body, "ERROR: 該当するスレッドがありません。") {
+		t.Errorf("NOT writeDatNotFound.html : %v", body)
+	}
+}
+
+func TestWriteDat_Done(t *testing.T) {
+	// Setup
+	dat := "1行目\n2行目"
+	repo := testutil.NewBoardStub("news4test", []testutil.ThreadStub{
+		{
+			ThreadKey:    "1234567890",
+			ThreadTitle:  "XXXX",
+			MessageCount: 1,
+			LastModified: time.Now().Add(time.Duration(-1) * time.Hour),
+			Dat:          dat,
+		},
+	},
+	)
+	sysEnv := &service.SysEnv{
+		StartedTime: time.Now(),
+	}
+	sv := service.NewBoardService(repo, sysEnv)
+
+	param := map[string]string{
+		"bbs":     "news4test",
+		"key":     "1234567890",
+		"time":    "1",
+		"FROM":    "xxxx",
+		"mail":    "yyyy",
+		"MESSAGE": "aaaa",
+	}
+
+	// request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest("POST", "/test/bbs.cgi", nil)
+	request.AddCookie(&http.Cookie{Name: "PON", Value: "1.1.1.1"})
+	request.AddCookie(&http.Cookie{Name: "yuki", Value: "akari"})
+
+	// Exercise
+	request.PostForm = make(map[string][]string)
+	for k, v := range param {
+		request.PostForm.Add(k, v)
+	}
+	handleWriteDat(sv, writer, request)
+
+	// Verify
+	if writer.Code != 200 {
+		t.Errorf("Response code is %v", writer.Code)
+	}
+	// body
+	body := string(util.SJIStoUTF8(writer.Body.Bytes()))
+	if !strings.Contains(body, "<title>書きこみました。</title>") {
+		t.Errorf("NOT writeDatDone.html : %v", body)
 	}
 }
 
 func TestHandleDat_200(t *testing.T) {
 	// Setup
 	repo := &testutil.BoardStub{
-		DatMap: map[string]map[string]*E.DatEntity{
-			"news4test": map[string]*E.DatEntity{
-				"123": &E.DatEntity{
+		DatMap: map[string]map[string]*DatEntity{
+			"news4test": map[string]*DatEntity{
+				"123": &DatEntity{
 					Dat: []byte("1行目\n2行目"),
 				},
 			},
@@ -255,9 +347,9 @@ func TestHandleDat_200(t *testing.T) {
 func TestHandleDat_404(t *testing.T) {
 	// Setup
 	repo := &testutil.BoardStub{
-		DatMap: map[string]map[string]*E.DatEntity{
-			"news4test": map[string]*E.DatEntity{
-				"123": &E.DatEntity{
+		DatMap: map[string]map[string]*DatEntity{
+			"news4test": map[string]*DatEntity{
+				"123": &DatEntity{
 					Dat: []byte("1行目\n2行目"),
 				},
 			},
@@ -285,19 +377,19 @@ func TestHandleDat_404(t *testing.T) {
 func TestHandleSubjectTxt_200(t *testing.T) {
 	// Setup
 	repo := &testutil.BoardStub{
-		BoardMap: map[string]*E.BoardEntity{
-			"news4test": &E.BoardEntity{Subjects: []E.Subject{
-				E.Subject{
+		BoardMap: map[string]*BoardEntity{
+			"news4test": &BoardEntity{Subjects: []Subject{
+				Subject{
 					ThreadKey:    "222",
 					ThreadTitle:  "YYY",
 					MessageCount: 200,
 				},
-				E.Subject{
+				Subject{
 					ThreadKey:    "111",
 					ThreadTitle:  "XXX",
 					MessageCount: 100,
 				},
-				E.Subject{
+				Subject{
 					ThreadKey:    "333",
 					ThreadTitle:  "ZZZ",
 					MessageCount: 300,
@@ -332,9 +424,9 @@ func TestHandleSubjectTxt_200(t *testing.T) {
 func TestHandleSubjectTxt_404(t *testing.T) {
 	// Setup
 	repo := &testutil.BoardStub{
-		BoardMap: map[string]*E.BoardEntity{
-			"news4test": &E.BoardEntity{Subjects: []E.Subject{
-				E.Subject{},
+		BoardMap: map[string]*BoardEntity{
+			"news4test": &BoardEntity{Subjects: []Subject{
+				Subject{},
 			}},
 		},
 	}

@@ -23,11 +23,14 @@ var (
 	indexTmpl = template.Must(
 		template.ParseFiles(filepath.Join("..", "template", "index.html")),
 	)
-	writeDatDoneTmpl = template.Must(
-		template.ParseFiles(filepath.Join("..", "template", "writeDatDone.html")),
-	)
 	writeDatConfirmTmpl = template.Must(
 		template.ParseFiles(filepath.Join("..", "template", "writeDatConfirm.html")),
+	)
+	writeDatNotFoundTmpl = template.Must(
+		template.ParseFiles(filepath.Join("..", "template", "writeDatNotFound.html")),
+	)
+	writeDatDoneTmpl = template.Must(
+		template.ParseFiles(filepath.Join("..", "template", "writeDatDone.html")),
 	)
 )
 
@@ -155,7 +158,7 @@ func executeWriteDatNotFoundTmpl(w http.ResponseWriter, r *http.Request,
 	w.Header().Add("Date", startedAt.UTC().Format(http.TimeFormat))
 	// //hebi.5ch.net/test/read.cgi/news4vip/1575543566/
 	view := fmt.Sprintf("//%s/test/read.cgi/%s/%s/", r.Host, boardName, threadKey)
-	if err := writeDatDoneTmpl.Execute(w, view); err != nil {
+	if err := writeDatNotFoundTmpl.Execute(w, view); err != nil {
 		log.Printf("Error executing template: %v", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 	}
