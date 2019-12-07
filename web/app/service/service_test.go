@@ -48,15 +48,12 @@ func TestNewBoardService(t *testing.T) {
 
 func TestMakeDat_ok(t *testing.T) {
 	// Setup
-	repo := &testutil.BoardStub{
-		DatMap: map[string]map[string]*DatEntity{
-			"news4test": map[string]*DatEntity{
-				"123": &DatEntity{
-					Dat: []byte("1行目\n2行目"),
-				},
-			},
+	repo := testutil.NewBoardStub("news4test", []testutil.ThreadStub{
+		{
+			ThreadKey: "123",
+			Dat:       "1行目\n2行目",
 		},
-	}
+	})
 	env := &SysEnv{}
 	sv := NewBoardService(repo, env)
 
@@ -74,15 +71,12 @@ func TestMakeDat_ok(t *testing.T) {
 
 func TestMakeDat_err(t *testing.T) {
 	// Setup
-	repo := &testutil.BoardStub{
-		DatMap: map[string]map[string]*DatEntity{
-			"news4test": map[string]*DatEntity{
-				"123": &DatEntity{
-					Dat: []byte("1行目\n2行目"),
-				},
-			},
+	repo := testutil.NewBoardStub("news4test", []testutil.ThreadStub{
+		{
+			ThreadKey: "123",
+			Dat:       "1行目\n2行目",
 		},
-	}
+	})
 	env := &SysEnv{}
 	sv := NewBoardService(repo, env)
 
@@ -100,27 +94,23 @@ func TestMakeDat_err(t *testing.T) {
 
 func TestMakeSubjectTxt_ok(t *testing.T) {
 	// Setup
-	repo := &testutil.BoardStub{
-		BoardMap: map[string]*BoardEntity{
-			"news4test": &BoardEntity{Subjects: []Subject{
-				Subject{
-					ThreadKey:    "222",
-					ThreadTitle:  "YYY",
-					MessageCount: 200,
-				},
-				Subject{
-					ThreadKey:    "111",
-					ThreadTitle:  "XXX",
-					MessageCount: 100,
-				},
-				Subject{
-					ThreadKey:    "333",
-					ThreadTitle:  "ZZZ",
-					MessageCount: 300,
-				},
-			}},
+	repo := testutil.NewBoardStub("news4test", []testutil.ThreadStub{
+		{
+			ThreadKey:    "222",
+			ThreadTitle:  "YYY",
+			MessageCount: 200,
 		},
-	}
+		{
+			ThreadKey:    "111",
+			ThreadTitle:  "XXX",
+			MessageCount: 100,
+		},
+		{
+			ThreadKey:    "333",
+			ThreadTitle:  "ZZZ",
+			MessageCount: 300,
+		},
+	})
 	env := &SysEnv{}
 	sv := NewBoardService(repo, env)
 
@@ -138,27 +128,23 @@ func TestMakeSubjectTxt_ok(t *testing.T) {
 
 func TestMakeSubjectTxt_err(t *testing.T) {
 	// Setup
-	repo := &testutil.BoardStub{
-		BoardMap: map[string]*BoardEntity{
-			"news4test": &BoardEntity{Subjects: []Subject{
-				Subject{
-					ThreadKey:    "222",
-					ThreadTitle:  "YYY",
-					MessageCount: 200,
-				},
-				Subject{
-					ThreadKey:    "111",
-					ThreadTitle:  "XXX",
-					MessageCount: 100,
-				},
-				Subject{
-					ThreadKey:    "333",
-					ThreadTitle:  "ZZZ",
-					MessageCount: 300,
-				},
-			}},
+	repo := testutil.NewBoardStub("news4test", []testutil.ThreadStub{
+		{
+			ThreadKey:    "222",
+			ThreadTitle:  "YYY",
+			MessageCount: 200,
 		},
-	}
+		{
+			ThreadKey:    "111",
+			ThreadTitle:  "XXX",
+			MessageCount: 100,
+		},
+		{
+			ThreadKey:    "333",
+			ThreadTitle:  "ZZZ",
+			MessageCount: 300,
+		},
+	})
 	env := &SysEnv{}
 	sv := NewBoardService(repo, env)
 

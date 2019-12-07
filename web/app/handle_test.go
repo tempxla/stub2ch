@@ -1,7 +1,6 @@
 package main
 
 import (
-	. "./entity"
 	"./service"
 	"./testutil"
 	"./util"
@@ -311,15 +310,12 @@ func TestWriteDat_Done(t *testing.T) {
 
 func TestHandleDat_200(t *testing.T) {
 	// Setup
-	repo := &testutil.BoardStub{
-		DatMap: map[string]map[string]*DatEntity{
-			"news4test": map[string]*DatEntity{
-				"123": &DatEntity{
-					Dat: []byte("1行目\n2行目"),
-				},
-			},
+	repo := testutil.NewBoardStub("news4test", []testutil.ThreadStub{
+		{
+			ThreadKey: "123",
+			Dat:       "1行目\n2行目",
 		},
-	}
+	})
 	env := &service.SysEnv{
 		StartedTime: time.Now(),
 	}
@@ -346,15 +342,12 @@ func TestHandleDat_200(t *testing.T) {
 
 func TestHandleDat_404(t *testing.T) {
 	// Setup
-	repo := &testutil.BoardStub{
-		DatMap: map[string]map[string]*DatEntity{
-			"news4test": map[string]*DatEntity{
-				"123": &DatEntity{
-					Dat: []byte("1行目\n2行目"),
-				},
-			},
+	repo := testutil.NewBoardStub("news4test", []testutil.ThreadStub{
+		{
+			ThreadKey: "123",
+			Dat:       "1行目\n2行目",
 		},
-	}
+	})
 	env := &service.SysEnv{
 		StartedTime: time.Now(),
 	}
@@ -376,27 +369,23 @@ func TestHandleDat_404(t *testing.T) {
 
 func TestHandleSubjectTxt_200(t *testing.T) {
 	// Setup
-	repo := &testutil.BoardStub{
-		BoardMap: map[string]*BoardEntity{
-			"news4test": &BoardEntity{Subjects: []Subject{
-				Subject{
-					ThreadKey:    "222",
-					ThreadTitle:  "YYY",
-					MessageCount: 200,
-				},
-				Subject{
-					ThreadKey:    "111",
-					ThreadTitle:  "XXX",
-					MessageCount: 100,
-				},
-				Subject{
-					ThreadKey:    "333",
-					ThreadTitle:  "ZZZ",
-					MessageCount: 300,
-				},
-			}},
+	repo := testutil.NewBoardStub("news4test", []testutil.ThreadStub{
+		{
+			ThreadKey:    "222",
+			ThreadTitle:  "YYY",
+			MessageCount: 200,
 		},
-	}
+		{
+			ThreadKey:    "111",
+			ThreadTitle:  "XXX",
+			MessageCount: 100,
+		},
+		{
+			ThreadKey:    "333",
+			ThreadTitle:  "ZZZ",
+			MessageCount: 300,
+		},
+	})
 	env := &service.SysEnv{
 		StartedTime: time.Now(),
 	}
@@ -423,13 +412,7 @@ func TestHandleSubjectTxt_200(t *testing.T) {
 
 func TestHandleSubjectTxt_404(t *testing.T) {
 	// Setup
-	repo := &testutil.BoardStub{
-		BoardMap: map[string]*BoardEntity{
-			"news4test": &BoardEntity{Subjects: []Subject{
-				Subject{},
-			}},
-		},
-	}
+	repo := testutil.NewBoardStub("news4test", []testutil.ThreadStub{})
 	env := &service.SysEnv{
 		StartedTime: time.Now(),
 	}
