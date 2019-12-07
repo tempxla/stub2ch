@@ -7,6 +7,7 @@ import (
 	_ "github.com/julienschmidt/httprouter"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 )
@@ -74,7 +75,8 @@ func TestHandleBbsCgi_200(t *testing.T) {
 	}
 }
 
-//
+// パラメータ不備
+// 本当は「ERROR: 送られてきたデータが壊れています」ページが返されると思う
 func TestWriteDat_400(t *testing.T) {
 	// Setup
 	var repo service.BoardRepository
@@ -157,6 +159,45 @@ func TestWriteDat_400(t *testing.T) {
 			t.Errorf("case %d . Response code is %v", i, writer.Code)
 		}
 	}
+}
+
+func TestWriteDat_CookieMissing(t *testing.T) {
+	// Setup
+	var repo service.BoardRepository
+	sysEnv := &service.SysEnv{
+		StartedTime: time.Now(),
+	}
+	sv := service.NewBoardService(repo, sysEnv)
+
+	param := map[string]string{
+		"bbs":     "news4test",
+		"key":     "1234567890",
+		"time":    "1",
+		"FROM":    "xxxx",
+		"mail":    "yyyy",
+		"MESSAGE": "aaaa",
+	}
+
+	// request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest("POST", "/test/bbs.cgi", nil)
+
+	// Exercise
+	request.PostForm = make(map[string][]string)
+	for k, v := range param {
+		request.PostForm.Add(k, v)
+	}
+	handleWriteDat(sv, writer, request)
+
+	// Verify
+	if writer.Code != 200 {
+		t.Errorf("Response code is %v", writer.Code)
+	}
+	body := writer.Body.String()
+	if !strings.Contains(body, "<title>■ 書き込み確認 ■</title>") {
+		t.Errorf("not confirm page: %v", body)
+	}
+
 }
 
 func TestHandleDat_200(t *testing.T) {
