@@ -15,11 +15,11 @@ import (
 )
 
 const (
-	dat_DATE_LAYOUT = "2006/01/02"
-	dat_TIME_LAYOUT = "15:04:05.000"
+	dat_date_layout = "2006/01/02"
+	dat_time_layout = "15:04:05.000"
 	// 名前<>メール欄<>年/月/日(曜) 時:分:秒.ミリ秒 ID:hogehoge0<> 本文 <>スレタイ
-	dat_FORMAT   = "%s<>%s<>%s(%s) %s ID:%s<> %s <>%s"
-	dat_FORMAT_N = "\n" + dat_FORMAT
+	dat_format   = "%s<>%s<>%s(%s) %s ID:%s<> %s <>%s"
+	dat_format_n = "\n" + dat_format
 )
 
 var (
@@ -193,7 +193,7 @@ func updateSubjectsWhenWriteDat(board *BoardEntity,
 // create dat. line: 1
 func createDat(name string, mail string, date time.Time, id string, message string, title string) *DatEntity {
 	dat := &DatEntity{}
-	writeDat(dat, dat_FORMAT, name, mail, date, id, message, title)
+	writeDat(dat, dat_format, name, mail, date, id, message, title)
 	return dat
 }
 
@@ -201,7 +201,7 @@ func createDat(name string, mail string, date time.Time, id string, message stri
 func appendDat(dat *DatEntity,
 	name string, mail string, date time.Time, id string, message string) {
 
-	writeDat(dat, dat_FORMAT_N, name, mail, date, id, message, "")
+	writeDat(dat, dat_format_n, name, mail, date, id, message, "")
 }
 
 func writeDat(dat *DatEntity, format string,
@@ -213,9 +213,9 @@ func writeDat(dat *DatEntity, format string,
 	fmt.Fprintf(wr, format,
 		html.EscapeString(name),               // 名前
 		html.EscapeString(mail),               // メール
-		date.Format(dat_DATE_LAYOUT),          // 年月日
+		date.Format(dat_date_layout),          // 年月日
 		week_DAYS_JP[date.Weekday()],          // 曜
-		date.Format(dat_TIME_LAYOUT),          // 時分秒
+		date.Format(dat_time_layout),          // 時分秒
 		id,                                    // ID
 		escapeDat(html.EscapeString(message)), // 本文
 		html.EscapeString(title))              // スレタイ
