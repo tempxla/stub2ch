@@ -4,220 +4,72 @@ import (
 	E "./entity"
 	"./service"
 	"./testutil"
-	"fmt"
-	"github.com/julienschmidt/httprouter"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 )
 
-func TestHandleBbsCgi_404(t *testing.T) {
-
+// トップページ表示
+func TestHandleIndex(t *testing.T) {
+	// Setup
 	var repo service.BoardRepository
 	var sysEnv service.BoardEnvironment
 	sv := service.NewBoardService(repo, sysEnv)
 
-	router := httprouter.New()
-	router.GET("/:board/bbs.cgi", handleBbsCgi(sv))
-
+	// request
 	writer := httptest.NewRecorder()
-	request, _ := http.NewRequest("GET", "/test1/bbs.cgi", nil)
+	request, _ := http.NewRequest("GET", "/", nil)
+
+	// Exercise
+	router := newBoardRouter(sv)
 	router.ServeHTTP(writer, request)
 
+	// Verify
+	if err := indexTmpl.Execute(writer, nil); err != nil {
+		t.Errorf("Error executing template: %v", err)
+	}
+}
+
+// bbs.cgi がない
+func TestHandleBbsCgi_404(t *testing.T) {
+	// Setup
+	var repo service.BoardRepository
+	var sysEnv service.BoardEnvironment
+	sv := service.NewBoardService(repo, sysEnv)
+
+	// request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest("POST", "/test1/bbs.cgi", nil)
+
+	// Exercise
+	router := newBoardRouter(sv)
+	router.ServeHTTP(writer, request)
+
+	// Verify
 	if writer.Code != 404 {
 		t.Errorf("Response code is %v", writer.Code)
 	}
 }
 
+// bbs.cgi へのGET
 func TestHandleBbsCgi_200(t *testing.T) {
-
+	// Setup
 	var repo service.BoardRepository
 	var sysEnv service.BoardEnvironment
 	sv := service.NewBoardService(repo, sysEnv)
 
-	router := httprouter.New()
-	router.GET("/:board/bbs.cgi", handleBbsCgi(sv))
-
+	// request
 	writer := httptest.NewRecorder()
-	request, _ := http.NewRequest("GET", "/test/bbs.cgi", nil)
+	request, _ := http.NewRequest("POST", "/test/bbs.cgi", nil)
+
+	// Exercise
+	router := newBoardRouter(sv)
 	router.ServeHTTP(writer, request)
 
+	// Verify
 	if writer.Code != 200 {
 		t.Errorf("Response code is %v", writer.Code)
-	}
-}
-
-func TestRequireParam_ok(t *testing.T) {
-	// Setup
-	r := &http.Request{
-		PostForm: map[string][]string{
-			"p1": []string{"v1"},
-		},
-	}
-
-	// Exercise
-	s, err := requireParam(r, "p1")
-
-	// Verify
-	if err != nil {
-		t.Errorf("err %v", err)
-	}
-	if s != "v1" {
-		t.Errorf("value: %v", s)
-	}
-}
-
-func TestRequireParam_missing(t *testing.T) {
-	// Setup
-	r := &http.Request{
-		PostForm: map[string][]string{
-			"p1": []string{"v1"},
-		},
-	}
-
-	// Exercise
-	_, err := requireParam(r, "p2")
-
-	// Verify
-	if err == nil {
-		t.Errorf("err is nil")
-	}
-}
-
-func TestRequireParam_empty(t *testing.T) {
-	// Setup
-	r := &http.Request{
-		PostForm: map[string][]string{
-			"p1": []string{},
-		},
-	}
-
-	// Exercise
-	_, err := requireParam(r, "p1")
-
-	// Verify
-	if err == nil {
-		t.Errorf("err is nil")
-	}
-}
-
-func TestRequireParam_many(t *testing.T) {
-	// Setup
-	r := &http.Request{
-		PostForm: map[string][]string{
-			"p1": []string{"v1", "v2"},
-		},
-	}
-
-	// Exercise
-	_, err := requireParam(r, "p1")
-
-	// Verify
-	if err == nil {
-		t.Errorf("err is nil")
-	}
-}
-
-func TestRequire(t *testing.T) {
-	// Setup
-	r := &http.Request{
-		PostForm: map[string][]string{
-			"p1": []string{"v1"},
-		},
-	}
-
-	// Exercise
-	s, err := require(r, "p1")()
-
-	// Verify
-	if err != nil {
-		t.Errorf("err %v", err)
-	}
-	if s != "v1" {
-		t.Errorf("value: %v", s)
-	}
-}
-
-func TestNotEmpty(t *testing.T) {
-	if _, err := notEmpty(""); err == nil {
-		t.Error("err is nil")
-	}
-	s, err := notEmpty("s1")
-	if err != nil {
-		t.Errorf("err: %v", err)
-	}
-	if s != "s1" {
-		t.Errorf("value: %v", s)
-	}
-}
-
-func TestNotBlank(t *testing.T) {
-	if _, err := notBlank(" 　\n\r\t\v"); err == nil {
-		t.Error("err is nil")
-	}
-	s, err := notBlank(" s1 ")
-	if err != nil {
-		t.Errorf("err: %v", err)
-	}
-	if s != " s1 " {
-		t.Errorf("value: %v", s)
-	}
-}
-
-func TestBetweenStr(t *testing.T) {
-	if _, err := betweenStr("bbb", "ddd")("eee"); err == nil {
-		t.Error("err is nil")
-	}
-	if _, err := betweenStr("bbb", "ddd")("aaa"); err == nil {
-		t.Error("err is nil")
-	}
-	xs := [...]string{"bbb", "ccc", "ddd", "bbbb"}
-	for _, x := range xs {
-		s, err := betweenStr("bbb", "ddd")(x)
-		if err != nil {
-			t.Errorf("err: %v", err)
-		}
-		if s != x {
-			t.Errorf("value: %v", s)
-		}
-	}
-}
-
-func TestProcessParam(t *testing.T) {
-	// case 1
-	f := func() (string, error) { return "s", fmt.Errorf("errrrrr") }
-
-	if _, err := processParam(f); err == nil {
-		t.Error("case 1: err is nil")
-	}
-
-	// case 2
-	g := func() (string, error) { return "s", nil }
-
-	s, err := processParam(g)
-	if err != nil {
-		t.Errorf("case 2 err: %v", err)
-	}
-	if s != "s" {
-		t.Errorf("case 2 value: %v", s)
-	}
-
-	// case 3
-	h1 := func(s string) (string, error) { return s + "t", nil }
-	h2 := func(s string) (string, error) { return s + "u", fmt.Errorf("errhhhh") }
-	if _, err := processParam(g, h1, h2); err == nil {
-		t.Error("case 3: err is nil")
-	}
-
-	// case 4
-	h3 := func(s string) (string, error) { return s + "u", nil }
-	s, err = processParam(g, h1, h3)
-	if err != nil {
-		t.Errorf("case 4 err: %v", err)
-	}
-	if s != "stu" {
-		t.Errorf("case 4 value: %v", s)
 	}
 }
 
@@ -237,12 +89,12 @@ func TestHandleDat_200(t *testing.T) {
 	}
 	sv := service.NewBoardService(repo, env)
 
-	router := httprouter.New()
-	router.GET("/:board/dat/:dat", handleDat(sv))
-
-	// Exercise
+	// request
 	writer := httptest.NewRecorder()
 	request, _ := http.NewRequest("GET", "/news4test/dat/123.dat", nil)
+
+	// Exercise
+	router := newBoardRouter(sv)
 	router.ServeHTTP(writer, request)
 
 	// Verify
@@ -272,12 +124,12 @@ func TestHandleDat_400(t *testing.T) {
 	}
 	sv := service.NewBoardService(repo, env)
 
-	router := httprouter.New()
-	router.GET("/:board/dat/:dat", handleDat(sv))
-
-	// Exercise
+	// request
 	writer := httptest.NewRecorder()
 	request, _ := http.NewRequest("GET", "/news4test/dat/999.dat", nil)
+
+	// Exercise
+	router := newBoardRouter(sv)
 	router.ServeHTTP(writer, request)
 
 	// Verify
@@ -314,12 +166,12 @@ func TestHandleSubjectTxt_200(t *testing.T) {
 	}
 	sv := service.NewBoardService(repo, env)
 
-	router := httprouter.New()
-	router.GET("/:board/subject.txt", handleSubjectTxt(sv))
-
-	// Exercise
+	// request
 	writer := httptest.NewRecorder()
 	request, _ := http.NewRequest("GET", "/news4test/subject.txt", nil)
+
+	// Exercise
+	router := newBoardRouter(sv)
 	router.ServeHTTP(writer, request)
 
 	// Verify
@@ -347,12 +199,12 @@ func TestHandleSubjectTxt_404(t *testing.T) {
 	}
 	sv := service.NewBoardService(repo, env)
 
-	router := httprouter.New()
-	router.GET("/:board/subject.txt", handleSubjectTxt(sv))
-
-	// Exercise
+	// request
 	writer := httptest.NewRecorder()
 	request, _ := http.NewRequest("GET", "/news4test2/subject.txt", nil)
+
+	// Exercise
+	router := newBoardRouter(sv)
 	router.ServeHTTP(writer, request)
 
 	// Verify

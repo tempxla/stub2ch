@@ -31,12 +31,19 @@ var (
 	)
 )
 
-// handleIndex uses a template to create an index.html.
+// HTTP routing
+func newBoardRouter(sv *service.BoardService) *httprouter.Router {
+	router := httprouter.New()
+	router.GET("/", handleIndex)
+	router.POST("/:board/bbs.cgi", handleBbsCgi(sv))
+	router.GET("/:board/subject.txt", handleSubjectTxt(sv))
+	router.GET("/:board/dat/:dat", handleDat(sv))
+	return router
+}
+
+// トップページ表示
 func handleIndex(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	if err := indexTmpl.Execute(w, nil); err != nil {
-		log.Printf("Error executing template: %v", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-	}
+	indexTmpl.Execute(w, nil)
 }
 
 func handleBbsCgi(sv *service.BoardService) httprouter.Handle {
@@ -65,71 +72,6 @@ func handleBbsCgi(sv *service.BoardService) httprouter.Handle {
 			fmt.Fprint(w, "SJISで書いてね？")
 		}
 	}
-}
-
-func requireParam(r *http.Request, name string) (str string, err error) {
-	if param, ok := r.PostForm[name]; !ok {
-		err = fmt.Errorf("missing")
-	} else if len(param) == 0 {
-		err = fmt.Errorf("empty")
-	} else if len(param) != 1 {
-		err = fmt.Errorf("too many")
-	} else {
-		str = param[0]
-	}
-	return
-}
-
-func require(r *http.Request, name string) func() (string, error) {
-	return func() (string, error) {
-		return requireParam(r, name)
-	}
-}
-
-func notEmpty(s string) (str string, err error) {
-	if s == "" {
-		err = fmt.Errorf("0 byte")
-	} else {
-		str = s
-	}
-	return
-}
-
-func notBlank(s string) (str string, err error) {
-	if strings.TrimSpace(s) == "" {
-		err = fmt.Errorf("blank")
-	} else {
-		str = s
-	}
-	return
-}
-
-func betweenStr(a, b string) func(string) (string, error) {
-	return func(s string) (str string, err error) {
-		if s < a || b < s {
-			err = fmt.Errorf("%s < %s or %s < %s", s, a, b, s)
-		} else {
-			str = s
-		}
-		return
-	}
-}
-
-func processParam(src func() (string, error),
-	funcs ...func(string) (string, error)) (s string, e error) {
-
-	s, e = src()
-	if e != nil {
-		return
-	}
-
-	for _, f := range funcs {
-		s, e = f(s)
-		if e != nil {
-			return
-		}
-	}
-	return
 }
 
 func handleWriteDat(sv *service.BoardService, w http.ResponseWriter, r *http.Request) {

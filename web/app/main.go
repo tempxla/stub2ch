@@ -6,7 +6,6 @@ import (
 	"cloud.google.com/go/datastore"
 	"context"
 	"fmt"
-	"github.com/julienschmidt/httprouter"
 	"log"
 	"net/http"
 	"os"
@@ -32,11 +31,7 @@ func main() {
 	}
 	sv := service.NewBoardService(repo, sysEnv)
 
-	router := httprouter.New()
-	router.GET("/", handleIndex)
-	router.GET("/:board/bbs.cgi", handleBbsCgi(sv))
-	router.GET("/:board/subject.txt", handleSubjectTxt(sv))
-	router.GET("/:board/dat/:dat", handleDat(sv))
+	router := newBoardRouter(sv)
 
 	// Serve static files out of the public directory.
 	// By configuring a static handler in app.yaml, App Engine serves all the

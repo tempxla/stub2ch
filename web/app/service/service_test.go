@@ -285,7 +285,7 @@ func TestUpdateSubjectsWhenWriteDat_age(t *testing.T) {
 	now := time.Now()
 
 	// Exercise
-	err := updateSubjectsWhenWriteDat(board, threadKey, mail, now)
+	resunum, err := updateSubjectsWhenWriteDat(board, threadKey, mail, now)
 	if err != nil {
 		t.Errorf("%v", err)
 	}
@@ -293,6 +293,9 @@ func TestUpdateSubjectsWhenWriteDat_age(t *testing.T) {
 	// Verify
 	if len(board.Subjects) != 3 {
 		t.Errorf("board count: %v", len(board.Subjects))
+	}
+	if resunum != 201 {
+		t.Errorf("wrong resnum: %v", resunum)
 	}
 	if board.Subjects[0].ThreadKey != "999" ||
 		board.Subjects[0].MessageCount != 201 ||
@@ -330,7 +333,7 @@ func TestUpdateSubjectsWhenWriteDat_sage(t *testing.T) {
 	now := time.Now()
 
 	// Exercise
-	err := updateSubjectsWhenWriteDat(board, threadKey, mail, now)
+	resnum, err := updateSubjectsWhenWriteDat(board, threadKey, mail, now)
 	if err != nil {
 		t.Errorf("%v", err)
 	}
@@ -338,6 +341,9 @@ func TestUpdateSubjectsWhenWriteDat_sage(t *testing.T) {
 	// Verify
 	if len(board.Subjects) != 2 {
 		t.Errorf("board count: %v", len(board.Subjects))
+	}
+	if resnum != 201 {
+		t.Errorf("wrong resnum: %v", resnum)
 	}
 	if board.Subjects[1].ThreadKey != "999" ||
 		board.Subjects[1].MessageCount != 201 ||
@@ -359,7 +365,7 @@ func TestUpdateSubjectsWhenWriteDat_fail(t *testing.T) {
 	now := time.Now()
 
 	// Exercise
-	err := updateSubjectsWhenWriteDat(board, threadKey, mail, now)
+	_, err := updateSubjectsWhenWriteDat(board, threadKey, mail, now)
 
 	// Verify
 	if err == nil {
