@@ -4,6 +4,7 @@ import (
 	E "./entity"
 	"./service"
 	"./testutil"
+	"./util"
 	_ "github.com/julienschmidt/httprouter"
 	"net/http"
 	"net/http/httptest"
@@ -193,11 +194,27 @@ func TestWriteDat_CookieMissing(t *testing.T) {
 	if writer.Code != 200 {
 		t.Errorf("Response code is %v", writer.Code)
 	}
-	body := writer.Body.String()
+	// header
+	cookieCount := 0
+	for k, vs := range writer.HeaderMap {
+		if k == "Set-Cookie" {
+			for _, v := range vs {
+				if strings.Contains(v, "PON=") {
+					cookieCount++
+				} else if strings.Contains(v, "yuki=akari") {
+					cookieCount++
+				}
+			}
+		}
+	}
+	if cookieCount != 2 {
+		t.Errorf("header: %v", writer.HeaderMap)
+	}
+	// body
+	body := string(util.SJIStoUTF8(writer.Body.Bytes()))
 	if !strings.Contains(body, "<title>■ 書き込み確認 ■</title>") {
 		t.Errorf("not confirm page: %v", body)
 	}
-
 }
 
 func TestHandleDat_200(t *testing.T) {
