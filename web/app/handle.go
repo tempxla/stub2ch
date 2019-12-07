@@ -43,7 +43,10 @@ func newBoardRouter(sv *service.BoardService) *httprouter.Router {
 
 // トップページ表示
 func handleIndex(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	indexTmpl.Execute(w, nil)
+	if err := indexTmpl.Execute(w, nil); err != nil {
+		log.Printf("Error executing template: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	}
 }
 
 func handleBbsCgi(sv *service.BoardService) httprouter.Handle {
@@ -124,7 +127,7 @@ func handleWriteDat(sv *service.BoardService, w http.ResponseWriter, r *http.Req
 }
 
 func executeWriteDoneTmpl(w http.ResponseWriter, r *http.Request,
-	boardName, threadKey, id string, resnum int, startedAt time.Time) bool {
+	boardName, threadKey, id string, resnum int, startedAt time.Time) {
 
 	w.Header().Add("Date", startedAt.UTC().Format(http.TimeFormat))
 	w.Header().Add("Content-Type", "text/html; charset=Shift_JIS")
@@ -139,21 +142,26 @@ func executeWriteDoneTmpl(w http.ResponseWriter, r *http.Request,
 		"URL": fmt.Sprintf("//%s/test/read.cgi/%s/%s/l50", r.Host, boardName, threadKey),
 		"Sec": fmt.Sprintf("%f", time.Now().Sub(startedAt).Seconds()),
 	}
-	writeDatDoneTmpl.Execute(w, view)
-	return true
+	if err := writeDatDoneTmpl.Execute(w, view); err != nil {
+		log.Printf("Error executing template: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	}
 }
 
 func executeWriteDatNotFoundTmpl(w http.ResponseWriter, r *http.Request,
-	boardName, threadKey string, startedAt time.Time) bool {
+	boardName, threadKey string, startedAt time.Time) {
 
 	w.Header().Add("Content-Type", "text/html; charset=Shift_JIS")
 	w.Header().Add("Date", startedAt.UTC().Format(http.TimeFormat))
 	// //hebi.5ch.net/test/read.cgi/news4vip/1575543566/
 	view := fmt.Sprintf("//%s/test/read.cgi/%s/%s/", r.Host, boardName, threadKey)
-	writeDatDoneTmpl.Execute(w, view)
-	return true
+	if err := writeDatDoneTmpl.Execute(w, view); err != nil {
+		log.Printf("Error executing template: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	}
 }
 
+// Returns false if Cookie Found.
 func executeWriteDatConfirmTmpl(w http.ResponseWriter, r *http.Request,
 	boardName, threadKey, name, mail, message string, startedAt time.Time) bool {
 
@@ -178,7 +186,10 @@ func executeWriteDatConfirmTmpl(w http.ResponseWriter, r *http.Request,
 		"Time":      strconv.FormatInt(startedAt.Unix(), 10),
 		"ThreadKey": threadKey,
 	}
-	writeDatConfirmTmpl.Execute(w, view)
+	if err := writeDatConfirmTmpl.Execute(w, view); err != nil {
+		log.Printf("Error executing template: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	}
 	return true
 }
 

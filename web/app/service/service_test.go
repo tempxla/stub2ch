@@ -37,7 +37,16 @@ func cleanDatastore(t *testing.T, ctx context.Context, client *datastore.Client)
 	}
 }
 
-func TestMakeDat(t *testing.T) {
+func TestNewBoardService(t *testing.T) {
+	var repo *BoardStore
+	var env *SysEnv
+	sv := NewBoardService(repo, env)
+	if sv.repo != repo || sv.env != env {
+		t.Errorf("%v", sv)
+	}
+}
+
+func TestMakeDat_ok(t *testing.T) {
 	// Setup
 	repo := &testutil.BoardStub{
 		DatMap: map[string]map[string]*E.DatEntity{
@@ -63,7 +72,33 @@ func TestMakeDat(t *testing.T) {
 	}
 }
 
-func TestMakeSubjectTxt(t *testing.T) {
+func TestMakeDat_err(t *testing.T) {
+	// Setup
+	repo := &testutil.BoardStub{
+		DatMap: map[string]map[string]*E.DatEntity{
+			"news4test": map[string]*E.DatEntity{
+				"123": &E.DatEntity{
+					Dat: []byte("1行目\n2行目"),
+				},
+			},
+		},
+	}
+	env := &SysEnv{}
+	sv := NewBoardService(repo, env)
+
+	// Exercise
+	_, err := sv.MakeDat("news4test", "999")
+
+	// Verify
+	if err == nil {
+		t.Errorf("err is nil")
+	}
+	if err != datastore.ErrNoSuchEntity {
+		t.Errorf("err is %v", err)
+	}
+}
+
+func TestMakeSubjectTxt_ok(t *testing.T) {
 	// Setup
 	repo := &testutil.BoardStub{
 		BoardMap: map[string]*E.BoardEntity{
@@ -101,7 +136,42 @@ func TestMakeSubjectTxt(t *testing.T) {
 	}
 }
 
-func TestCreateNewThreadAtFirst(t *testing.T) {
+func TestMakeSubjectTxt_err(t *testing.T) {
+	// Setup
+	repo := &testutil.BoardStub{
+		BoardMap: map[string]*E.BoardEntity{
+			"news4test": &E.BoardEntity{Subjects: []E.Subject{
+				E.Subject{
+					ThreadKey:    "222",
+					ThreadTitle:  "YYY",
+					MessageCount: 200,
+				},
+				E.Subject{
+					ThreadKey:    "111",
+					ThreadTitle:  "XXX",
+					MessageCount: 100,
+				},
+				E.Subject{
+					ThreadKey:    "333",
+					ThreadTitle:  "ZZZ",
+					MessageCount: 300,
+				},
+			}},
+		},
+	}
+	env := &SysEnv{}
+	sv := NewBoardService(repo, env)
+
+	// Exercise
+	_, err := sv.MakeSubjectTxt("news4test1")
+
+	// Verify
+	if err != datastore.ErrNoSuchEntity {
+		t.Errorf("err is %v", err)
+	}
+}
+
+func TestCreateNewThread_AtFirst(t *testing.T) {
 	// Setup
 	// ----------------------------------
 	ctx := context.Background()
@@ -146,11 +216,14 @@ func TestCreateNewThreadAtFirst(t *testing.T) {
 	// Create new thread.
 	now, _ := time.ParseInLocation("2006-01-02 15:04:05.000",
 		"2019-11-23 22:29:01.123", time.Local)
-	sv.CreateNewThread("news4test",
+	err = sv.CreateNewThread("news4test",
 		"テスタ", "age", now, "ABC", "これはテストスレ", "スレ立てテスト")
 
 	// Verify
 	// ----------------------------------
+	if err != nil {
+		t.Errorf("err is %v", err)
+	}
 	// Get Board
 	key := datastore.NameKey("Board", "news4test", nil)
 	e := new(E.BoardEntity)
@@ -189,7 +262,7 @@ func TestCreateNewThreadAtFirst(t *testing.T) {
 	}
 }
 
-func TestCreateNewThreadMore(t *testing.T) {
+func TestCreateNewThread_More(t *testing.T) {
 	// Setup
 	// ----------------------------------
 	ctx := context.Background()
@@ -234,14 +307,18 @@ func TestCreateNewThreadMore(t *testing.T) {
 	// Create new thread.
 	now, _ := time.ParseInLocation("2006-01-02 15:04:05.000",
 		"2019-11-23 22:29:01.123", time.Local)
-	sv.CreateNewThread("news4test",
-		"テスタ", "age", now, "ABC", "これはテストスレ", "スレ立てテスト")
+	if err := sv.CreateNewThread("news4test",
+		"テスタ", "age", now, "ABC", "これはテストスレ", "スレ立てテスト"); err != nil {
+		t.Fatalf("at first err is %v", err)
+	}
 
 	// Create another thread.
 	now2, _ := time.ParseInLocation("2006-01-02 15:04:05.000",
 		"2019-11-24 22:29:01.123", time.Local)
-	sv.CreateNewThread("news4test",
-		"テスタ2", "age2", now2, "XYZ", "これはテストスレ2", "スレ立てテスト2")
+	if err := sv.CreateNewThread("news4test",
+		"テスタ2", "age2", now2, "XYZ", "これはテストスレ2", "スレ立てテスト2"); err != nil {
+		t.Fatalf("at second err is %v", err)
+	}
 
 	// Verify
 	// ----------------------------------
@@ -253,6 +330,45 @@ func TestCreateNewThreadMore(t *testing.T) {
 	}
 	if len(e.Subjects) != 2 {
 		t.Fatalf("subject count  %d", len(e.Subjects))
+	}
+}
+
+func TestCreateNewThread_NoSuchBoard(t *testing.T) {
+	// Setup
+	// ----------------------------------
+	ctx := context.Background()
+
+	// Creates a client.
+	client, err := datastore.NewClient(ctx, config.PROJECT_ID)
+	if err != nil {
+		t.Fatalf("Failed to create client: %v", err)
+	}
+
+	// Clean Datastore
+	cleanDatastore(t, ctx, client)
+
+	// Injection
+	sv := NewBoardService(
+		&BoardStore{
+			Context: ctx,
+			Client:  client,
+		},
+		&SysEnv{},
+	)
+
+	// Exercise
+	// ----------------------------------
+	// Create new thread.
+	now, _ := time.ParseInLocation("2006-01-02 15:04:05.000",
+		"2019-11-23 22:29:01.123", time.Local)
+	err = sv.CreateNewThread("news4test",
+		"テスタ", "age", now, "ABC", "これはテストスレ", "スレ立てテスト")
+
+	// Verify
+	// ----------------------------------
+	// Get Board
+	if err != datastore.ErrNoSuchEntity {
+		t.Errorf("err is %v", err)
 	}
 }
 
