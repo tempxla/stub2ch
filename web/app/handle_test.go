@@ -4,6 +4,7 @@ import (
 	E "./entity"
 	"./service"
 	"./testutil"
+	_ "github.com/julienschmidt/httprouter"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -52,7 +53,7 @@ func TestHandleBbsCgi_404(t *testing.T) {
 	}
 }
 
-// bbs.cgi へのGET
+// bbs.cgi
 func TestHandleBbsCgi_200(t *testing.T) {
 	// Setup
 	var repo service.BoardRepository
@@ -70,6 +71,91 @@ func TestHandleBbsCgi_200(t *testing.T) {
 	// Verify
 	if writer.Code != 200 {
 		t.Errorf("Response code is %v", writer.Code)
+	}
+}
+
+//
+func TestWriteDat_400(t *testing.T) {
+	// Setup
+	var repo service.BoardRepository
+	var sysEnv service.BoardEnvironment
+	sv := service.NewBoardService(repo, sysEnv)
+
+	params := []map[string]string{
+		// not 400
+		// map[string]string{
+		// 	"bbs":     "news4test",
+		// 	"key":     "1234567890",
+		// 	"time":    "1",
+		// 	"FROM":    "xxxx",
+		// 	"mail":    "yyyy",
+		// 	"MESSAGE": "aaaa",
+		// },
+		map[string]string{
+			"bbs":     "12345678901", // too long
+			"key":     "1234567890",
+			"time":    "1",
+			"FROM":    "xxxx",
+			"mail":    "yyyy",
+			"MESSAGE": "aaaa",
+		},
+		map[string]string{
+			"bbs":     "news4test",
+			"key":     "12345678901", // too long
+			"time":    "1",
+			"FROM":    "xxxx",
+			"mail":    "yyyy",
+			"MESSAGE": "aaaa",
+		},
+		map[string]string{
+			"bbs":     "news4test",
+			"key":     "1234567890",
+			"time":    "", // empty
+			"FROM":    "xxxx",
+			"mail":    "yyyy",
+			"MESSAGE": "aaaa",
+		},
+		map[string]string{
+			"bbs":  "news4test",
+			"key":  "1234567890",
+			"time": "1",
+			// "FROM":    "xxxx", // missing
+			"mail":    "yyyy",
+			"MESSAGE": "aaaa",
+		},
+		map[string]string{
+			"bbs":  "news4test",
+			"key":  "1234567890",
+			"time": "1",
+			"FROM": "xxxx",
+			// "mail":    "yyyy", // missing
+			"MESSAGE": "aaaa",
+		},
+		map[string]string{
+			"bbs":     "news4test",
+			"key":     "1234567890",
+			"time":    "1",
+			"FROM":    "xxxx",
+			"mail":    "yyyy",
+			"MESSAGE": " ", // balnk
+		},
+	}
+
+	// Exercise
+	for i, param := range params {
+		// request
+		writer := httptest.NewRecorder()
+		request, _ := http.NewRequest("POST", "/test/bbs.cgi", nil)
+		request.PostForm = make(map[string][]string)
+		for k, v := range param {
+			request.PostForm.Add(k, v)
+		}
+		handleWriteDat(sv, writer, request)
+
+		// Verify
+		if writer.Code != 400 {
+			t.Errorf("case %d . Response code is %v", i, writer.Code)
+		}
 	}
 }
 
@@ -108,7 +194,7 @@ func TestHandleDat_200(t *testing.T) {
 	}
 }
 
-func TestHandleDat_400(t *testing.T) {
+func TestHandleDat_404(t *testing.T) {
 	// Setup
 	repo := &testutil.BoardStub{
 		DatMap: map[string]map[string]*E.DatEntity{

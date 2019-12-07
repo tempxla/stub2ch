@@ -64,6 +64,8 @@ func handleBbsCgi(sv *service.BoardService) httprouter.Handle {
 
 		switch submit {
 		case "書き込む":
+			fallthrough
+		case "上記全てを承諾して書き込む":
 			// レスを書き込む
 			handleWriteDat(sv, w, r)
 		case "新規スレッド作成":
@@ -75,34 +77,34 @@ func handleBbsCgi(sv *service.BoardService) httprouter.Handle {
 }
 
 func handleWriteDat(sv *service.BoardService, w http.ResponseWriter, r *http.Request) {
-	boardName, err := processParam(require(r, "bbs"), betweenStr("0", "zzzzzzzzzz"))
+	boardName, err := processParam(require(r, "bbs"), maxLen(10), between("0", "zzzzzzzzzz"))
 	if err != nil {
-		fmt.Fprintf(w, param_error_format, "bbs", err)
+		http.Error(w, fmt.Sprintf(param_error_format, "bbs", err), http.StatusBadRequest)
 		return
 	}
-	threadKey, err := processParam(require(r, "key"), betweenStr("0000000000", "9999999999"))
+	threadKey, err := processParam(require(r, "key"), maxLen(10), between("0000000000", "9999999999"))
 	if err != nil {
-		fmt.Fprintf(w, param_error_format, "key", err)
+		http.Error(w, fmt.Sprintf(param_error_format, "key", err), http.StatusBadRequest)
 		return
 	}
 	_, err = processParam(require(r, "time"), notEmpty)
 	if err != nil {
-		fmt.Fprintf(w, param_error_format, "time", err)
+		http.Error(w, fmt.Sprintf(param_error_format, "time", err), http.StatusBadRequest)
 		return
 	}
 	name, err := processParam(require(r, "FROM"), url.QueryUnescape)
 	if err != nil {
-		fmt.Fprintf(w, param_error_format, "FROM", err)
+		http.Error(w, fmt.Sprintf(param_error_format, "FROM", err), http.StatusBadRequest)
 		return
 	}
 	mail, err := processParam(require(r, "mail"), url.QueryUnescape)
 	if err != nil {
-		fmt.Fprintf(w, param_error_format, "mail", err)
+		http.Error(w, fmt.Sprintf(param_error_format, "mail", err), http.StatusBadRequest)
 		return
 	}
 	message, err := processParam(require(r, "MESSAGE"), url.QueryUnescape, notBlank)
 	if err != nil {
-		fmt.Fprintf(w, param_error_format, "MESSAGE", err)
+		http.Error(w, fmt.Sprintf(param_error_format, "MESSAGE", err), http.StatusBadRequest)
 		return
 	}
 	// クッキー確認

@@ -43,10 +43,21 @@ func notBlank(s string) (str string, err error) {
 	return
 }
 
-func betweenStr(a, b string) func(string) (string, error) {
+func between(a, b string) func(string) (string, error) {
 	return func(s string) (str string, err error) {
 		if s < a || b < s {
 			err = fmt.Errorf("%s < %s or %s < %s", s, a, b, s)
+		} else {
+			str = s
+		}
+		return
+	}
+}
+
+func maxLen(max int) func(string) (string, error) {
+	return func(s string) (str string, err error) {
+		if len(s) > max {
+			err = fmt.Errorf(" len %s > %d", s, max)
 		} else {
 			str = s
 		}

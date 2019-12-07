@@ -98,9 +98,11 @@ func TestRequire(t *testing.T) {
 }
 
 func TestNotEmpty(t *testing.T) {
+	// error case
 	if _, err := notEmpty(""); err == nil {
 		t.Error("err is nil")
 	}
+	// not error
 	s, err := notEmpty("s1")
 	if err != nil {
 		t.Errorf("err: %v", err)
@@ -111,9 +113,11 @@ func TestNotEmpty(t *testing.T) {
 }
 
 func TestNotBlank(t *testing.T) {
+	// error case
 	if _, err := notBlank(" 　\n\r\t\v"); err == nil {
 		t.Error("err is nil")
 	}
+	// not error
 	s, err := notBlank(" s1 ")
 	if err != nil {
 		t.Errorf("err: %v", err)
@@ -123,22 +127,39 @@ func TestNotBlank(t *testing.T) {
 	}
 }
 
-func TestBetweenStr(t *testing.T) {
-	if _, err := betweenStr("bbb", "ddd")("eee"); err == nil {
+func TestBetween(t *testing.T) {
+	// error case
+	if _, err := between("bbb", "ddd")("eee"); err == nil {
 		t.Error("err is nil")
 	}
-	if _, err := betweenStr("bbb", "ddd")("aaa"); err == nil {
+	if _, err := between("bbb", "ddd")("aaa"); err == nil {
 		t.Error("err is nil")
 	}
+	// not error
 	xs := [...]string{"bbb", "ccc", "ddd", "bbbb"}
 	for _, x := range xs {
-		s, err := betweenStr("bbb", "ddd")(x)
+		s, err := between("bbb", "ddd")(x)
 		if err != nil {
 			t.Errorf("err: %v", err)
 		}
 		if s != x {
 			t.Errorf("value: %v", s)
 		}
+	}
+}
+
+func TestMaxLen(t *testing.T) {
+	// error case
+	if _, err := maxLen(4)("12345"); err == nil {
+		t.Error("err is nil")
+	}
+	// not error
+	s, err := maxLen(4)("1234")
+	if err != nil {
+		t.Errorf("err: %v", err)
+	}
+	if s != "1234" {
+		t.Errorf("value: %v", s)
 	}
 }
 
