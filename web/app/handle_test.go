@@ -93,7 +93,7 @@ func TestWriteDat_400(t *testing.T) {
 		// 	"mail":    "yyyy",
 		// 	"MESSAGE": "aaaa",
 		// },
-		map[string]string{
+		{
 			"bbs":     "12345678901", // too long
 			"key":     "1234567890",
 			"time":    "1",
@@ -101,7 +101,7 @@ func TestWriteDat_400(t *testing.T) {
 			"mail":    "yyyy",
 			"MESSAGE": "aaaa",
 		},
-		map[string]string{
+		{
 			"bbs":     "news4test",
 			"key":     "12345678901", // too long
 			"time":    "1",
@@ -109,7 +109,7 @@ func TestWriteDat_400(t *testing.T) {
 			"mail":    "yyyy",
 			"MESSAGE": "aaaa",
 		},
-		map[string]string{
+		{
 			"bbs":     "news4test",
 			"key":     "1234567890",
 			"time":    "", // empty
@@ -117,7 +117,7 @@ func TestWriteDat_400(t *testing.T) {
 			"mail":    "yyyy",
 			"MESSAGE": "aaaa",
 		},
-		map[string]string{
+		{
 			"bbs":  "news4test",
 			"key":  "1234567890",
 			"time": "1",
@@ -125,7 +125,7 @@ func TestWriteDat_400(t *testing.T) {
 			"mail":    "yyyy",
 			"MESSAGE": "aaaa",
 		},
-		map[string]string{
+		{
 			"bbs":  "news4test",
 			"key":  "1234567890",
 			"time": "1",
@@ -133,7 +133,7 @@ func TestWriteDat_400(t *testing.T) {
 			// "mail":    "yyyy", // missing
 			"MESSAGE": "aaaa",
 		},
-		map[string]string{
+		{
 			"bbs":     "news4test",
 			"key":     "1234567890",
 			"time":    "1",

@@ -363,25 +363,23 @@ func TestUpdateSubjectsWhenWriteDat_age(t *testing.T) {
 	t1 := time.Now().Add(time.Duration(-1) * time.Hour)
 	t2 := time.Now().Add(time.Duration(-2) * time.Hour)
 	t3 := time.Now().Add(time.Duration(-3) * time.Hour)
-	board := &BoardEntity{
-		[]Subject{
-			Subject{
-				ThreadKey:    "123",
-				MessageCount: 100,
-				LastModified: t1,
-			},
-			Subject{
-				ThreadKey:    "999",
-				MessageCount: 200,
-				LastModified: t2,
-			},
-			Subject{
-				ThreadKey:    "456",
-				MessageCount: 300,
-				LastModified: t3,
-			},
+	board := &BoardEntity{[]Subject{
+		{
+			ThreadKey:    "123",
+			MessageCount: 100,
+			LastModified: t1,
 		},
-	}
+		{
+			ThreadKey:    "999",
+			MessageCount: 200,
+			LastModified: t2,
+		},
+		{
+			ThreadKey:    "456",
+			MessageCount: 300,
+			LastModified: t3,
+		},
+	}}
 	threadKey := "999"
 	mail := ""
 	now := time.Now()
@@ -416,20 +414,18 @@ func TestUpdateSubjectsWhenWriteDat_sage(t *testing.T) {
 	// Setup
 	t1 := time.Now().Add(time.Duration(-1) * time.Hour)
 	t2 := time.Now().Add(time.Duration(-2) * time.Hour)
-	board := &BoardEntity{
-		[]Subject{
-			Subject{
-				ThreadKey:    "123",
-				MessageCount: 100,
-				LastModified: t1,
-			},
-			Subject{
-				ThreadKey:    "999",
-				MessageCount: 200,
-				LastModified: t2,
-			},
+	board := &BoardEntity{[]Subject{
+		{
+			ThreadKey:    "123",
+			MessageCount: 100,
+			LastModified: t1,
 		},
-	}
+		{
+			ThreadKey:    "999",
+			MessageCount: 200,
+			LastModified: t2,
+		},
+	}}
 	threadKey := "999"
 	mail := "sage"
 	now := time.Now()
