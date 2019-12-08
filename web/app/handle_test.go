@@ -148,6 +148,135 @@ func TestHandleBbsCgi_writeDatOK(t *testing.T) {
 	}
 }
 
+func TestHandleBbsCgi_writeDatOKthroughConfirm(t *testing.T) {
+	// Setup
+	repo := testutil.NewBoardStub("news4test", []testutil.ThreadStub{
+		{
+			ThreadKey:    "1234567890",
+			ThreadTitle:  "XXXX",
+			MessageCount: 1,
+			LastModified: time.Now().Add(time.Duration(-1) * time.Hour),
+			Dat:          "1行目",
+		},
+	},
+	)
+	sysEnv := &service.SysEnv{
+		StartedTime: time.Now(),
+	}
+	sv := service.NewBoardService(repo, sysEnv)
+
+	// request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest("POST", "/test/bbs.cgi", nil)
+	request.PostForm = map[string][]string{
+		"submit":  []string{"上記全てを承諾して書き込む"},
+		"bbs":     []string{"news4test"},
+		"key":     []string{"1234567890"},
+		"time":    []string{"1"},
+		"FROM":    []string{"xxxx"},
+		"mail":    []string{"sage"},
+		"MESSAGE": []string{"書き"},
+	}
+	request.AddCookie(&http.Cookie{Name: "PON", Value: "1.1.1.1"})
+	request.AddCookie(&http.Cookie{Name: "yuki", Value: "akari"})
+
+	// Exercise
+	router := newBoardRouter(sv)
+	router.ServeHTTP(writer, request)
+
+	// Verify
+	if writer.Code != 200 {
+		t.Errorf("Response code is %v", writer.Code)
+	}
+	// body
+	body := string(util.SJIStoUTF8(writer.Body.Bytes()))
+	if !strings.Contains(body, "<title>書きこみました。</title>") {
+		t.Errorf("NOT writeDatDone.html : %v", body)
+	}
+}
+
+func TestHandleBbsCgi_createThreadOK(t *testing.T) {
+	// Setup
+	repo := testutil.NewBoardStub("news4test", []testutil.ThreadStub{
+		{},
+	},
+	)
+	sysEnv := &service.SysEnv{
+		StartedTime: time.Now(),
+	}
+	sv := service.NewBoardService(repo, sysEnv)
+
+	// request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest("POST", "/test/bbs.cgi", nil)
+	request.PostForm = map[string][]string{
+		"submit":  []string{"新規スレッド作成"},
+		"bbs":     []string{"news4test"},
+		"subject": []string{"AAAA"},
+		"time":    []string{"1"},
+		"FROM":    []string{"xxxx"},
+		"mail":    []string{"sage"},
+		"MESSAGE": []string{"書き"},
+	}
+	request.AddCookie(&http.Cookie{Name: "PON", Value: "1.1.1.1"})
+	request.AddCookie(&http.Cookie{Name: "yuki", Value: "akari"})
+
+	// Exercise
+	router := newBoardRouter(sv)
+	router.ServeHTTP(writer, request)
+
+	// Verify
+	if writer.Code != 200 {
+		t.Errorf("Response code is %v", writer.Code)
+	}
+	// body
+	body := string(util.SJIStoUTF8(writer.Body.Bytes()))
+	if !strings.Contains(body, "<title>書きこみました。</title>") {
+		t.Errorf("NOT writeDatDone.html : %v", body)
+	}
+}
+
+func TestHandleBbsCgi_createThreadOKthroughConfirm(t *testing.T) {
+	// Setup
+	repo := testutil.NewBoardStub("news4test", []testutil.ThreadStub{
+		{},
+	},
+	)
+	sysEnv := &service.SysEnv{
+		StartedTime: time.Now(),
+	}
+	sv := service.NewBoardService(repo, sysEnv)
+
+	// request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest("POST", "/test/bbs.cgi", nil)
+	request.PostForm = map[string][]string{
+		"submit":  []string{"上記全てを承諾して書き込む"},
+		"bbs":     []string{"news4test"},
+		"subject": []string{"AAAA"},
+		"time":    []string{"1"},
+		"FROM":    []string{"xxxx"},
+		"mail":    []string{"sage"},
+		"MESSAGE": []string{"書き"},
+	}
+	request.AddCookie(&http.Cookie{Name: "PON", Value: "1.1.1.1"})
+	request.AddCookie(&http.Cookie{Name: "yuki", Value: "akari"})
+
+	// Exercise
+	router := newBoardRouter(sv)
+	router.ServeHTTP(writer, request)
+
+	// Verify
+	if writer.Code != 200 {
+		t.Errorf("Response code is %v", writer.Code)
+	}
+	// body
+	body := string(util.SJIStoUTF8(writer.Body.Bytes()))
+	if !strings.Contains(body, "<title>書きこみました。</title>") {
+		t.Errorf("NOT writeDatDone.html : %v", body)
+	}
+}
+
 // パラメータ不備
 // 本当は「ERROR: 送られてきたデータが壊れています」ページが返されると思う
 func TestWriteDat_400(t *testing.T) {
