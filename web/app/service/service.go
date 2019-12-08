@@ -23,7 +23,7 @@ const (
 )
 
 var (
-	week_DAYS_JP = [...]string{"日", "月", "火", "水", "木", "金", "土"}
+	week_days_jp = [...]string{"日", "月", "火", "水", "木", "金", "土"}
 )
 
 // Dependency injection for Board
@@ -215,7 +215,7 @@ func writeDat(dat *DatEntity, format string,
 		html.EscapeString(name),               // 名前
 		html.EscapeString(mail),               // メール
 		date.Format(dat_date_layout),          // 年月日
-		week_DAYS_JP[date.Weekday()],          // 曜
+		week_days_jp[date.Weekday()],          // 曜
 		date.Format(dat_time_layout),          // 時分秒
 		id,                                    // ID
 		escapeDat(html.EscapeString(message)), // 本文
