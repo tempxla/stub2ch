@@ -55,7 +55,7 @@ func TestHandleBbsCgi_404(t *testing.T) {
 }
 
 // bbs.cgi
-func TestHandleBbsCgi_200(t *testing.T) {
+func TestHandleBbsCgi_MissingSubmit(t *testing.T) {
 	// Setup
 	var repo service.BoardRepository
 	var sysEnv service.BoardEnvironment
@@ -70,8 +70,81 @@ func TestHandleBbsCgi_200(t *testing.T) {
 	router.ServeHTTP(writer, request)
 
 	// Verify
+	if writer.Code != 400 {
+		t.Errorf("Response code is %v", writer.Code)
+	}
+}
+
+func TestHandleBbsCgi_WrongSubmit(t *testing.T) {
+	// Setup
+	var repo service.BoardRepository
+	var sysEnv service.BoardEnvironment
+	sv := service.NewBoardService(repo, sysEnv)
+
+	// request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest("POST", "/test/bbs.cgi", nil)
+	request.PostForm = make(map[string][]string)
+	request.PostForm.Add("submit", "カキカキ")
+
+	// Exercise
+	router := newBoardRouter(sv)
+	router.ServeHTTP(writer, request)
+
+	// Verify
 	if writer.Code != 200 {
 		t.Errorf("Response code is %v", writer.Code)
+	}
+	txt := writer.Body.String()
+	if txt != "SJISで書いてね？" {
+		t.Errorf("actual: %v", txt)
+	}
+}
+
+func TestHandleBbsCgi_writeDatOK(t *testing.T) {
+	// Setup
+	repo := testutil.NewBoardStub("news4test", []testutil.ThreadStub{
+		{
+			ThreadKey:    "1234567890",
+			ThreadTitle:  "XXXX",
+			MessageCount: 1,
+			LastModified: time.Now().Add(time.Duration(-1) * time.Hour),
+			Dat:          "1行目",
+		},
+	},
+	)
+	sysEnv := &service.SysEnv{
+		StartedTime: time.Now(),
+	}
+	sv := service.NewBoardService(repo, sysEnv)
+
+	// request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest("POST", "/test/bbs.cgi", nil)
+	request.PostForm = map[string][]string{
+		"submit":  []string{"書き込む"},
+		"bbs":     []string{"news4test"},
+		"key":     []string{"1234567890"},
+		"time":    []string{"1"},
+		"FROM":    []string{"xxxx"},
+		"mail":    []string{"sage"},
+		"MESSAGE": []string{"書き"},
+	}
+	request.AddCookie(&http.Cookie{Name: "PON", Value: "1.1.1.1"})
+	request.AddCookie(&http.Cookie{Name: "yuki", Value: "akari"})
+
+	// Exercise
+	router := newBoardRouter(sv)
+	router.ServeHTTP(writer, request)
+
+	// Verify
+	if writer.Code != 200 {
+		t.Errorf("Response code is %v", writer.Code)
+	}
+	// body
+	body := string(util.SJIStoUTF8(writer.Body.Bytes()))
+	if !strings.Contains(body, "<title>書きこみました。</title>") {
+		t.Errorf("NOT writeDatDone.html : %v", body)
 	}
 }
 
@@ -264,7 +337,7 @@ func TestWriteDat_Done(t *testing.T) {
 		{
 			ThreadKey:    "1234567890",
 			ThreadTitle:  "XXXX",
-			MessageCount: 1,
+			MessageCount: 2,
 			LastModified: time.Now().Add(time.Duration(-1) * time.Hour),
 			Dat:          dat,
 		},
@@ -296,6 +369,232 @@ func TestWriteDat_Done(t *testing.T) {
 		request.PostForm.Add(k, v)
 	}
 	handleWriteDat(sv, writer, request)
+
+	// Verify
+	if writer.Code != 200 {
+		t.Errorf("Response code is %v", writer.Code)
+	}
+	// body
+	body := string(util.SJIStoUTF8(writer.Body.Bytes()))
+	if !strings.Contains(body, "<title>書きこみました。</title>") {
+		t.Errorf("NOT writeDatDone.html : %v", body)
+	}
+}
+
+// パラメータ不備
+// 本当は「ERROR: 送られてきたデータが壊れています」ページが返されると思う
+func TestCreateThread_400(t *testing.T) {
+	// Setup
+	var repo service.BoardRepository
+	var sysEnv service.BoardEnvironment
+	sv := service.NewBoardService(repo, sysEnv)
+
+	params := []map[string]string{
+		// not 400
+		// {
+		// 	"bbs":     "news4test",
+		// 	"subject": "AAAAA",
+		// 	"time":    "1",
+		// 	"FROM":    "xxxx",
+		// 	"mail":    "yyyy",
+		// 	"MESSAGE": "aaaa",
+		// },
+		{
+			"bbs":     "12345678901", // too long
+			"subject": "AAAAA",
+			"time":    "1",
+			"FROM":    "xxxx",
+			"mail":    "yyyy",
+			"MESSAGE": "aaaa",
+		},
+		{
+			"bbs":     "news4test",
+			"subject": " ", // blank
+			"time":    "1",
+			"FROM":    "xxxx",
+			"mail":    "yyyy",
+			"MESSAGE": "aaaa",
+		},
+		{
+			"bbs":     "news4test",
+			"subject": "AAAAA",
+			"time":    "", // empty
+			"FROM":    "xxxx",
+			"mail":    "yyyy",
+			"MESSAGE": "aaaa",
+		},
+		{
+			"bbs":     "news4test",
+			"subject": "AAAAA",
+			"time":    "1",
+			// "FROM":    "xxxx", // missing
+			"mail":    "yyyy",
+			"MESSAGE": "aaaa",
+		},
+		{
+			"bbs":     "news4test",
+			"subject": "AAAAA",
+			"time":    "1",
+			"FROM":    "xxxx",
+			// "mail":    "yyyy", // missing
+			"MESSAGE": "aaaa",
+		},
+		{
+			"bbs":     "news4test",
+			"subject": "AAAAA",
+			"time":    "1",
+			"FROM":    "xxxx",
+			"mail":    "yyyy",
+			"MESSAGE": " ", // balnk
+		},
+	}
+
+	// Exercise
+	for i, param := range params {
+		// request
+		writer := httptest.NewRecorder()
+		request, _ := http.NewRequest("POST", "/test/bbs.cgi", nil)
+		request.PostForm = make(map[string][]string)
+		for k, v := range param {
+			request.PostForm.Add(k, v)
+		}
+		handleCreateThread(sv, writer, request)
+
+		// Verify
+		if writer.Code != 400 {
+			t.Errorf("case %d . Response code is %v", i, writer.Code)
+		}
+	}
+}
+
+func TestCreateThread_CookieMissing(t *testing.T) {
+	// Setup
+	var repo service.BoardRepository
+	sysEnv := &service.SysEnv{
+		StartedTime: time.Now(),
+	}
+	sv := service.NewBoardService(repo, sysEnv)
+
+	param := map[string]string{
+		"bbs":     "news4test",
+		"time":    "1",
+		"subject": "AAAAA",
+		"FROM":    "xxxx",
+		"mail":    "yyyy",
+		"MESSAGE": "aaaa",
+	}
+
+	// request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest("POST", "/test/bbs.cgi", nil)
+
+	// Exercise
+	request.PostForm = make(map[string][]string)
+	for k, v := range param {
+		request.PostForm.Add(k, v)
+	}
+	handleCreateThread(sv, writer, request)
+
+	// Verify
+	if writer.Code != 200 {
+		t.Errorf("Response code is %v", writer.Code)
+	}
+	// header
+	cookieCount := 0
+	for k, vs := range writer.HeaderMap {
+		if k == "Set-Cookie" {
+			for _, v := range vs {
+				if strings.HasPrefix(v, "PON=") {
+					cookieCount++
+				} else if strings.HasPrefix(v, "yuki=akari") {
+					cookieCount++
+				}
+			}
+		}
+	}
+	if cookieCount != 2 {
+		t.Errorf("header: %v", writer.HeaderMap)
+	}
+	// body
+	body := string(util.SJIStoUTF8(writer.Body.Bytes()))
+	if !strings.Contains(body, "<title>■ 書き込み確認 ■</title>") {
+		t.Errorf("NOT writeDatConfirm.html: %v", body)
+	}
+}
+
+func TestCreateThread_NotFound(t *testing.T) {
+	// Setup
+	repo := testutil.EmptyBoardStub()
+	sysEnv := &service.SysEnv{
+		StartedTime: time.Now(),
+	}
+	sv := service.NewBoardService(repo, sysEnv)
+
+	param := map[string]string{
+		"bbs":     "news4test",
+		"time":    "1",
+		"subject": "AAAAA",
+		"FROM":    "xxxx",
+		"mail":    "yyyy",
+		"MESSAGE": "aaaa",
+	}
+
+	// request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest("POST", "/test/bbs.cgi", nil)
+	request.AddCookie(&http.Cookie{Name: "PON", Value: "1.1.1.1"})
+	request.AddCookie(&http.Cookie{Name: "yuki", Value: "akari"})
+
+	// Exercise
+	request.PostForm = make(map[string][]string)
+	for k, v := range param {
+		request.PostForm.Add(k, v)
+	}
+	handleCreateThread(sv, writer, request)
+
+	// Verify
+	if writer.Code != 200 {
+		t.Errorf("Response code is %v", writer.Code)
+	}
+	// body
+	body := string(util.SJIStoUTF8(writer.Body.Bytes()))
+	if !strings.Contains(body, "ERROR: XXXXXXX") {
+		t.Errorf("NOT createTHreadError.html : %v", body)
+	}
+}
+
+func TestCreateThread_Done(t *testing.T) {
+	// Setup
+	repo := testutil.NewBoardStub("news4test", []testutil.ThreadStub{
+		{},
+	},
+	)
+	sysEnv := &service.SysEnv{
+		StartedTime: time.Now(),
+	}
+	sv := service.NewBoardService(repo, sysEnv)
+
+	param := map[string]string{
+		"bbs":     "news4test",
+		"time":    "1",
+		"subject": "AAAAA",
+		"FROM":    "xxxx",
+		"mail":    "yyyy",
+		"MESSAGE": "aaaa",
+	}
+
+	// request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest("POST", "/test/bbs.cgi", nil)
+	request.AddCookie(&http.Cookie{Name: "PON", Value: "1.1.1.1"})
+	request.AddCookie(&http.Cookie{Name: "yuki", Value: "akari"})
+
+	// Exercise
+	request.PostForm = make(map[string][]string)
+	for k, v := range param {
+		request.PostForm.Add(k, v)
+	}
+	handleCreateThread(sv, writer, request)
 
 	// Verify
 	if writer.Code != 200 {

@@ -33,7 +33,20 @@ var (
 	writeDatDoneTmpl = template.Must(
 		template.ParseFiles(filepath.Join("..", "template", "writeDatDone.html")),
 	)
+	createThreadErrorTmpl = template.Must(
+		template.ParseFiles(filepath.Join("..", "template", "createThreadError.html")),
+	)
 )
+
+type maybe []string // optional parameter
+
+func nothing() maybe {
+	return []string{}
+}
+
+func just(s string) []string {
+	return []string{s}
+}
 
 // HTTP routing
 func newBoardRouter(sv *service.BoardService) *httprouter.Router {
@@ -65,18 +78,23 @@ func handleBbsCgi(sv *service.BoardService) httprouter.Handle {
 
 		submit, err := processParam(require(r, "submit"), url.QueryUnescape)
 		if err != nil {
-			fmt.Fprint(w, param_error_format, "submit", err)
+			http.Error(w, fmt.Sprintf(param_error_format, "submit", err), http.StatusBadRequest)
 			return
 		}
 
 		switch submit {
 		case "書き込む":
-			fallthrough
-		case "上記全てを承諾して書き込む":
 			// レスを書き込む
 			handleWriteDat(sv, w, r)
 		case "新規スレッド作成":
 			// スレッドを立てる
+			handleCreateThread(sv, w, r)
+		case "上記全てを承諾して書き込む":
+			if _, ok := r.PostForm["key"]; ok {
+				handleWriteDat(sv, w, r)
+			} else {
+				handleCreateThread(sv, w, r)
+			}
 		default:
 			fmt.Fprint(w, "SJISで書いてね？")
 		}
@@ -115,7 +133,8 @@ func handleWriteDat(sv *service.BoardService, w http.ResponseWriter, r *http.Req
 		return
 	}
 	// クッキー確認
-	if executeWriteDatConfirmTmpl(w, r, boardName, threadKey, name, mail, message, sv.StartedAt()) {
+	if executeWriteDatConfirmTmpl(w, r,
+		boardName, name, mail, message, sv.StartedAt(), nothing(), just(threadKey)) {
 		return
 	}
 	// 書き込み
@@ -167,7 +186,7 @@ func executeWriteDatNotFoundTmpl(w http.ResponseWriter, r *http.Request,
 
 // Returns false if Cookie Found.
 func executeWriteDatConfirmTmpl(w http.ResponseWriter, r *http.Request,
-	boardName, threadKey, name, mail, message string, startedAt time.Time) bool {
+	boardName, name, mail, message string, startedAt time.Time, title, threadKey maybe) bool {
 
 	if c, err := r.Cookie("PON"); err == nil && c.Value != "" {
 		if c, err := r.Cookie("yuki"); err == nil && c.Value == "akari" {
@@ -183,18 +202,83 @@ func executeWriteDatConfirmTmpl(w http.ResponseWriter, r *http.Request,
 	w.Header().Add("Set-Cookie", fmt.Sprintf("yuki=akari; expires=%s; path=/", expires))
 	// Body
 	view := map[string]string{
+		"Title":     "",
 		"Name":      name,
 		"Mail":      mail,
 		"Message":   message,
 		"BoardName": boardName,
 		"Time":      strconv.FormatInt(startedAt.Unix(), 10),
-		"ThreadKey": threadKey,
+	}
+	if len(title) > 0 {
+		view["Title"] = title[0]
+	}
+	if len(threadKey) > 0 {
+		view["ThreadKey"] = threadKey[0]
 	}
 	if err := writeDatConfirmTmpl.Execute(w, view); err != nil {
 		log.Printf("Error executing template: %v", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 	}
 	return true
+}
+
+func handleCreateThread(sv *service.BoardService, w http.ResponseWriter, r *http.Request) {
+	boardName, err := processParam(require(r, "bbs"), maxLen(10), between("0", "zzzzzzzzzz"))
+	if err != nil {
+		http.Error(w, fmt.Sprintf(param_error_format, "bbs", err), http.StatusBadRequest)
+		return
+	}
+	title, err := processParam(require(r, "subject"), url.QueryUnescape, notBlank)
+	if err != nil {
+		http.Error(w, fmt.Sprintf(param_error_format, "subject", err), http.StatusBadRequest)
+		return
+	}
+	_, err = processParam(require(r, "time"), notEmpty)
+	if err != nil {
+		http.Error(w, fmt.Sprintf(param_error_format, "time", err), http.StatusBadRequest)
+		return
+	}
+	name, err := processParam(require(r, "FROM"), url.QueryUnescape)
+	if err != nil {
+		http.Error(w, fmt.Sprintf(param_error_format, "FROM", err), http.StatusBadRequest)
+		return
+	}
+	mail, err := processParam(require(r, "mail"), url.QueryUnescape)
+	if err != nil {
+		http.Error(w, fmt.Sprintf(param_error_format, "mail", err), http.StatusBadRequest)
+		return
+	}
+	message, err := processParam(require(r, "MESSAGE"), url.QueryUnescape, notBlank)
+	if err != nil {
+		http.Error(w, fmt.Sprintf(param_error_format, "MESSAGE", err), http.StatusBadRequest)
+		return
+	}
+	// クッキー確認
+	if executeWriteDatConfirmTmpl(w, r,
+		boardName, name, mail, message, sv.StartedAt(), just(title), nothing()) {
+		return
+	}
+	// スレ立て
+	id := sv.ComputeId(r.RemoteAddr, boardName)
+	threadKey, err := sv.CreateThread(boardName, name, mail, sv.StartedAt(), id, message, title)
+	if err != nil {
+		// スレ立て失敗
+		executeCreateThreadErrorTmpl(w, r, sv.StartedAt())
+		return
+	}
+	// 書き込み完了
+	executeWriteDoneTmpl(w, r, boardName, threadKey, id, 1, sv.StartedAt())
+}
+
+func executeCreateThreadErrorTmpl(w http.ResponseWriter, r *http.Request, startedAt time.Time) {
+
+	w.Header().Add("Content-Type", "text/html; charset=Shift_JIS")
+	w.Header().Add("Date", startedAt.UTC().Format(http.TimeFormat))
+
+	if err := createThreadErrorTmpl.Execute(w, nil); err != nil {
+		log.Printf("Error executing template: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	}
 }
 
 func handleDat(sv *service.BoardService) httprouter.Handle {
