@@ -41,11 +41,31 @@ var (
 type maybe []string // optional parameter
 
 func nothing() maybe {
-	return []string{}
+	return nil
 }
 
-func just(s string) []string {
+func just(s string) maybe {
 	return []string{s}
+}
+
+func fromMaybe(m maybe, def string) string {
+	if m != nil {
+		return m[0]
+	} else {
+		return def
+	}
+}
+
+func fromJust(m maybe) string {
+	return m[0]
+}
+
+func isJust(m maybe) bool {
+	return m != nil
+}
+
+func isNothing(m maybe) bool {
+	return m == nil
 }
 
 // HTTP routing
@@ -76,7 +96,7 @@ func handleBbsCgi(sv *service.BoardService) httprouter.Handle {
 
 		r.ParseForm()
 
-		submit, err := processParam(require(r, "submit"), url.QueryUnescape)
+		submit, err := process(requireOne(r, "submit"), url.QueryUnescape)
 		if err != nil {
 			http.Error(w, fmt.Sprintf(param_error_format, "submit", err), http.StatusBadRequest)
 			return
@@ -102,34 +122,28 @@ func handleBbsCgi(sv *service.BoardService) httprouter.Handle {
 }
 
 func handleWriteDat(sv *service.BoardService, w http.ResponseWriter, r *http.Request) {
-	boardName, err := processParam(require(r, "bbs"), maxLen(10), between("0", "zzzzzzzzzz"))
-	if err != nil {
-		http.Error(w, fmt.Sprintf(param_error_format, "bbs", err), http.StatusBadRequest)
+	boardName, ok := requireBoardName(w, r)
+	if !ok {
 		return
 	}
-	threadKey, err := processParam(require(r, "key"), maxLen(10), between("0000000000", "9999999999"))
-	if err != nil {
-		http.Error(w, fmt.Sprintf(param_error_format, "key", err), http.StatusBadRequest)
+	threadKey, ok := requireThreadKey(w, r)
+	if !ok {
 		return
 	}
-	_, err = processParam(require(r, "time"), notEmpty)
-	if err != nil {
-		http.Error(w, fmt.Sprintf(param_error_format, "time", err), http.StatusBadRequest)
+	_, ok = requireTime(w, r)
+	if !ok {
 		return
 	}
-	name, err := processParam(require(r, "FROM"), url.QueryUnescape)
-	if err != nil {
-		http.Error(w, fmt.Sprintf(param_error_format, "FROM", err), http.StatusBadRequest)
+	name, ok := requireName(w, r)
+	if !ok {
 		return
 	}
-	mail, err := processParam(require(r, "mail"), url.QueryUnescape)
-	if err != nil {
-		http.Error(w, fmt.Sprintf(param_error_format, "mail", err), http.StatusBadRequest)
+	mail, ok := requireMail(w, r)
+	if !ok {
 		return
 	}
-	message, err := processParam(require(r, "MESSAGE"), url.QueryUnescape, notBlank)
-	if err != nil {
-		http.Error(w, fmt.Sprintf(param_error_format, "MESSAGE", err), http.StatusBadRequest)
+	message, ok := requireMessage(w, r)
+	if !ok {
 		return
 	}
 	// クッキー確認
@@ -202,18 +216,15 @@ func executeWriteDatConfirmTmpl(w http.ResponseWriter, r *http.Request,
 	w.Header().Add("Set-Cookie", fmt.Sprintf("yuki=akari; expires=%s; path=/", expires))
 	// Body
 	view := map[string]string{
-		"Title":     "",
+		"Title":     fromMaybe(title, ""),
 		"Name":      name,
 		"Mail":      mail,
 		"Message":   message,
 		"BoardName": boardName,
 		"Time":      strconv.FormatInt(startedAt.Unix(), 10),
 	}
-	if len(title) > 0 {
-		view["Title"] = title[0]
-	}
-	if len(threadKey) > 0 {
-		view["ThreadKey"] = threadKey[0]
+	if isJust(threadKey) {
+		view["ThreadKey"] = fromJust(threadKey)
 	}
 	if err := writeDatConfirmTmpl.Execute(w, view); err != nil {
 		log.Printf("Error executing template: %v", err)
@@ -223,34 +234,28 @@ func executeWriteDatConfirmTmpl(w http.ResponseWriter, r *http.Request,
 }
 
 func handleCreateThread(sv *service.BoardService, w http.ResponseWriter, r *http.Request) {
-	boardName, err := processParam(require(r, "bbs"), maxLen(10), between("0", "zzzzzzzzzz"))
-	if err != nil {
-		http.Error(w, fmt.Sprintf(param_error_format, "bbs", err), http.StatusBadRequest)
+	boardName, ok := requireBoardName(w, r)
+	if !ok {
 		return
 	}
-	title, err := processParam(require(r, "subject"), url.QueryUnescape, notBlank)
-	if err != nil {
-		http.Error(w, fmt.Sprintf(param_error_format, "subject", err), http.StatusBadRequest)
+	title, ok := requireTitle(w, r)
+	if !ok {
 		return
 	}
-	_, err = processParam(require(r, "time"), notEmpty)
-	if err != nil {
-		http.Error(w, fmt.Sprintf(param_error_format, "time", err), http.StatusBadRequest)
+	_, ok = requireTime(w, r)
+	if !ok {
 		return
 	}
-	name, err := processParam(require(r, "FROM"), url.QueryUnescape)
-	if err != nil {
-		http.Error(w, fmt.Sprintf(param_error_format, "FROM", err), http.StatusBadRequest)
+	name, ok := requireName(w, r)
+	if !ok {
 		return
 	}
-	mail, err := processParam(require(r, "mail"), url.QueryUnescape)
-	if err != nil {
-		http.Error(w, fmt.Sprintf(param_error_format, "mail", err), http.StatusBadRequest)
+	mail, ok := requireMail(w, r)
+	if !ok {
 		return
 	}
-	message, err := processParam(require(r, "MESSAGE"), url.QueryUnescape, notBlank)
-	if err != nil {
-		http.Error(w, fmt.Sprintf(param_error_format, "MESSAGE", err), http.StatusBadRequest)
+	message, ok := requireMessage(w, r)
+	if !ok {
 		return
 	}
 	// クッキー確認
