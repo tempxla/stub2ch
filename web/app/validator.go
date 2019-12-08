@@ -3,25 +3,22 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 )
 
-func requireParam(r *http.Request, name string) (str string, err error) {
-	if param, ok := r.PostForm[name]; !ok {
-		err = fmt.Errorf("missing")
-	} else if len(param) == 0 {
-		err = fmt.Errorf("empty")
-	} else if len(param) != 1 {
-		err = fmt.Errorf("too many")
-	} else {
-		str = param[0]
-	}
-	return
-}
-
-func require(r *http.Request, name string) func() (string, error) {
-	return func() (string, error) {
-		return requireParam(r, name)
+func requireOne(r *http.Request, name string) func() (string, error) {
+	return func() (str string, err error) {
+		if param, ok := r.PostForm[name]; !ok {
+			err = fmt.Errorf("missing")
+		} else if len(param) == 0 {
+			err = fmt.Errorf("empty")
+		} else if len(param) != 1 {
+			err = fmt.Errorf("too many")
+		} else {
+			str = param[0]
+		}
+		return
 	}
 }
 
@@ -65,7 +62,7 @@ func maxLen(max int) func(string) (string, error) {
 	}
 }
 
-func processParam(src func() (string, error),
+func process(src func() (string, error),
 	funcs ...func(string) (string, error)) (s string, e error) {
 
 	s, e = src()
@@ -80,4 +77,67 @@ func processParam(src func() (string, error),
 		}
 	}
 	return
+}
+
+func requireBoardName(w http.ResponseWriter, r *http.Request) (string, bool) {
+	boardName, err := process(requireOne(r, "bbs"), maxLen(10), between("0", "zzzzzzzzzz"))
+	if err != nil {
+		http.Error(w, fmt.Sprintf(param_error_format, "bbs", err), http.StatusBadRequest)
+		return "", false
+	}
+	return boardName, true
+}
+
+func requireThreadKey(w http.ResponseWriter, r *http.Request) (string, bool) {
+	threadKey, err := process(requireOne(r, "key"), maxLen(10), between("0000000000", "9999999999"))
+	if err != nil {
+		http.Error(w, fmt.Sprintf(param_error_format, "key", err), http.StatusBadRequest)
+		return "", false
+	}
+	return threadKey, true
+}
+
+func requireTime(w http.ResponseWriter, r *http.Request) (string, bool) {
+	t, err := process(requireOne(r, "time"), notEmpty)
+	if err != nil {
+		http.Error(w, fmt.Sprintf(param_error_format, "time", err), http.StatusBadRequest)
+		return "", false
+	}
+	return t, true
+}
+
+func requireName(w http.ResponseWriter, r *http.Request) (string, bool) {
+	name, err := process(requireOne(r, "FROM"), url.QueryUnescape)
+	if err != nil {
+		http.Error(w, fmt.Sprintf(param_error_format, "FROM", err), http.StatusBadRequest)
+		return "", false
+	}
+	return name, true
+}
+
+func requireMail(w http.ResponseWriter, r *http.Request) (string, bool) {
+	mail, err := process(requireOne(r, "mail"), url.QueryUnescape)
+	if err != nil {
+		http.Error(w, fmt.Sprintf(param_error_format, "mail", err), http.StatusBadRequest)
+		return "", false
+	}
+	return mail, true
+}
+
+func requireMessage(w http.ResponseWriter, r *http.Request) (string, bool) {
+	message, err := process(requireOne(r, "MESSAGE"), url.QueryUnescape, notBlank)
+	if err != nil {
+		http.Error(w, fmt.Sprintf(param_error_format, "MESSAGE", err), http.StatusBadRequest)
+		return "", false
+	}
+	return message, true
+}
+
+func requireTitle(w http.ResponseWriter, r *http.Request) (string, bool) {
+	title, err := process(requireOne(r, "subject"), url.QueryUnescape, notBlank)
+	if err != nil {
+		http.Error(w, fmt.Sprintf(param_error_format, "subject", err), http.StatusBadRequest)
+		return "", false
+	}
+	return title, true
 }

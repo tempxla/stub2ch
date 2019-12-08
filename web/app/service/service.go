@@ -90,8 +90,9 @@ func (sv *BoardService) MakeSubjectTxt(boardName string) (_ []byte, err error) {
 }
 
 // Creates a Thread
-func (sv *BoardService) CreateNewThread(boardName string,
-	name string, mail string, now time.Time, id string, message string, title string) (err error) {
+func (sv *BoardService) CreateThread(boardName string,
+	name string, mail string, now time.Time, id string, message string,
+	title string) (_ string, err error) {
 
 	// Gets a Board entity
 	boardKey := datastore.NameKey("Board", boardName, nil)
@@ -120,7 +121,7 @@ func (sv *BoardService) CreateNewThread(boardName string,
 	if err = sv.repo.PutDat(datKey, dat); err != nil {
 		return
 	}
-	return nil
+	return threadKey, nil
 }
 
 func (sv *BoardService) WriteDat(boardName, threadKey,

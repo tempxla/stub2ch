@@ -9,7 +9,7 @@
 <ul>
 <br>
 <br>
-<b> </b><br>
+<b>{{ .Title }} </b><br>
 名前：{{ .Name }}<br>
 E-mail：{{ .Mail }}<br>
 内容：<br>
@@ -24,14 +24,16 @@ E-mail：{{ .Mail }}<br>
 </b>
 <pre>Cookie:</pre>
 <form method="POST" action="../test/bbs.cgi?guid=ON" accept-charset="Shift_JIS">
-<input type=hidden name=subject value="">
+<input type=hidden name=subject value="{{ .Title }}">
 <input type=hidden name=FROM value="{{ .Name }}">
 <input type=hidden name=mail value="{{ .Mail }}">
 <input type=hidden name=MESSAGE value="{{ .Message }}">
 <input type=hidden name=bbs value="{{ .BoardName }}">
 <input type=hidden name=sid value="">
 <input type=hidden name=time value="{{ .Time }}">
+{{ if ne (index . "ThreadKey") "" }}
 <input type=hidden name=key value="{{ .ThreadKey }}">
+{{ end }}
 <input type=hidden name="yuki" value="akari"><br>
 <input type=submit value="上記全てを承諾して書き込む" name="submit"><br>
 </form>
