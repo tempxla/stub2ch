@@ -2,6 +2,7 @@ package main
 
 import (
 	"./service"
+	"./util"
 	"cloud.google.com/go/datastore"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
@@ -210,7 +211,7 @@ func handleDat(sv *service.BoardService) httprouter.Handle {
 			}
 			return
 		}
-		fmt.Fprintf(w, dat)
+		fmt.Fprintf(w, string(util.UTF8toSJIS(dat)))
 	}
 }
 
@@ -227,6 +228,6 @@ func handleSubjectTxt(sv *service.BoardService) httprouter.Handle {
 			}
 			return
 		}
-		fmt.Fprintf(w, subjectTxt)
+		fmt.Fprintf(w, string(util.UTF8toSJIS(subjectTxt)))
 	}
 }

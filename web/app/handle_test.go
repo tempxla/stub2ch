@@ -198,9 +198,9 @@ func TestWriteDat_CookieMissing(t *testing.T) {
 	for k, vs := range writer.HeaderMap {
 		if k == "Set-Cookie" {
 			for _, v := range vs {
-				if strings.Contains(v, "PON=") {
+				if strings.HasPrefix(v, "PON=") {
 					cookieCount++
-				} else if strings.Contains(v, "yuki=akari") {
+				} else if strings.HasPrefix(v, "yuki=akari") {
 					cookieCount++
 				}
 			}
@@ -334,7 +334,7 @@ func TestHandleDat_200(t *testing.T) {
 		t.Errorf("Response code is %v", writer.Code)
 	}
 
-	txt := writer.Body.String()
+	txt := string(util.SJIStoUTF8(writer.Body.Bytes()))
 	if txt != "1行目\n2行目" {
 		t.Errorf("dat actual: %v", txt)
 	}

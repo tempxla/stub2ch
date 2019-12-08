@@ -64,7 +64,7 @@ func TestMakeDat_ok(t *testing.T) {
 	if err != nil {
 		t.Errorf("dat err: %v", err)
 	}
-	if dat != "1行目\n2行目" {
+	if !bytes.Equal(dat, []byte("1行目\n2行目")) {
 		t.Errorf("dat content err. actual: %v", dat)
 	}
 }
@@ -121,7 +121,8 @@ func TestMakeSubjectTxt_ok(t *testing.T) {
 	if err != nil {
 		t.Errorf("subject.txt err: %v", err)
 	}
-	if txt != "222.dat<>YYY \t (200)\n111.dat<>XXX \t (100)\n333.dat<>ZZZ \t (300)" {
+	if !bytes.Equal(txt,
+		[]byte("222.dat<>YYY \t (200)\n111.dat<>XXX \t (100)\n333.dat<>ZZZ \t (300)")) {
 		t.Errorf("subject.txt actual: %v", txt)
 	}
 }

@@ -53,7 +53,7 @@ func NewBoardService(repo BoardRepository, env BoardEnvironment) *BoardService {
 }
 
 // データストアからエンティティを取得しdatを返す
-func (sv *BoardService) MakeDat(boardName string, threadKey string) (_ string, err error) {
+func (sv *BoardService) MakeDat(boardName string, threadKey string) (_ []byte, err error) {
 	// Creates a Key instance.
 	key := datastore.NameKey("Dat", threadKey,
 		datastore.NameKey("Board", boardName, nil))
@@ -64,11 +64,11 @@ func (sv *BoardService) MakeDat(boardName string, threadKey string) (_ string, e
 		return
 	}
 
-	return string(e.Dat), nil
+	return e.Dat, nil
 }
 
 // データストアからエンティティを取得しsubject.txtとして返す
-func (sv *BoardService) MakeSubjectTxt(boardName string) (_ string, err error) {
+func (sv *BoardService) MakeSubjectTxt(boardName string) (_ []byte, err error) {
 	// Creates a Key instance.
 	key := datastore.NameKey("Board", boardName, nil)
 
@@ -86,7 +86,7 @@ func (sv *BoardService) MakeSubjectTxt(boardName string) (_ string, err error) {
 		fmt.Fprintf(buf, "%s.dat<>%s \t (%d)", s.ThreadKey, s.ThreadTitle, s.MessageCount)
 	}
 
-	return buf.String(), nil
+	return buf.Bytes(), nil
 }
 
 // Creates a Thread
