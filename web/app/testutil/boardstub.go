@@ -42,6 +42,30 @@ func (repo *BoardStub) PutDat(key *datastore.Key, entity *DatEntity) (err error)
 	return
 }
 
+func (repo *BoardStub) RunInTransaction(f func(tx *datastore.Transaction) error) (err error) {
+	return f(nil)
+}
+
+func (repo *BoardStub) TxGetBoard(tx *datastore.Transaction, key *datastore.Key, entity *BoardEntity) (err error) {
+	err = repo.GetBoard(key, entity)
+	return
+}
+
+func (repo *BoardStub) TxPutBoard(tx *datastore.Transaction, key *datastore.Key, entity *BoardEntity) (err error) {
+	err = repo.PutBoard(key, entity)
+	return
+}
+
+func (repo *BoardStub) TxGetDat(tx *datastore.Transaction, key *datastore.Key, entity *DatEntity) (err error) {
+	err = repo.GetDat(key, entity)
+	return
+}
+
+func (repo *BoardStub) TxPutDat(tx *datastore.Transaction, key *datastore.Key, entity *DatEntity) (err error) {
+	err = repo.PutDat(key, entity)
+	return
+}
+
 type ThreadStub struct {
 	ThreadKey    string
 	ThreadTitle  string

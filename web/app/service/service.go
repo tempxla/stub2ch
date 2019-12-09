@@ -37,6 +37,11 @@ type BoardRepository interface {
 	PutBoard(key *datastore.Key, entity *BoardEntity) (err error)
 	GetDat(key *datastore.Key, entity *DatEntity) (err error)
 	PutDat(key *datastore.Key, entity *DatEntity) (err error)
+	RunInTransaction(func(tx *datastore.Transaction) error) (err error)
+	TxGetBoard(tx *datastore.Transaction, key *datastore.Key, entity *BoardEntity) (err error)
+	TxPutBoard(tx *datastore.Transaction, key *datastore.Key, entity *BoardEntity) (err error)
+	TxGetDat(tx *datastore.Transaction, key *datastore.Key, entity *DatEntity) (err error)
+	TxPutDat(tx *datastore.Transaction, key *datastore.Key, entity *DatEntity) (err error)
 }
 
 type BoardEnvironment interface {
@@ -92,36 +97,48 @@ func (sv *BoardService) MakeSubjectTxt(boardName string) (_ []byte, err error) {
 // Creates a Thread
 func (sv *BoardService) CreateThread(boardName string,
 	name string, mail string, now time.Time, id string, message string,
-	title string) (_ string, err error) {
+	title string) (threadKey string, err error) {
 
-	// Gets a Board entity
-	boardKey := datastore.NameKey("Board", boardName, nil)
-	board := &BoardEntity{}
-	if err = sv.repo.GetBoard(boardKey, board); err != nil {
-		return
-	}
-
-	// Adds to Subject
-	threadKey := strconv.FormatInt(now.Unix(), 10)
+	// New subject
+	threadKey = strconv.FormatInt(now.Unix(), 10)
 	subject := Subject{
 		ThreadKey:    threadKey,
 		ThreadTitle:  title,
 		MessageCount: 1,
 		LastModified: now,
 	}
-	board.Subjects = append(board.Subjects, subject)
-
-	if err = sv.repo.PutBoard(boardKey, board); err != nil {
-		return
-	}
 
 	// Create dat
-	datKey := datastore.NameKey("Dat", threadKey, boardKey)
 	dat := createDat(name, mail, now, id, message, title)
-	if err = sv.repo.PutDat(datKey, dat); err != nil {
-		return
-	}
-	return threadKey, nil
+
+	// Key
+	boardKey := datastore.NameKey("Board", boardName, nil)
+	datKey := datastore.NameKey("Dat", threadKey, boardKey)
+
+	// Start transaction
+	err = sv.repo.RunInTransaction(func(tx *datastore.Transaction) error {
+		// Get And Check
+		board := &BoardEntity{}
+		if err := sv.repo.TxGetBoard(tx, boardKey, board); err != nil {
+			return err
+		}
+		for _, sbj := range board.Subjects {
+			if sbj.ThreadKey == datKey.Name {
+				return fmt.Errorf("thread key is duplicate")
+			}
+		}
+		// Add
+		board.Subjects = append(board.Subjects, subject)
+		// Save
+		if err := sv.repo.TxPutBoard(tx, boardKey, board); err != nil {
+			return err
+		}
+		if err := sv.repo.TxPutDat(tx, datKey, dat); err != nil {
+			return err
+		}
+		return nil
+	})
+	return
 }
 
 func (sv *BoardService) WriteDat(boardName, threadKey,
@@ -131,32 +148,35 @@ func (sv *BoardService) WriteDat(boardName, threadKey,
 	boardKey := datastore.NameKey("Board", boardName, nil)
 	datKey := datastore.NameKey("Dat", threadKey, boardKey)
 
-	// Get Entities
-	dat := new(DatEntity)
-	if err = sv.repo.GetDat(datKey, dat); err != nil {
-		return
-	}
-	board := new(BoardEntity)
-	if err = sv.repo.GetBoard(boardKey, board); err != nil {
-		return
-	}
+	err = sv.repo.RunInTransaction(func(tx *datastore.Transaction) error {
+		// Get Entities
+		dat := new(DatEntity)
+		if err := sv.repo.TxGetDat(tx, datKey, dat); err != nil {
+			return err
+		}
+		board := new(BoardEntity)
+		if err := sv.repo.TxGetBoard(tx, boardKey, board); err != nil {
+			return err
+		}
 
-	// 書き込み
-	appendDat(dat, name, mail, sv.env.StartedAt(), id, message)
+		// 書き込み
+		appendDat(dat, name, mail, sv.env.StartedAt(), id, message)
 
-	// subject.txtの更新
-	resnum, err = updateSubjectsWhenWriteDat(board, threadKey, mail, sv.env.StartedAt())
-	if err != nil {
-		return
-	}
+		// subject.txtの更新
+		resnum, err = updateSubjectsWhenWriteDat(board, threadKey, mail, sv.env.StartedAt())
+		if err != nil {
+			return err
+		}
 
-	// Push Entities
-	if err = sv.repo.PutDat(datKey, dat); err != nil {
-		return
-	}
-	if err = sv.repo.PutBoard(boardKey, board); err != nil {
-		return
-	}
+		// Push Entities
+		if err := sv.repo.TxPutDat(tx, datKey, dat); err != nil {
+			return err
+		}
+		if err = sv.repo.TxPutBoard(tx, boardKey, board); err != nil {
+			return err
+		}
+		return nil
+	})
 	return
 }
 
@@ -181,8 +201,8 @@ func updateSubjectsWhenWriteDat(board *BoardEntity,
 
 	// (´∀`∩)↑age↑
 	if sbjLen > 1 && mail != "sage" {
-		sbj := board.Subjects[pos]
 		// 切り出し
+		sbj := board.Subjects[pos]
 		board.Subjects = append(board.Subjects[:pos], board.Subjects[pos+1:]...)
 		// 先頭に追加
 		board.Subjects, board.Subjects[0] =
