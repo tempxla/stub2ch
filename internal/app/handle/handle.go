@@ -22,7 +22,6 @@ import (
 
 const (
 	param_error_format = "bad parameter '%s' is: %v"
-	web_root           = "../../../web/template/"
 )
 
 var (

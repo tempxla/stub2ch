@@ -2,8 +2,8 @@ package handle
 
 import (
 	_ "github.com/julienschmidt/httprouter"
-	"github.com/tempxla/stub2ch/configs/app/config"
 	"github.com/tempxla/stub2ch/internal/app/service"
+	"github.com/tempxla/stub2ch/internal/app/util"
 	"github.com/tempxla/stub2ch/tools/app/testutil"
 	"net/http"
 	"net/http/httptest"
@@ -24,7 +24,7 @@ func TestHandleIndex(t *testing.T) {
 	request, _ := http.NewRequest("GET", "/", nil)
 
 	// Exercise
-	router := newBoardRouter(sv)
+	router := NewBoardRouter(sv)
 	router.ServeHTTP(writer, request)
 
 	// Verify
@@ -45,7 +45,7 @@ func TestHandleBbsCgi_404(t *testing.T) {
 	request, _ := http.NewRequest("POST", "/test1/bbs.cgi", nil)
 
 	// Exercise
-	router := newBoardRouter(sv)
+	router := NewBoardRouter(sv)
 	router.ServeHTTP(writer, request)
 
 	// Verify
@@ -66,7 +66,7 @@ func TestHandleBbsCgi_MissingSubmit(t *testing.T) {
 	request, _ := http.NewRequest("POST", "/test/bbs.cgi", nil)
 
 	// Exercise
-	router := newBoardRouter(sv)
+	router := NewBoardRouter(sv)
 	router.ServeHTTP(writer, request)
 
 	// Verify
@@ -88,7 +88,7 @@ func TestHandleBbsCgi_WrongSubmit(t *testing.T) {
 	request.PostForm.Add("submit", "カキカキ")
 
 	// Exercise
-	router := newBoardRouter(sv)
+	router := NewBoardRouter(sv)
 	router.ServeHTTP(writer, request)
 
 	// Verify
@@ -134,7 +134,7 @@ func TestHandleBbsCgi_writeDatOK(t *testing.T) {
 	request.AddCookie(&http.Cookie{Name: "yuki", Value: "akari"})
 
 	// Exercise
-	router := newBoardRouter(sv)
+	router := NewBoardRouter(sv)
 	router.ServeHTTP(writer, request)
 
 	// Verify
@@ -181,7 +181,7 @@ func TestHandleBbsCgi_writeDatOKthroughConfirm(t *testing.T) {
 	request.AddCookie(&http.Cookie{Name: "yuki", Value: "akari"})
 
 	// Exercise
-	router := newBoardRouter(sv)
+	router := NewBoardRouter(sv)
 	router.ServeHTTP(writer, request)
 
 	// Verify
@@ -222,7 +222,7 @@ func TestHandleBbsCgi_createThreadOK(t *testing.T) {
 	request.AddCookie(&http.Cookie{Name: "yuki", Value: "akari"})
 
 	// Exercise
-	router := newBoardRouter(sv)
+	router := NewBoardRouter(sv)
 	router.ServeHTTP(writer, request)
 
 	// Verify
@@ -263,7 +263,7 @@ func TestHandleBbsCgi_createThreadOKthroughConfirm(t *testing.T) {
 	request.AddCookie(&http.Cookie{Name: "yuki", Value: "akari"})
 
 	// Exercise
-	router := newBoardRouter(sv)
+	router := NewBoardRouter(sv)
 	router.ServeHTTP(writer, request)
 
 	// Verify
@@ -754,7 +754,7 @@ func TestHandleDat_200(t *testing.T) {
 	request, _ := http.NewRequest("GET", "/news4test/dat/123.dat", nil)
 
 	// Exercise
-	router := newBoardRouter(sv)
+	router := NewBoardRouter(sv)
 	router.ServeHTTP(writer, request)
 
 	// Verify
@@ -786,7 +786,7 @@ func TestHandleDat_404(t *testing.T) {
 	request, _ := http.NewRequest("GET", "/news4test/dat/999.dat", nil)
 
 	// Exercise
-	router := newBoardRouter(sv)
+	router := NewBoardRouter(sv)
 	router.ServeHTTP(writer, request)
 
 	// Verify
@@ -824,7 +824,7 @@ func TestHandleSubjectTxt_200(t *testing.T) {
 	request, _ := http.NewRequest("GET", "/news4test/subject.txt", nil)
 
 	// Exercise
-	router := newBoardRouter(sv)
+	router := NewBoardRouter(sv)
 	router.ServeHTTP(writer, request)
 
 	// Verify
@@ -851,7 +851,7 @@ func TestHandleSubjectTxt_404(t *testing.T) {
 	request, _ := http.NewRequest("GET", "/news4test2/subject.txt", nil)
 
 	// Exercise
-	router := newBoardRouter(sv)
+	router := NewBoardRouter(sv)
 	router.ServeHTTP(writer, request)
 
 	// Verify
