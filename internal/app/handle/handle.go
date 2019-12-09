@@ -1,11 +1,15 @@
-package main
+package handle
 
 import (
-	"./service"
-	"./util"
 	"cloud.google.com/go/datastore"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
+	"github.com/tempxla/stub2ch/configs/app/config"
+	"github.com/tempxla/stub2ch/internal/app/service"
+	. "github.com/tempxla/stub2ch/internal/app/types"
+	"github.com/tempxla/stub2ch/internal/app/util"
+	"google.golang.org/appengine"
+	"google.golang.org/appengine/user"
 	"html/template"
 	"log"
 	"net/http"
@@ -18,64 +22,59 @@ import (
 
 const (
 	param_error_format = "bad parameter '%s' is: %v"
+	web_root           = "../../../web/template/"
 )
 
 var (
-	indexTmpl = template.Must(
-		template.ParseFiles(filepath.Join("..", "template", "index.html")),
-	)
-	writeDatConfirmTmpl = template.Must(
-		template.ParseFiles(filepath.Join("..", "template", "writeDatConfirm.html")),
-	)
-	writeDatNotFoundTmpl = template.Must(
-		template.ParseFiles(filepath.Join("..", "template", "writeDatNotFound.html")),
-	)
-	writeDatDoneTmpl = template.Must(
-		template.ParseFiles(filepath.Join("..", "template", "writeDatDone.html")),
-	)
-	createThreadErrorTmpl = template.Must(
-		template.ParseFiles(filepath.Join("..", "template", "createThreadError.html")),
-	)
+	indexTmpl             = template.Must(template.ParseFiles(filepath.Join("web", "template", "index.html")))
+	writeDatConfirmTmpl   = template.Must(template.ParseFiles(filepath.Join("web", "template", "writeDatConfirm.html")))
+	writeDatNotFoundTmpl  = template.Must(template.ParseFiles(filepath.Join("web", "template", "writeDatNotFound.html")))
+	writeDatDoneTmpl      = template.Must(template.ParseFiles(filepath.Join("web", "template", "writeDatDone.html")))
+	createThreadErrorTmpl = template.Must(template.ParseFiles(filepath.Join("web", "template", "createThreadError.html")))
 )
 
-type maybe []string // optional parameter
-
-func nothing() maybe {
-	return nil
+// HTTP routing
+func NewBoardRouter(sv *service.BoardService) *httprouter.Router {
+	router := httprouter.New()
+	router.GET("/", handleIndex)
+	router.GET("/:board/_admin/datastore", authenticate(handleTestDir(handleAdmin(sv))))
+	router.POST("/:board/bbs.cgi", protect(handleTestDir(handleBbsCgi(sv))))
+	router.GET("/:board/subject.txt", protect(handleSubjectTxt(sv)))
+	router.GET("/:board/dat/:dat", protect(handleDat(sv)))
+	return router
 }
 
-func just(s string) maybe {
-	return []string{s}
-}
-
-func fromMaybe(m maybe, def string) string {
-	if m != nil {
-		return m[0]
-	} else {
-		return def
+func protect(h httprouter.Handle) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		if config.KEEP_OUT {
+			http.Error(w, "KEEP OUT", http.StatusServiceUnavailable) // 503
+			return
+		}
+		h(w, r, ps)
 	}
 }
 
-func fromJust(m maybe) string {
-	return m[0]
+func authenticate(h httprouter.Handle) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		w.Header().Set("Content-type", "text/html; charset=utf-8")
+		ctx := appengine.NewContext(r)
+		u := user.Current(ctx)
+		if u == nil {
+			url, _ := user.LoginURL(ctx, "/")
+			fmt.Fprintf(w, `<a href="%s">Sign in or register</a>`, url)
+			return
+		}
+		h(w, r, ps)
+	}
 }
 
-func isJust(m maybe) bool {
-	return m != nil
-}
+func handleAdmin(sv *service.BoardService) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
-func isNothing(m maybe) bool {
-	return m == nil
-}
-
-// HTTP routing
-func newBoardRouter(sv *service.BoardService) *httprouter.Router {
-	router := httprouter.New()
-	router.GET("/", handleIndex)
-	router.POST("/:board/bbs.cgi", handleBbsCgi(sv))
-	router.GET("/:board/subject.txt", handleSubjectTxt(sv))
-	router.GET("/:board/dat/:dat", handleDat(sv))
-	return router
+		ctx := appengine.NewContext(r)
+		url, _ := user.LogoutURL(ctx, "/")
+		fmt.Fprintf(w, `Welcome, %s! (<a href="%s">sign out</a>)`, user.Current(ctx), url)
+	}
 }
 
 // トップページ表示
@@ -86,13 +85,19 @@ func handleIndex(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 }
 
-func handleBbsCgi(sv *service.BoardService) httprouter.Handle {
+func handleTestDir(h httprouter.Handle) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		board := ps.ByName("board")
 		if board != "test" {
 			http.NotFound(w, r)
 			return
 		}
+		h(w, r, ps)
+	}
+}
+
+func handleBbsCgi(sv *service.BoardService) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 		r.ParseForm()
 
@@ -148,7 +153,7 @@ func handleWriteDat(sv *service.BoardService, w http.ResponseWriter, r *http.Req
 	}
 	// クッキー確認
 	if executeWriteDatConfirmTmpl(w, r,
-		boardName, name, mail, message, sv.StartedAt(), nothing(), just(threadKey)) {
+		boardName, name, mail, message, sv.StartedAt(), Nothing(), Just(threadKey)) {
 		return
 	}
 	// 書き込み
@@ -200,7 +205,7 @@ func executeWriteDatNotFoundTmpl(w http.ResponseWriter, r *http.Request,
 
 // Returns false if Cookie Found.
 func executeWriteDatConfirmTmpl(w http.ResponseWriter, r *http.Request,
-	boardName, name, mail, message string, startedAt time.Time, title, threadKey maybe) bool {
+	boardName, name, mail, message string, startedAt time.Time, title, threadKey Maybe) bool {
 
 	if c, err := r.Cookie("PON"); err == nil && c.Value != "" {
 		if c, err := r.Cookie("yuki"); err == nil && c.Value == "akari" {
@@ -216,15 +221,15 @@ func executeWriteDatConfirmTmpl(w http.ResponseWriter, r *http.Request,
 	w.Header().Add("Set-Cookie", fmt.Sprintf("yuki=akari; expires=%s; path=/", expires))
 	// Body
 	view := map[string]string{
-		"Title":     fromMaybe(title, ""),
+		"Title":     FromMaybe(title, ""),
 		"Name":      name,
 		"Mail":      mail,
 		"Message":   message,
 		"BoardName": boardName,
 		"Time":      strconv.FormatInt(startedAt.Unix(), 10),
 	}
-	if isJust(threadKey) {
-		view["ThreadKey"] = fromJust(threadKey)
+	if IsJust(threadKey) {
+		view["ThreadKey"] = FromJust(threadKey)
 	}
 	if err := writeDatConfirmTmpl.Execute(w, view); err != nil {
 		log.Printf("Error executing template: %v", err)
@@ -260,7 +265,7 @@ func handleCreateThread(sv *service.BoardService, w http.ResponseWriter, r *http
 	}
 	// クッキー確認
 	if executeWriteDatConfirmTmpl(w, r,
-		boardName, name, mail, message, sv.StartedAt(), just(title), nothing()) {
+		boardName, name, mail, message, sv.StartedAt(), Just(title), Nothing()) {
 		return
 	}
 	// スレ立て

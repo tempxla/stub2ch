@@ -1,11 +1,12 @@
 package main
 
 import (
-	"./config"
-	"./service"
 	"cloud.google.com/go/datastore"
 	"context"
 	"fmt"
+	"github.com/tempxla/stub2ch/configs/app/config"
+	"github.com/tempxla/stub2ch/internal/app/handle"
+	"github.com/tempxla/stub2ch/internal/app/service"
 	"log"
 	"net/http"
 	"os"
@@ -31,7 +32,7 @@ func main() {
 	}
 	sv := service.NewBoardService(repo, sysEnv)
 
-	router := newBoardRouter(sv)
+	router := handle.NewBoardRouter(sv)
 
 	// Serve static files out of the public directory.
 	// By configuring a static handler in app.yaml, App Engine serves all the

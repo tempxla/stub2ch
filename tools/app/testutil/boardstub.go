@@ -1,8 +1,8 @@
 package testutil
 
 import (
-	. "../entity"
 	"cloud.google.com/go/datastore"
+	. "github.com/tempxla/stub2ch/internal/app/types"
 	"time"
 )
 

@@ -1,12 +1,12 @@
 package service
 
 import (
-	"../config"
-	. "../entity"
-	"../testutil"
 	"bytes"
 	"cloud.google.com/go/datastore"
 	"context"
+	"github.com/tempxla/stub2ch/configs/app/config"
+	. "github.com/tempxla/stub2ch/internal/app/types"
+	"github.com/tempxla/stub2ch/tools/app/testutil"
 	"strconv"
 	"testing"
 	"time"

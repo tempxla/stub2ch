@@ -1,13 +1,13 @@
 package service
 
 import (
-	. "../entity"
 	"bytes"
 	"cloud.google.com/go/datastore"
 	"crypto/md5"
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
+	. "github.com/tempxla/stub2ch/internal/app/types"
 	"html"
 	"strconv"
 	"strings"

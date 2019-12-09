@@ -1,9 +1,9 @@
 package service
 
 import (
-	. "../entity"
 	"cloud.google.com/go/datastore"
 	"context"
+	. "github.com/tempxla/stub2ch/internal/app/types"
 )
 
 type BoardStore struct {
