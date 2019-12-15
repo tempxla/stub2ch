@@ -3,10 +3,13 @@ package service
 import (
 	"bytes"
 	"cloud.google.com/go/datastore"
+	"context"
 	"crypto/md5"
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
+	"github.com/tempxla/stub2ch/configs/app/config"
+	"github.com/tempxla/stub2ch/internal/app/memcache"
 	. "github.com/tempxla/stub2ch/internal/app/types"
 	"html"
 	"strconv"
@@ -31,6 +34,31 @@ type BoardService struct {
 	repo  BoardRepository
 	env   BoardEnvironment
 	Admin *AdminFunction
+}
+
+func DefaultBoardService() (*BoardService, error) {
+
+	ctx := context.Background()
+
+	// Creates a client.
+	client, err := datastore.NewClient(ctx, config.PROJECT_ID)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to create client: %v", err)
+	}
+
+	repo := &BoardStore{
+		Context: ctx,
+		Client:  client,
+	}
+	sysEnv := &SysEnv{
+		StartedTime: time.Now(),
+	}
+	mem := &memcache.AlterMemcache{
+		Context: ctx,
+		Client:  client,
+	}
+
+	return NewBoardService(RepoConf(repo), EnvConf(sysEnv), MemConf(mem)), nil
 }
 
 func NewBoardService(config ...func(*BoardService) *BoardService) *BoardService {

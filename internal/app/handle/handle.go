@@ -2,11 +2,9 @@ package handle
 
 import (
 	"cloud.google.com/go/datastore"
-	"context"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
 	"github.com/tempxla/stub2ch/configs/app/config"
-	"github.com/tempxla/stub2ch/internal/app/memcache"
 	"github.com/tempxla/stub2ch/internal/app/service"
 	. "github.com/tempxla/stub2ch/internal/app/types"
 	"github.com/tempxla/stub2ch/internal/app/util"
@@ -33,50 +31,38 @@ var (
 	adminIndexTmpl        = template.Must(template.ParseFiles(filepath.Join("web", "template", "admin", "index.html")))
 )
 
+type ServiceHandle func(http.ResponseWriter, *http.Request, httprouter.Params, *service.BoardService)
+
 // HTTP routing
 func NewBoardRouter(sv *service.BoardService) *httprouter.Router {
 	router := httprouter.New()
 	router.GET("/", handleIndex)
-	router.GET("/:board/_admin/:mode", handleTestDir(serviceChain(sv, authenticate, handleAdmin)))
-	router.POST("/:board/bbs.cgi", protect(handleTestDir(serviceChain(sv, handleBbsCgi))))
-	router.GET("/:board/subject.txt", protect(serviceChain(sv, handleSubjectTxt)))
-	router.GET("/:board/dat/:dat", protect(serviceChain(sv, handleDat)))
+	router.GET("/:board/_admin/:mode", handleTestDir(injectService(sv)(authenticate(handleAdmin()))))
+	router.POST("/:board/bbs.cgi", protect(handleTestDir(injectService(sv)(handleBbsCgi()))))
+	router.GET("/:board/subject.txt", protect(injectService(sv)(handleSubjectTxt())))
+	router.GET("/:board/dat/:dat", protect(injectService(sv)(handleDat())))
 	return router
 }
 
-func serviceChain(sv *service.BoardService, handles ...func(*service.BoardService) httprouter.Handle) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func injectService(sv *service.BoardService) func(ServiceHandle) httprouter.Handle {
+	return func(sh ServiceHandle) httprouter.Handle {
+		return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
-		var boardService *service.BoardService
-		if sv != nil {
-			boardService = sv
-		} else {
-			ctx := context.Background()
+			var boardService *service.BoardService
+			var err error
 
-			// Creates a client.
-			client, err := datastore.NewClient(ctx, config.PROJECT_ID)
-			if err != nil {
-				log.Fatalf("Failed to create client: %v", err)
+			if sv != nil {
+				boardService = sv
+			} else {
+				boardService, err = service.DefaultBoardService()
+				if err != nil {
+					http.Error(w, fmt.Sprintf("%v", err), http.StatusServiceUnavailable) // 503
+					return
+				}
 			}
 
-			repo := &service.BoardStore{
-				Context: ctx,
-				Client:  client,
-			}
-			sysEnv := &service.SysEnv{
-				StartedTime: time.Now(),
-			}
-			mem := &memcache.AlterMemcache{
-				Context: ctx,
-				Client:  client,
-			}
-
-			boardService = service.NewBoardService(service.RepoConf(repo), service.EnvConf(sysEnv), service.MemConf(mem))
-		}
-
-		// Injection
-		for _, h := range handles {
-			h(boardService)(w, r, ps)
+			// Injection
+			sh(w, r, ps, boardService)
 		}
 	}
 }
@@ -91,14 +77,17 @@ func protect(h httprouter.Handle) httprouter.Handle {
 	}
 }
 
-func authenticate(sv *service.BoardService) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-
+func authenticate(sh ServiceHandle) ServiceHandle {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params, sv *service.BoardService) {
+		if true {
+			// authenticate
+		}
+		sh(w, r, ps, sv)
 	}
 }
 
-func handleAdmin(sv *service.BoardService) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func handleAdmin() ServiceHandle {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params, sv *service.BoardService) {
 
 	}
 }
@@ -122,8 +111,8 @@ func handleTestDir(h httprouter.Handle) httprouter.Handle {
 	}
 }
 
-func handleBbsCgi(sv *service.BoardService) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func handleBbsCgi() ServiceHandle {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params, sv *service.BoardService) {
 
 		r.ParseForm()
 
@@ -136,15 +125,15 @@ func handleBbsCgi(sv *service.BoardService) httprouter.Handle {
 		switch submit {
 		case "書き込む":
 			// レスを書き込む
-			handleWriteDat(sv, w, r)
+			handleWriteDat(w, r, sv)
 		case "新規スレッド作成":
 			// スレッドを立てる
-			handleCreateThread(sv, w, r)
+			handleCreateThread(w, r, sv)
 		case "上記全てを承諾して書き込む":
 			if _, ok := r.PostForm["key"]; ok {
-				handleWriteDat(sv, w, r)
+				handleWriteDat(w, r, sv)
 			} else {
-				handleCreateThread(sv, w, r)
+				handleCreateThread(w, r, sv)
 			}
 		default:
 			fmt.Fprint(w, "SJISで書いてね？")
@@ -152,7 +141,7 @@ func handleBbsCgi(sv *service.BoardService) httprouter.Handle {
 	}
 }
 
-func handleWriteDat(sv *service.BoardService, w http.ResponseWriter, r *http.Request) {
+func handleWriteDat(w http.ResponseWriter, r *http.Request, sv *service.BoardService) {
 	boardName, ok := requireBoardName(w, r)
 	if !ok {
 		return
@@ -264,7 +253,7 @@ func executeWriteDatConfirmTmpl(w http.ResponseWriter, r *http.Request,
 	return true
 }
 
-func handleCreateThread(sv *service.BoardService, w http.ResponseWriter, r *http.Request) {
+func handleCreateThread(w http.ResponseWriter, r *http.Request, sv *service.BoardService) {
 	boardName, ok := requireBoardName(w, r)
 	if !ok {
 		return
@@ -317,8 +306,8 @@ func executeCreateThreadErrorTmpl(w http.ResponseWriter, r *http.Request, starte
 	}
 }
 
-func handleDat(sv *service.BoardService) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func handleDat() ServiceHandle {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params, sv *service.BoardService) {
 		board := ps.ByName("board")
 		threadKey := strings.Replace(ps.ByName("dat"), ".dat", "", 1)
 		dat, err := sv.MakeDat(board, threadKey)
@@ -335,8 +324,8 @@ func handleDat(sv *service.BoardService) httprouter.Handle {
 	}
 }
 
-func handleSubjectTxt(sv *service.BoardService) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func handleSubjectTxt() ServiceHandle {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params, sv *service.BoardService) {
 		board := ps.ByName("board")
 		subjectTxt, err := sv.MakeSubjectTxt(board)
 		if err != nil {

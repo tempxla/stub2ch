@@ -354,7 +354,7 @@ func TestWriteDat_400(t *testing.T) {
 		for k, v := range param {
 			request.PostForm.Add(k, v)
 		}
-		handleWriteDat(sv, writer, request)
+		handleWriteDat(writer, request, sv)
 
 		// Verify
 		if writer.Code != 400 {
@@ -389,7 +389,7 @@ func TestWriteDat_CookieMissing(t *testing.T) {
 	for k, v := range param {
 		request.PostForm.Add(k, v)
 	}
-	handleWriteDat(sv, writer, request)
+	handleWriteDat(writer, request, sv)
 
 	// Verify
 	if writer.Code != 200 {
@@ -446,7 +446,7 @@ func TestWriteDat_NotFound(t *testing.T) {
 	for k, v := range param {
 		request.PostForm.Add(k, v)
 	}
-	handleWriteDat(sv, writer, request)
+	handleWriteDat(writer, request, sv)
 
 	// Verify
 	if writer.Code != 200 {
@@ -497,7 +497,7 @@ func TestWriteDat_Done(t *testing.T) {
 	for k, v := range param {
 		request.PostForm.Add(k, v)
 	}
-	handleWriteDat(sv, writer, request)
+	handleWriteDat(writer, request, sv)
 
 	// Verify
 	if writer.Code != 200 {
@@ -587,7 +587,7 @@ func TestCreateThread_400(t *testing.T) {
 		for k, v := range param {
 			request.PostForm.Add(k, v)
 		}
-		handleCreateThread(sv, writer, request)
+		handleCreateThread(writer, request, sv)
 
 		// Verify
 		if writer.Code != 400 {
@@ -622,7 +622,7 @@ func TestCreateThread_CookieMissing(t *testing.T) {
 	for k, v := range param {
 		request.PostForm.Add(k, v)
 	}
-	handleCreateThread(sv, writer, request)
+	handleCreateThread(writer, request, sv)
 
 	// Verify
 	if writer.Code != 200 {
@@ -679,7 +679,7 @@ func TestCreateThread_NotFound(t *testing.T) {
 	for k, v := range param {
 		request.PostForm.Add(k, v)
 	}
-	handleCreateThread(sv, writer, request)
+	handleCreateThread(writer, request, sv)
 
 	// Verify
 	if writer.Code != 200 {
@@ -723,7 +723,7 @@ func TestCreateThread_Done(t *testing.T) {
 	for k, v := range param {
 		request.PostForm.Add(k, v)
 	}
-	handleCreateThread(sv, writer, request)
+	handleCreateThread(writer, request, sv)
 
 	// Verify
 	if writer.Code != 200 {
