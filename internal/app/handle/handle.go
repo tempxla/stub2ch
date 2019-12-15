@@ -26,52 +26,57 @@ const (
 
 var (
 	indexTmpl             = template.Must(template.ParseFiles(filepath.Join("web", "template", "index.html")))
-	writeDatConfirmTmpl   = template.Must(template.ParseFiles(filepath.Join("web", "template", "writeDatConfirm.html")))
-	writeDatNotFoundTmpl  = template.Must(template.ParseFiles(filepath.Join("web", "template", "writeDatNotFound.html")))
-	writeDatDoneTmpl      = template.Must(template.ParseFiles(filepath.Join("web", "template", "writeDatDone.html")))
-	createThreadErrorTmpl = template.Must(template.ParseFiles(filepath.Join("web", "template", "createThreadError.html")))
+	writeDatConfirmTmpl   = template.Must(template.ParseFiles(filepath.Join("web", "template", "write_dat_confirm.html")))
+	writeDatNotFoundTmpl  = template.Must(template.ParseFiles(filepath.Join("web", "template", "write_dat_not_found.html")))
+	writeDatDoneTmpl      = template.Must(template.ParseFiles(filepath.Join("web", "template", "write_dat_done.html")))
+	createThreadErrorTmpl = template.Must(template.ParseFiles(filepath.Join("web", "template", "create_thread_error.html")))
 	adminIndexTmpl        = template.Must(template.ParseFiles(filepath.Join("web", "template", "admin", "index.html")))
 )
 
 // HTTP routing
-func NewBoardRouter() *httprouter.Router {
+func NewBoardRouter(sv *service.BoardService) *httprouter.Router {
 	router := httprouter.New()
 	router.GET("/", handleIndex)
-	router.GET("/:board/_admin/:mode", handleTestDir(serviceChain(authenticate, handleAdmin)))
-	router.POST("/:board/bbs.cgi", protect(handleTestDir(serviceChain(handleBbsCgi))))
-	router.GET("/:board/subject.txt", protect(serviceChain(handleSubjectTxt)))
-	router.GET("/:board/dat/:dat", protect(serviceChain(handleDat)))
+	router.GET("/:board/_admin/:mode", handleTestDir(serviceChain(sv, authenticate, handleAdmin)))
+	router.POST("/:board/bbs.cgi", protect(handleTestDir(serviceChain(sv, handleBbsCgi))))
+	router.GET("/:board/subject.txt", protect(serviceChain(sv, handleSubjectTxt)))
+	router.GET("/:board/dat/:dat", protect(serviceChain(sv, handleDat)))
 	return router
 }
 
-func serviceChain(handles ...func(*service.BoardService) httprouter.Handle) httprouter.Handle {
+func serviceChain(sv *service.BoardService, handles ...func(*service.BoardService) httprouter.Handle) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
-		ctx := context.Background()
+		var boardService *service.BoardService
+		if sv != nil {
+			boardService = sv
+		} else {
+			ctx := context.Background()
 
-		// Creates a client.
-		client, err := datastore.NewClient(ctx, config.PROJECT_ID)
-		if err != nil {
-			log.Fatalf("Failed to create client: %v", err)
-		}
+			// Creates a client.
+			client, err := datastore.NewClient(ctx, config.PROJECT_ID)
+			if err != nil {
+				log.Fatalf("Failed to create client: %v", err)
+			}
 
-		repo := &service.BoardStore{
-			Context: ctx,
-			Client:  client,
-		}
-		sysEnv := &service.SysEnv{
-			StartedTime: time.Now(),
-		}
-		mem := &memcache.AlterMemcache{
-			Context: ctx,
-			Client:  client,
-		}
+			repo := &service.BoardStore{
+				Context: ctx,
+				Client:  client,
+			}
+			sysEnv := &service.SysEnv{
+				StartedTime: time.Now(),
+			}
+			mem := &memcache.AlterMemcache{
+				Context: ctx,
+				Client:  client,
+			}
 
-		sv := service.NewBoardService(repo, sysEnv, mem)
+			boardService = service.NewBoardService(service.RepoConf(repo), service.EnvConf(sysEnv), service.MemConf(mem))
+		}
 
 		// Injection
 		for _, h := range handles {
-			h(sv)(w, r, ps)
+			h(boardService)(w, r, ps)
 		}
 	}
 }

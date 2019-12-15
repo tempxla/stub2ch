@@ -1,9 +1,10 @@
 #!/bin/sh
-template_path=./internal/app/handle/web
-if [ -e $template_path ]; then
-    echo you cannot run test. path exists.: $template_path
+web_path=$(pwd)/internal/app/handle/web
+target=$(pwd)/web
+if [ -e $web_path ]; then
+    echo you cannot run test. path exists.: $web_path
     exit 1
 fi
-ln -s ./web $template_path
+ln -s $target $web_path
 go test ./... -cover
-rm $template_path
+rm $web_path

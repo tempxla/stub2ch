@@ -10,7 +10,7 @@ import (
 
 func main() {
 
-	router := handle.NewBoardRouter()
+	router := handle.NewBoardRouter(nil)
 
 	// Serve static files out of the public directory.
 	// By configuring a static handler in app.yaml, App Engine serves all the

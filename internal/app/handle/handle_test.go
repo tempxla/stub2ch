@@ -17,7 +17,7 @@ func TestHandleIndex(t *testing.T) {
 	// Setup
 	var repo service.BoardRepository
 	var sysEnv service.BoardEnvironment
-	sv := service.NewBoardService(repo, sysEnv)
+	sv := service.NewBoardService(service.RepoConf(repo), service.EnvConf(sysEnv))
 
 	// request
 	writer := httptest.NewRecorder()
@@ -38,7 +38,7 @@ func TestHandleBbsCgi_404(t *testing.T) {
 	// Setup
 	var repo service.BoardRepository
 	var sysEnv service.BoardEnvironment
-	sv := service.NewBoardService(repo, sysEnv)
+	sv := service.NewBoardService(service.RepoConf(repo), service.EnvConf(sysEnv))
 
 	// request
 	writer := httptest.NewRecorder()
@@ -59,7 +59,7 @@ func TestHandleBbsCgi_MissingSubmit(t *testing.T) {
 	// Setup
 	var repo service.BoardRepository
 	var sysEnv service.BoardEnvironment
-	sv := service.NewBoardService(repo, sysEnv)
+	sv := service.NewBoardService(service.RepoConf(repo), service.EnvConf(sysEnv))
 
 	// request
 	writer := httptest.NewRecorder()
@@ -79,7 +79,7 @@ func TestHandleBbsCgi_WrongSubmit(t *testing.T) {
 	// Setup
 	var repo service.BoardRepository
 	var sysEnv service.BoardEnvironment
-	sv := service.NewBoardService(repo, sysEnv)
+	sv := service.NewBoardService(service.RepoConf(repo), service.EnvConf(sysEnv))
 
 	// request
 	writer := httptest.NewRecorder()
@@ -116,7 +116,7 @@ func TestHandleBbsCgi_writeDatOK(t *testing.T) {
 	sysEnv := &service.SysEnv{
 		StartedTime: time.Now(),
 	}
-	sv := service.NewBoardService(repo, sysEnv)
+	sv := service.NewBoardService(service.RepoConf(repo), service.EnvConf(sysEnv))
 
 	// request
 	writer := httptest.NewRecorder()
@@ -144,7 +144,7 @@ func TestHandleBbsCgi_writeDatOK(t *testing.T) {
 	// body
 	body := string(util.SJIStoUTF8(writer.Body.Bytes()))
 	if !strings.Contains(body, "<title>書きこみました。</title>") {
-		t.Errorf("NOT writeDatDone.html : %v", body)
+		t.Errorf("NOT write_dat_done.html : %v", body)
 	}
 }
 
@@ -163,7 +163,7 @@ func TestHandleBbsCgi_writeDatOKthroughConfirm(t *testing.T) {
 	sysEnv := &service.SysEnv{
 		StartedTime: time.Now(),
 	}
-	sv := service.NewBoardService(repo, sysEnv)
+	sv := service.NewBoardService(service.RepoConf(repo), service.EnvConf(sysEnv))
 
 	// request
 	writer := httptest.NewRecorder()
@@ -191,7 +191,7 @@ func TestHandleBbsCgi_writeDatOKthroughConfirm(t *testing.T) {
 	// body
 	body := string(util.SJIStoUTF8(writer.Body.Bytes()))
 	if !strings.Contains(body, "<title>書きこみました。</title>") {
-		t.Errorf("NOT writeDatDone.html : %v", body)
+		t.Errorf("NOT write_dat_done.html : %v", body)
 	}
 }
 
@@ -204,7 +204,7 @@ func TestHandleBbsCgi_createThreadOK(t *testing.T) {
 	sysEnv := &service.SysEnv{
 		StartedTime: time.Now(),
 	}
-	sv := service.NewBoardService(repo, sysEnv)
+	sv := service.NewBoardService(service.RepoConf(repo), service.EnvConf(sysEnv))
 
 	// request
 	writer := httptest.NewRecorder()
@@ -232,7 +232,7 @@ func TestHandleBbsCgi_createThreadOK(t *testing.T) {
 	// body
 	body := string(util.SJIStoUTF8(writer.Body.Bytes()))
 	if !strings.Contains(body, "<title>書きこみました。</title>") {
-		t.Errorf("NOT writeDatDone.html : %v", body)
+		t.Errorf("NOT write_dat_done.html : %v", body)
 	}
 }
 
@@ -245,7 +245,7 @@ func TestHandleBbsCgi_createThreadOKthroughConfirm(t *testing.T) {
 	sysEnv := &service.SysEnv{
 		StartedTime: time.Now(),
 	}
-	sv := service.NewBoardService(repo, sysEnv)
+	sv := service.NewBoardService(service.RepoConf(repo), service.EnvConf(sysEnv))
 
 	// request
 	writer := httptest.NewRecorder()
@@ -273,7 +273,7 @@ func TestHandleBbsCgi_createThreadOKthroughConfirm(t *testing.T) {
 	// body
 	body := string(util.SJIStoUTF8(writer.Body.Bytes()))
 	if !strings.Contains(body, "<title>書きこみました。</title>") {
-		t.Errorf("NOT writeDatDone.html : %v", body)
+		t.Errorf("NOT write_dat_done.html : %v", body)
 	}
 }
 
@@ -283,7 +283,7 @@ func TestWriteDat_400(t *testing.T) {
 	// Setup
 	var repo service.BoardRepository
 	var sysEnv service.BoardEnvironment
-	sv := service.NewBoardService(repo, sysEnv)
+	sv := service.NewBoardService(service.RepoConf(repo), service.EnvConf(sysEnv))
 
 	params := []map[string]string{
 		// not 400
@@ -369,7 +369,7 @@ func TestWriteDat_CookieMissing(t *testing.T) {
 	sysEnv := &service.SysEnv{
 		StartedTime: time.Now(),
 	}
-	sv := service.NewBoardService(repo, sysEnv)
+	sv := service.NewBoardService(service.RepoConf(repo), service.EnvConf(sysEnv))
 
 	param := map[string]string{
 		"bbs":     "news4test",
@@ -414,7 +414,7 @@ func TestWriteDat_CookieMissing(t *testing.T) {
 	// body
 	body := string(util.SJIStoUTF8(writer.Body.Bytes()))
 	if !strings.Contains(body, "<title>■ 書き込み確認 ■</title>") {
-		t.Errorf("NOT writeDatConfirm.html: %v", body)
+		t.Errorf("NOT write_dat_confirm.html: %v", body)
 	}
 }
 
@@ -424,7 +424,7 @@ func TestWriteDat_NotFound(t *testing.T) {
 	sysEnv := &service.SysEnv{
 		StartedTime: time.Now(),
 	}
-	sv := service.NewBoardService(repo, sysEnv)
+	sv := service.NewBoardService(service.RepoConf(repo), service.EnvConf(sysEnv))
 
 	param := map[string]string{
 		"bbs":     "news4test",
@@ -455,7 +455,7 @@ func TestWriteDat_NotFound(t *testing.T) {
 	// body
 	body := string(util.SJIStoUTF8(writer.Body.Bytes()))
 	if !strings.Contains(body, "ERROR: 該当するスレッドがありません。") {
-		t.Errorf("NOT writeDatNotFound.html : %v", body)
+		t.Errorf("NOT write_dat_not_found.html : %v", body)
 	}
 }
 
@@ -475,7 +475,7 @@ func TestWriteDat_Done(t *testing.T) {
 	sysEnv := &service.SysEnv{
 		StartedTime: time.Now(),
 	}
-	sv := service.NewBoardService(repo, sysEnv)
+	sv := service.NewBoardService(service.RepoConf(repo), service.EnvConf(sysEnv))
 
 	param := map[string]string{
 		"bbs":     "news4test",
@@ -506,7 +506,7 @@ func TestWriteDat_Done(t *testing.T) {
 	// body
 	body := string(util.SJIStoUTF8(writer.Body.Bytes()))
 	if !strings.Contains(body, "<title>書きこみました。</title>") {
-		t.Errorf("NOT writeDatDone.html : %v", body)
+		t.Errorf("NOT write_dat_done.html : %v", body)
 	}
 }
 
@@ -516,7 +516,7 @@ func TestCreateThread_400(t *testing.T) {
 	// Setup
 	var repo service.BoardRepository
 	var sysEnv service.BoardEnvironment
-	sv := service.NewBoardService(repo, sysEnv)
+	sv := service.NewBoardService(service.RepoConf(repo), service.EnvConf(sysEnv))
 
 	params := []map[string]string{
 		// not 400
@@ -602,7 +602,7 @@ func TestCreateThread_CookieMissing(t *testing.T) {
 	sysEnv := &service.SysEnv{
 		StartedTime: time.Now(),
 	}
-	sv := service.NewBoardService(repo, sysEnv)
+	sv := service.NewBoardService(service.RepoConf(repo), service.EnvConf(sysEnv))
 
 	param := map[string]string{
 		"bbs":     "news4test",
@@ -647,7 +647,7 @@ func TestCreateThread_CookieMissing(t *testing.T) {
 	// body
 	body := string(util.SJIStoUTF8(writer.Body.Bytes()))
 	if !strings.Contains(body, "<title>■ 書き込み確認 ■</title>") {
-		t.Errorf("NOT writeDatConfirm.html: %v", body)
+		t.Errorf("NOT write_dat_confirm.html: %v", body)
 	}
 }
 
@@ -657,7 +657,7 @@ func TestCreateThread_NotFound(t *testing.T) {
 	sysEnv := &service.SysEnv{
 		StartedTime: time.Now(),
 	}
-	sv := service.NewBoardService(repo, sysEnv)
+	sv := service.NewBoardService(service.RepoConf(repo), service.EnvConf(sysEnv))
 
 	param := map[string]string{
 		"bbs":     "news4test",
@@ -688,7 +688,7 @@ func TestCreateThread_NotFound(t *testing.T) {
 	// body
 	body := string(util.SJIStoUTF8(writer.Body.Bytes()))
 	if !strings.Contains(body, "ERROR: XXXXXXX") {
-		t.Errorf("NOT createTHreadError.html : %v", body)
+		t.Errorf("NOT create_thread_error.html : %v", body)
 	}
 }
 
@@ -701,7 +701,7 @@ func TestCreateThread_Done(t *testing.T) {
 	sysEnv := &service.SysEnv{
 		StartedTime: time.Now(),
 	}
-	sv := service.NewBoardService(repo, sysEnv)
+	sv := service.NewBoardService(service.RepoConf(repo), service.EnvConf(sysEnv))
 
 	param := map[string]string{
 		"bbs":     "news4test",
@@ -732,7 +732,7 @@ func TestCreateThread_Done(t *testing.T) {
 	// body
 	body := string(util.SJIStoUTF8(writer.Body.Bytes()))
 	if !strings.Contains(body, "<title>書きこみました。</title>") {
-		t.Errorf("NOT writeDatDone.html : %v", body)
+		t.Errorf("NOT write_dat_done.html : %v", body)
 	}
 }
 
@@ -747,7 +747,7 @@ func TestHandleDat_200(t *testing.T) {
 	env := &service.SysEnv{
 		StartedTime: time.Now(),
 	}
-	sv := service.NewBoardService(repo, env)
+	sv := service.NewBoardService(service.RepoConf(repo), service.EnvConf(env))
 
 	// request
 	writer := httptest.NewRecorder()
@@ -779,7 +779,7 @@ func TestHandleDat_404(t *testing.T) {
 	env := &service.SysEnv{
 		StartedTime: time.Now(),
 	}
-	sv := service.NewBoardService(repo, env)
+	sv := service.NewBoardService(service.RepoConf(repo), service.EnvConf(env))
 
 	// request
 	writer := httptest.NewRecorder()
@@ -817,7 +817,7 @@ func TestHandleSubjectTxt_200(t *testing.T) {
 	env := &service.SysEnv{
 		StartedTime: time.Now(),
 	}
-	sv := service.NewBoardService(repo, env)
+	sv := service.NewBoardService(service.RepoConf(repo), service.EnvConf(env))
 
 	// request
 	writer := httptest.NewRecorder()
@@ -844,7 +844,7 @@ func TestHandleSubjectTxt_404(t *testing.T) {
 	env := &service.SysEnv{
 		StartedTime: time.Now(),
 	}
-	sv := service.NewBoardService(repo, env)
+	sv := service.NewBoardService(service.RepoConf(repo), service.EnvConf(env))
 
 	// request
 	writer := httptest.NewRecorder()

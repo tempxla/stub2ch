@@ -40,7 +40,7 @@ func cleanDatastore(t *testing.T, ctx context.Context, client *datastore.Client)
 func TestNewBoardService(t *testing.T) {
 	var repo *BoardStore
 	var env *SysEnv
-	sv := NewBoardService(repo, env)
+	sv := NewBoardService(RepoConf(repo), EnvConf(env))
 	if sv.repo != repo || sv.env != env {
 		t.Errorf("%v", sv)
 	}
@@ -55,7 +55,7 @@ func TestMakeDat_ok(t *testing.T) {
 		},
 	})
 	env := &SysEnv{}
-	sv := NewBoardService(repo, env)
+	sv := NewBoardService(RepoConf(repo), EnvConf(env))
 
 	// Exercise
 	dat, err := sv.MakeDat("news4test", "123")
@@ -78,7 +78,7 @@ func TestMakeDat_err(t *testing.T) {
 		},
 	})
 	env := &SysEnv{}
-	sv := NewBoardService(repo, env)
+	sv := NewBoardService(RepoConf(repo), EnvConf(env))
 
 	// Exercise
 	_, err := sv.MakeDat("news4test", "999")
@@ -112,7 +112,7 @@ func TestMakeSubjectTxt_ok(t *testing.T) {
 		},
 	})
 	env := &SysEnv{}
-	sv := NewBoardService(repo, env)
+	sv := NewBoardService(RepoConf(repo), EnvConf(env))
 
 	// Exercise
 	txt, err := sv.MakeSubjectTxt("news4test")
@@ -147,7 +147,7 @@ func TestMakeSubjectTxt_err(t *testing.T) {
 		},
 	})
 	env := &SysEnv{}
-	sv := NewBoardService(repo, env)
+	sv := NewBoardService(RepoConf(repo), EnvConf(env))
 
 	// Exercise
 	_, err := sv.MakeSubjectTxt("news4test1")
@@ -190,12 +190,12 @@ func TestCreateNewThread_AtFirst(t *testing.T) {
 	}
 
 	// Injection
-	sv := NewBoardService(
+	sv := NewBoardService(RepoConf(
 		&BoardStore{
 			Context: ctx,
 			Client:  client,
-		},
-		&SysEnv{},
+		}),
+		EnvConf(&SysEnv{}),
 	)
 
 	// Exercise
@@ -281,12 +281,12 @@ func TestCreateNewThread_More(t *testing.T) {
 	}
 
 	// Injection
-	sv := NewBoardService(
+	sv := NewBoardService(RepoConf(
 		&BoardStore{
 			Context: ctx,
 			Client:  client,
-		},
-		&SysEnv{},
+		}),
+		EnvConf(&SysEnv{}),
 	)
 
 	// Exercise
@@ -335,12 +335,12 @@ func TestCreateNewThread_NoSuchBoard(t *testing.T) {
 	cleanDatastore(t, ctx, client)
 
 	// Injection
-	sv := NewBoardService(
+	sv := NewBoardService(RepoConf(
 		&BoardStore{
 			Context: ctx,
 			Client:  client,
-		},
-		&SysEnv{},
+		}),
+		EnvConf(&SysEnv{}),
 	)
 
 	// Exercise
@@ -508,11 +508,11 @@ func TestComputeId(t *testing.T) {
 	// http://age.s22.xrea.com/talk2ch/id.txt
 	now, _ := time.ParseInLocation("2006/01/02", "2019/12/26", time.Local)
 	sv := NewBoardService(
-		&BoardStore{},
-		&SysEnv{
+		RepoConf(&BoardStore{}),
+		EnvConf(&SysEnv{
 			StartedTime:   now,
 			ComputeIdSalt: "1385643578654298",
-		},
+		}),
 	)
 
 	ipAddr := "110.111.112.113"
