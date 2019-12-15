@@ -9,6 +9,7 @@ import (
 type BoardMemcache interface {
 	Set(item *Item) error
 	Get(key string) (*Item, error)
+	Delete(key string) error
 }
 
 // 見せかけのmemcache. 実態はdatastore.
@@ -36,19 +37,14 @@ func (mem *AlterMemcache) Set(item *Item) error {
 }
 
 func (mem *AlterMemcache) Get(key string) (*Item, error) {
-	dKey := datastore.NameKey(kind, key, nil)
+	dkey := datastore.NameKey(kind, key, nil)
 	dst := &Item{}
-	err := mem.Client.Get(mem.Context, dKey, dst)
+	err := mem.Client.Get(mem.Context, dkey, dst)
 	item := Item{Key: key, Value: dst.Value}
 	return &item, err
 }
 
-func (mem *AlterMemcache) DeleteAll() error {
-	query := datastore.NewQuery(kind).KeysOnly()
-	var dst []*Item
-	keys, err := mem.Client.GetAll(mem.Context, query, dst)
-	if err != nil {
-		return err
-	}
-	return mem.Client.DeleteMulti(mem.Context, keys)
+func (mem *AlterMemcache) Delete(key string) error {
+	dkey := datastore.NameKey(kind, key, nil)
+	return mem.Client.Delete(mem.Context, dkey)
 }
