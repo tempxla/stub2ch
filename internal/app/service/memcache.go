@@ -1,10 +1,15 @@
-package memcache
+package service
 
 import (
 	"cloud.google.com/go/datastore"
 	"context"
 	"time"
 )
+
+type BoardMemcache interface {
+	Set(item *Item) error
+	Get(key string) (*Item, error)
+}
 
 // 見せかけのmemcache. 実態はdatastore.
 // Kind=MemcacheItem

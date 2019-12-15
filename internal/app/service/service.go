@@ -9,7 +9,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"github.com/tempxla/stub2ch/configs/app/config"
-	"github.com/tempxla/stub2ch/internal/app/memcache"
 	. "github.com/tempxla/stub2ch/internal/app/types"
 	"html"
 	"strconv"
@@ -53,7 +52,7 @@ func DefaultBoardService() (*BoardService, error) {
 	sysEnv := &SysEnv{
 		StartedTime: time.Now(),
 	}
-	mem := &memcache.AlterMemcache{
+	mem := &AlterMemcache{
 		Context: ctx,
 		Client:  client,
 	}

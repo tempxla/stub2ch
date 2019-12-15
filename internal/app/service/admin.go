@@ -2,24 +2,15 @@ package service
 
 import (
 	"fmt"
-	"github.com/tempxla/stub2ch/internal/app/memcache"
+	"github.com/tempxla/stub2ch/configs/app/config"
 )
-
-const (
-	memkey_session_id = "SESSION_ID"
-)
-
-type BoardMemcache interface {
-	Set(item *memcache.Item) error
-	Get(key string) (*memcache.Item, error)
-}
 
 type AdminFunction struct {
 	mem BoardMemcache
 }
 
 func (admin *AdminFunction) VerifySessionId(sessionId string) error {
-	cache, err := admin.mem.Get(memkey_session_id)
+	cache, err := admin.mem.Get(config.ADMIN_COOKIE_NAME)
 	if err != nil {
 		return err
 	}
