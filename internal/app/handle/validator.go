@@ -2,10 +2,15 @@ package handle
 
 import (
 	"fmt"
+	"html"
 	"net/http"
 	"net/url"
 	"strings"
 )
+
+func HtmlUnescapeString(s string) (string, error) {
+	return html.UnescapeString(s), nil
+}
 
 func requireOne(r *http.Request, name string) func() (string, error) {
 	return func() (str string, err error) {

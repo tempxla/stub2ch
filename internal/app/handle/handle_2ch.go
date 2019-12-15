@@ -22,8 +22,6 @@ const (
 func handleBbsCgi() ServiceHandle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params, sv *service.BoardService) {
 
-		r.ParseForm()
-
 		submit, err := process(requireOne(r, "submit"), url.QueryUnescape)
 		if err != nil {
 			http.Error(w, fmt.Sprintf(param_error_format, "submit", err), http.StatusBadRequest)

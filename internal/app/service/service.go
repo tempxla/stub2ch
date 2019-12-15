@@ -61,7 +61,9 @@ func DefaultBoardService() (*BoardService, error) {
 }
 
 func NewBoardService(config ...func(*BoardService) *BoardService) *BoardService {
-	sv := &BoardService{}
+	sv := &BoardService{
+		Admin: &AdminFunction{},
+	}
 	for _, conf := range config {
 		sv = conf(sv)
 	}

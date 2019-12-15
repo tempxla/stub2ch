@@ -26,11 +26,31 @@ type ServiceHandle func(http.ResponseWriter, *http.Request, httprouter.Params, *
 func NewBoardRouter(sv *service.BoardService) *httprouter.Router {
 	router := httprouter.New()
 	router.GET("/", handleIndex())
-	router.POST("/:board/_admin/login", handleTestDir(injectService(sv)(handleAdminLogin())))
-	router.POST("/:board/_admin/", handleTestDir(injectService(sv)(authenticate(handleAdmin()))))
-	router.POST("/:board/bbs.cgi", protect(config.KEEP_OUT)(handleTestDir(injectService(sv)(handleBbsCgi()))))
-	router.GET("/:board/subject.txt", protect(config.KEEP_OUT)(injectService(sv)(handleSubjectTxt())))
-	router.GET("/:board/dat/:dat", protect(config.KEEP_OUT)(injectService(sv)(handleDat())))
+	router.POST("/:board/_admin/login",
+		handleTestDir(
+			hParseForm(
+				injectService(sv)(
+					handleAdminLogin()))))
+	router.POST("/:board/_admin/",
+		handleTestDir(
+			hParseForm(
+				injectService(sv)(
+					authenticate(
+						handleAdmin())))))
+	router.POST("/:board/bbs.cgi",
+		protect(config.KEEP_OUT)(
+			handleTestDir(
+				hParseForm(
+					injectService(sv)(
+						handleBbsCgi())))))
+	router.GET("/:board/subject.txt",
+		protect(config.KEEP_OUT)(
+			injectService(sv)(
+				handleSubjectTxt())))
+	router.GET("/:board/dat/:dat",
+		protect(config.KEEP_OUT)(
+			injectService(sv)(
+				handleDat())))
 	return router
 }
 
@@ -86,6 +106,13 @@ func handleTestDir(h httprouter.Handle) httprouter.Handle {
 			http.NotFound(w, r)
 			return
 		}
+		h(w, r, ps)
+	}
+}
+
+func hParseForm(h httprouter.Handle) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		r.ParseForm()
 		h(w, r, ps)
 	}
 }

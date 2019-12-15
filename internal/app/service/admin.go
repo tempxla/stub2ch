@@ -13,7 +13,7 @@ type AdminFunction struct {
 	mem BoardMemcache
 }
 
-func (admin *AdminFunction) VerifySessionId(sessionId string) error {
+func (admin *AdminFunction) VerifySession(sessionId string) error {
 	cache, err := admin.mem.Get(config.ADMIN_COOKIE_NAME)
 	if err != nil {
 		return err
@@ -28,7 +28,7 @@ func (admin *AdminFunction) Login(passphrase, signature string) (string, error) 
 
 	sha256phrase := sha256.Sum256([]byte(passphrase))
 
-	if string(sha256phrase[:]) != config.ADMIN_PASSPHRASE_DIGEST {
+	if fmt.Sprintf("%x", sha256phrase) != config.ADMIN_PASSPHRASE_DIGEST {
 		return "", fmt.Errorf("invalid passphrase.")
 	}
 
