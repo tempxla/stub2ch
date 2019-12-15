@@ -2,14 +2,14 @@ package handle
 
 import (
 	"cloud.google.com/go/datastore"
+	"context"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
 	"github.com/tempxla/stub2ch/configs/app/config"
+	"github.com/tempxla/stub2ch/internal/app/memcache"
 	"github.com/tempxla/stub2ch/internal/app/service"
 	. "github.com/tempxla/stub2ch/internal/app/types"
 	"github.com/tempxla/stub2ch/internal/app/util"
-	"google.golang.org/appengine"
-	"google.golang.org/appengine/user"
 	"html/template"
 	"log"
 	"net/http"
@@ -30,17 +30,50 @@ var (
 	writeDatNotFoundTmpl  = template.Must(template.ParseFiles(filepath.Join("web", "template", "writeDatNotFound.html")))
 	writeDatDoneTmpl      = template.Must(template.ParseFiles(filepath.Join("web", "template", "writeDatDone.html")))
 	createThreadErrorTmpl = template.Must(template.ParseFiles(filepath.Join("web", "template", "createThreadError.html")))
+	adminIndexTmpl        = template.Must(template.ParseFiles(filepath.Join("web", "template", "admin", "index.html")))
 )
 
 // HTTP routing
-func NewBoardRouter(sv *service.BoardService) *httprouter.Router {
+func NewBoardRouter() *httprouter.Router {
 	router := httprouter.New()
 	router.GET("/", handleIndex)
-	router.GET("/:board/_admin/datastore", authenticate(handleTestDir(handleAdmin(sv))))
-	router.POST("/:board/bbs.cgi", protect(handleTestDir(handleBbsCgi(sv))))
-	router.GET("/:board/subject.txt", protect(handleSubjectTxt(sv)))
-	router.GET("/:board/dat/:dat", protect(handleDat(sv)))
+	router.GET("/:board/_admin/:mode", handleTestDir(serviceChain(authenticate, handleAdmin)))
+	router.POST("/:board/bbs.cgi", protect(handleTestDir(serviceChain(handleBbsCgi))))
+	router.GET("/:board/subject.txt", protect(serviceChain(handleSubjectTxt)))
+	router.GET("/:board/dat/:dat", protect(serviceChain(handleDat)))
 	return router
+}
+
+func serviceChain(handles ...func(*service.BoardService) httprouter.Handle) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+
+		ctx := context.Background()
+
+		// Creates a client.
+		client, err := datastore.NewClient(ctx, config.PROJECT_ID)
+		if err != nil {
+			log.Fatalf("Failed to create client: %v", err)
+		}
+
+		repo := &service.BoardStore{
+			Context: ctx,
+			Client:  client,
+		}
+		sysEnv := &service.SysEnv{
+			StartedTime: time.Now(),
+		}
+		mem := &memcache.AlterMemcache{
+			Context: ctx,
+			Client:  client,
+		}
+
+		sv := service.NewBoardService(repo, sysEnv, mem)
+
+		// Injection
+		for _, h := range handles {
+			h(sv)(w, r, ps)
+		}
+	}
 }
 
 func protect(h httprouter.Handle) httprouter.Handle {
@@ -53,26 +86,15 @@ func protect(h httprouter.Handle) httprouter.Handle {
 	}
 }
 
-func authenticate(h httprouter.Handle) httprouter.Handle {
+func authenticate(sv *service.BoardService) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		w.Header().Set("Content-type", "text/html; charset=utf-8")
-		ctx := appengine.NewContext(r)
-		u := user.Current(ctx)
-		if u == nil {
-			url, _ := user.LoginURL(ctx, "/")
-			fmt.Fprintf(w, `<a href="%s">Sign in or register</a>`, url)
-			return
-		}
-		h(w, r, ps)
+
 	}
 }
 
 func handleAdmin(sv *service.BoardService) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
-		ctx := appengine.NewContext(r)
-		url, _ := user.LogoutURL(ctx, "/")
-		fmt.Fprintf(w, `Welcome, %s! (<a href="%s">sign out</a>)`, user.Current(ctx), url)
 	}
 }
 

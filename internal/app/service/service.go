@@ -28,32 +28,37 @@ var (
 
 // Dependency injection for Board
 type BoardService struct {
-	repo BoardRepository
-	env  BoardEnvironment
+	repo  BoardRepository
+	env   BoardEnvironment
+	Admin *AdminFunction
 }
 
-type BoardRepository interface {
-	GetBoard(key *datastore.Key, entity *BoardEntity) (err error)
-	PutBoard(key *datastore.Key, entity *BoardEntity) (err error)
-	GetDat(key *datastore.Key, entity *DatEntity) (err error)
-	PutDat(key *datastore.Key, entity *DatEntity) (err error)
-	RunInTransaction(func(tx *datastore.Transaction) error) (err error)
-	TxGetBoard(tx *datastore.Transaction, key *datastore.Key, entity *BoardEntity) (err error)
-	TxPutBoard(tx *datastore.Transaction, key *datastore.Key, entity *BoardEntity) (err error)
-	TxGetDat(tx *datastore.Transaction, key *datastore.Key, entity *DatEntity) (err error)
-	TxPutDat(tx *datastore.Transaction, key *datastore.Key, entity *DatEntity) (err error)
+func NewBoardService(config ...func(*BoardService) *BoardService) *BoardService {
+	sv := &BoardService{}
+	for _, conf := range config {
+		sv = conf(sv)
+	}
+	return sv
 }
 
-type BoardEnvironment interface {
-	StartedAt() time.Time
-	SaltComputeId() string
-	SaltAdminMail() string
+func RepoConf(repo BoardRepository) func(*BoardService) *BoardService {
+	return func(sv *BoardService) *BoardService {
+		sv.repo = repo
+		return sv
+	}
 }
 
-func NewBoardService(repo BoardRepository, env BoardEnvironment) *BoardService {
-	return &BoardService{
-		repo: repo,
-		env:  env,
+func EnvConf(env BoardEnvironment) func(*BoardService) *BoardService {
+	return func(sv *BoardService) *BoardService {
+		sv.env = env
+		return sv
+	}
+}
+
+func MemConf(mem BoardMemcache) func(*BoardService) *BoardService {
+	return func(sv *BoardService) *BoardService {
+		sv.Admin.mem = mem
+		return sv
 	}
 }
 

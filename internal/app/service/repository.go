@@ -6,6 +6,18 @@ import (
 	. "github.com/tempxla/stub2ch/internal/app/types"
 )
 
+type BoardRepository interface {
+	GetBoard(key *datastore.Key, entity *BoardEntity) (err error)
+	PutBoard(key *datastore.Key, entity *BoardEntity) (err error)
+	GetDat(key *datastore.Key, entity *DatEntity) (err error)
+	PutDat(key *datastore.Key, entity *DatEntity) (err error)
+	RunInTransaction(func(tx *datastore.Transaction) error) (err error)
+	TxGetBoard(tx *datastore.Transaction, key *datastore.Key, entity *BoardEntity) (err error)
+	TxPutBoard(tx *datastore.Transaction, key *datastore.Key, entity *BoardEntity) (err error)
+	TxGetDat(tx *datastore.Transaction, key *datastore.Key, entity *DatEntity) (err error)
+	TxPutDat(tx *datastore.Transaction, key *datastore.Key, entity *DatEntity) (err error)
+}
+
 type BoardStore struct {
 	Context context.Context
 	Client  *datastore.Client

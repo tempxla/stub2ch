@@ -4,6 +4,12 @@ import (
 	"time"
 )
 
+type BoardEnvironment interface {
+	StartedAt() time.Time
+	SaltComputeId() string
+	SaltAdminMail() string
+}
+
 type SysEnv struct {
 	StartedTime   time.Time
 	ComputeIdSalt string
