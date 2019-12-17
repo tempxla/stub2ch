@@ -10,7 +10,7 @@ import (
 
 func TestVerifyPKCS1v15(t *testing.T) {
 
-	base64PK := config.RSA_PUBLIC
+	base64Pub := config.RSA_PUBLIC
 
 	var sha256Digest [sha256.Size]byte
 	sha256byte, err := hex.DecodeString(config.ADMIN_PASSPHRASE_DIGEST)
@@ -19,18 +19,62 @@ func TestVerifyPKCS1v15(t *testing.T) {
 	}
 	copy(sha256Digest[:], sha256byte)
 
-	base64sig, err := ioutil.ReadFile("/tmp/sig_stub2ch.txt")
+	base64Sig, err := ioutil.ReadFile("/tmp/sig_stub2ch.txt")
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = VerifyPKCS1v15(base64PK, sha256Digest, string(base64sig))
+	err = VerifyPKCS1v15(base64Pub, sha256Digest, string(base64Sig))
 
 	if err != nil {
 		t.Error(err)
-		t.Errorf("base64PK: %s", base64PK)
+		t.Errorf("base64Pub: %s", base64Pub)
 		t.Errorf("sha256Digest: %x", sha256Digest)
-		t.Errorf("base64sig: %s", string(base64sig))
+		t.Errorf("base64sig: %s", string(base64Sig))
+	}
+}
+
+func TestVerifyPKCS1v15_Bad(t *testing.T) {
+
+	// public key
+	base64Pub := config.RSA_PUBLIC
+	base64Pub_not_base64 := "NOT BASE64"
+	base64Pub_not_Pub := "44GG44KT44GT"
+
+	// digest
+	var sha256Digest [sha256.Size]byte
+	sha256byte, err := hex.DecodeString(config.ADMIN_PASSPHRASE_DIGEST)
+	if err != nil {
+		t.Error(err)
+	}
+	copy(sha256Digest[:], sha256byte)
+	var sha256Digest_bad [sha256.Size]byte
+	copy(sha256Digest_bad[:], []byte("AA"))
+
+	// signature
+	base64Sig, err := ioutil.ReadFile("/tmp/sig_stub2ch.txt")
+	if err != nil {
+		t.Error(err)
+	}
+	base64sig_not_base64 := []byte("NOT BASE64")
+
+	// test cases
+	tests := []struct {
+		pub string
+		dig [sha256.Size]byte
+		sig []byte
+	}{
+		{base64Pub_not_base64, sha256Digest, base64Sig},
+		{base64Pub_not_Pub, sha256Digest, base64Sig},
+		{base64Pub, sha256Digest, base64sig_not_base64},
+		{base64Pub, sha256Digest_bad, base64Sig},
 	}
 
+	// Verify
+	for _, ts := range tests {
+		err = VerifyPKCS1v15(ts.pub, ts.dig, string(ts.sig))
+		if err == nil {
+			t.Error("err is nil")
+		}
+	}
 }

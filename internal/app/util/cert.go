@@ -8,9 +8,9 @@ import (
 	"encoding/base64"
 )
 
-func VerifyPKCS1v15(base64PK string, sha256Digest [sha256.Size]byte, base64sig string) error {
+func VerifyPKCS1v15(base64Pub string, sha256Digest [sha256.Size]byte, base64Sig string) error {
 
-	pubKey, err := base64.StdEncoding.DecodeString(base64PK)
+	pubKey, err := base64.StdEncoding.DecodeString(base64Pub)
 	if err != nil {
 		return err
 	}
@@ -20,7 +20,7 @@ func VerifyPKCS1v15(base64PK string, sha256Digest [sha256.Size]byte, base64sig s
 		return err
 	}
 
-	signature, err := base64.StdEncoding.DecodeString(base64sig)
+	signature, err := base64.StdEncoding.DecodeString(base64Sig)
 	if err != nil {
 		return err
 	}
