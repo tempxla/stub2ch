@@ -50,7 +50,8 @@ func DefaultBoardService() (*BoardService, error) {
 		Client:  client,
 	}
 	sysEnv := &SysEnv{
-		StartedTime: time.Now(),
+		StartedTime:   time.Now(),
+		ComputeIdSalt: config.COMPUTE_ID_SALT,
 	}
 	mem := &AlterMemcache{
 		Context: ctx,
