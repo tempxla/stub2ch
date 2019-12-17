@@ -3,17 +3,17 @@ package util
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"github.com/tempxla/stub2ch/configs/app/config"
+	"github.com/tempxla/stub2ch/configs/app/admincfg"
 	"io/ioutil"
 	"testing"
 )
 
 func TestVerifyPKCS1v15(t *testing.T) {
 
-	base64Pub := config.RSA_PUBLIC
+	base64Pub := admincfg.RSA_PUBLIC
 
 	var sha256Digest [sha256.Size]byte
-	sha256byte, err := hex.DecodeString(config.ADMIN_PASSPHRASE_DIGEST)
+	sha256byte, err := hex.DecodeString(admincfg.LOGIN_PASSPHRASE_DIGEST)
 	if err != nil {
 		t.Error(err)
 	}
@@ -37,13 +37,13 @@ func TestVerifyPKCS1v15(t *testing.T) {
 func TestVerifyPKCS1v15_Bad(t *testing.T) {
 
 	// public key
-	base64Pub := config.RSA_PUBLIC
+	base64Pub := admincfg.RSA_PUBLIC
 	base64Pub_not_base64 := "NOT BASE64"
 	base64Pub_not_Pub := "44GG44KT44GT"
 
 	// digest
 	var sha256Digest [sha256.Size]byte
-	sha256byte, err := hex.DecodeString(config.ADMIN_PASSPHRASE_DIGEST)
+	sha256byte, err := hex.DecodeString(admincfg.LOGIN_PASSPHRASE_DIGEST)
 	if err != nil {
 		t.Error(err)
 	}

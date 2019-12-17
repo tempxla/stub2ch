@@ -4,7 +4,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"github.com/google/uuid"
-	"github.com/tempxla/stub2ch/configs/app/config"
+	"github.com/tempxla/stub2ch/configs/app/admincfg"
 	"github.com/tempxla/stub2ch/internal/app/util"
 	"time"
 )
@@ -14,7 +14,7 @@ type AdminFunction struct {
 }
 
 func (admin *AdminFunction) VerifySession(sessionId string) error {
-	cache, err := admin.mem.Get(config.ADMIN_COOKIE_NAME)
+	cache, err := admin.mem.Get(admincfg.LOGIN_COOKIE_NAME)
 	if err != nil {
 		return err
 	}
@@ -28,17 +28,17 @@ func (admin *AdminFunction) Login(passphrase, signature string) (string, error) 
 
 	sha256phrase := sha256.Sum256([]byte(passphrase))
 
-	if fmt.Sprintf("%x", sha256phrase) != config.ADMIN_PASSPHRASE_DIGEST {
+	if fmt.Sprintf("%x", sha256phrase) != admincfg.LOGIN_PASSPHRASE_DIGEST {
 		return "", fmt.Errorf("invalid passphrase.")
 	}
 
-	if err := util.VerifyPKCS1v15(config.RSA_PUBLIC, sha256phrase, signature); err != nil {
+	if err := util.VerifyPKCS1v15(admincfg.RSA_PUBLIC, sha256phrase, signature); err != nil {
 		return "", err
 	}
 
 	sessionId := uuid.New().String()
 	item := &Item{
-		Key:        config.ADMIN_COOKIE_NAME,
+		Key:        admincfg.LOGIN_COOKIE_NAME,
 		Value:      []byte(sessionId),
 		Expiration: time.Duration(30) * time.Minute, // 30分たっても削除されないよ！
 	}
@@ -52,7 +52,7 @@ func (admin *AdminFunction) Login(passphrase, signature string) (string, error) 
 
 func (admin *AdminFunction) Logout(sessionId string) error {
 
-	if err := admin.mem.Delete(config.ADMIN_COOKIE_NAME); err != nil {
+	if err := admin.mem.Delete(admincfg.LOGIN_COOKIE_NAME); err != nil {
 		return err
 	}
 

@@ -9,6 +9,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"github.com/tempxla/stub2ch/configs/app/config"
+	"github.com/tempxla/stub2ch/configs/app/secretcfg"
 	. "github.com/tempxla/stub2ch/internal/app/types"
 	"html"
 	"strconv"
@@ -51,7 +52,7 @@ func DefaultBoardService() (*BoardService, error) {
 	}
 	sysEnv := &SysEnv{
 		StartedTime:   time.Now(),
-		ComputeIdSalt: config.COMPUTE_ID_SALT,
+		ComputeIdSalt: secretcfg.COMPUTE_ID_SALT,
 	}
 	mem := &AlterMemcache{
 		Context: ctx,

@@ -3,6 +3,7 @@ package service
 import (
 	"cloud.google.com/go/datastore"
 	"context"
+	"github.com/tempxla/stub2ch/configs/app/admincfg"
 	"github.com/tempxla/stub2ch/configs/app/config"
 	"testing"
 )
@@ -26,7 +27,7 @@ func TestVerifySession_notfound(t *testing.T) {
 		mem: mem,
 	}
 
-	mem.Delete(config.ADMIN_COOKIE_NAME)
+	mem.Delete(admincfg.LOGIN_COOKIE_NAME)
 
 	// Exercise
 	err = admin.VerifySession("x")
@@ -57,7 +58,7 @@ func TestVerifySession_unmatch(t *testing.T) {
 	}
 
 	item := &Item{
-		Key:   config.ADMIN_COOKIE_NAME,
+		Key:   admincfg.LOGIN_COOKIE_NAME,
 		Value: []byte("XXXX"),
 	}
 
@@ -92,7 +93,7 @@ func TestVerifySession(t *testing.T) {
 	}
 
 	item := &Item{
-		Key:   config.ADMIN_COOKIE_NAME,
+		Key:   admincfg.LOGIN_COOKIE_NAME,
 		Value: []byte("XXXX"),
 	}
 
