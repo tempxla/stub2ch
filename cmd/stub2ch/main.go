@@ -12,13 +12,6 @@ func main() {
 
 	router := handle.NewBoardRouter(nil)
 
-	// Serve static files out of the public directory.
-	// By configuring a static handler in app.yaml, App Engine serves all the
-	// static content itself. As a result, the following two lines are in
-	// effect for development only.
-	public := http.StripPrefix("/static", http.FileServer(http.Dir("static")))
-	http.Handle("/static/", public)
-
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"

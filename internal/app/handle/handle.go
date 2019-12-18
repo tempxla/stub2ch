@@ -25,6 +25,7 @@ type ServiceHandle func(http.ResponseWriter, *http.Request, httprouter.Params, *
 // HTTP routing
 func NewBoardRouter(sv *service.BoardService) *httprouter.Router {
 	router := httprouter.New()
+	router.ServeFiles("/:board/_static/*filepath", http.Dir("web/static"))
 	router.GET("/", handleIndex())
 	router.POST("/:board/_admin/login",
 		handleTestDir(
