@@ -25,8 +25,11 @@ type ServiceHandle func(http.ResponseWriter, *http.Request, httprouter.Params, *
 // HTTP routing
 func NewBoardRouter(sv *service.BoardService) *httprouter.Router {
 	router := httprouter.New()
-	router.ServeFiles("/:board/_static/*filepath", http.Dir("web/static"))
+
+	// トップ
 	router.GET("/", handleIndex())
+
+	// 管理ページ
 	router.POST("/:board/_admin/login",
 		handleTestDir(
 			parseForm(
@@ -38,6 +41,7 @@ func NewBoardRouter(sv *service.BoardService) *httprouter.Router {
 				injectService(sv)(
 					authenticate(
 						handleAdmin())))))
+	// 掲示板
 	router.POST("/:board/bbs.cgi",
 		protect(config.KEEP_OUT)(
 			handleTestDir(
@@ -52,6 +56,12 @@ func NewBoardRouter(sv *service.BoardService) *httprouter.Router {
 		protect(config.KEEP_OUT)(
 			injectService(sv)(
 				handleDat())))
+
+	// 静的ファイル
+	// GAEの設定はapp.yamlなので、これは開発用
+	// The path must end with "/*filepath"
+	router.ServeFiles("/:board/_static/*filepath", http.Dir("web/static"))
+
 	return router
 }
 
