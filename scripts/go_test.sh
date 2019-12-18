@@ -19,6 +19,10 @@ openssl dgst \
         tools/auth/passphrase.txt \
     | base64 -w 0 > $signature_path
 
+# pass
+pass_path=/tmp/pass_stub2ch.txt
+cp tools/auth/passphrase.txt $pass_path
+
 ##### TESTING #####
 go test ./... -cover
 
@@ -29,3 +33,6 @@ rm $web_path
 
 # signature
 rm $signature_path
+
+# pass
+rm $pass_path

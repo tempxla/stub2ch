@@ -46,5 +46,9 @@ func (mem *AlterMemcache) Get(key string) (*Item, error) {
 
 func (mem *AlterMemcache) Delete(key string) error {
 	dkey := datastore.NameKey(kind, key, nil)
-	return mem.Client.Delete(mem.Context, dkey)
+	err := mem.Client.Delete(mem.Context, dkey)
+	if err != nil && err != datastore.ErrNoSuchEntity {
+		return err
+	}
+	return nil
 }
