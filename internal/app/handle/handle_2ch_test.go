@@ -1,7 +1,6 @@
 package handle
 
 import (
-	_ "github.com/julienschmidt/httprouter"
 	"github.com/tempxla/stub2ch/internal/app/service"
 	"github.com/tempxla/stub2ch/internal/app/util"
 	"github.com/tempxla/stub2ch/tools/app/testutil"

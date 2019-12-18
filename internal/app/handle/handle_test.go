@@ -1,15 +1,10 @@
 package handle
 
 import (
-	_ "github.com/julienschmidt/httprouter"
 	"github.com/tempxla/stub2ch/internal/app/service"
-	"github.com/tempxla/stub2ch/internal/app/util"
-	"github.com/tempxla/stub2ch/tools/app/testutil"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
-	"time"
 )
 
 // トップページ表示
