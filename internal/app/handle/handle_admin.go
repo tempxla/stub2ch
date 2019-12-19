@@ -13,7 +13,7 @@ func authenticate(sh ServiceHandle) ServiceHandle {
 		const invalid_user_message = "invalid user."
 
 		c, err := r.Cookie(admincfg.LOGIN_COOKIE_NAME)
-		if err != nil || len(c.Value) != 1 {
+		if err != nil {
 			log.Println("admin cookie is missing")
 			http.Error(w, invalid_user_message, http.StatusForbidden) // 403
 			return
