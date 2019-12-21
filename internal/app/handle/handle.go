@@ -32,12 +32,12 @@ func NewBoardRouter(sv *service.BoardService) *httprouter.Router {
 	// 管理ページ
 	router.POST("/:board/_admin/login",
 		handleTestDir(
-			parseForm(
+			handleParseForm(
 				injectService(sv)(
 					handleAdminLogin()))))
 	router.POST("/:board/_admin/",
 		handleTestDir(
-			parseForm(
+			handleParseForm(
 				injectService(sv)(
 					authenticate(
 						handleAdmin())))))
@@ -45,7 +45,7 @@ func NewBoardRouter(sv *service.BoardService) *httprouter.Router {
 	router.POST("/:board/bbs.cgi",
 		protect(config.KEEP_OUT)(
 			handleTestDir(
-				parseForm(
+				handleParseForm(
 					injectService(sv)(
 						handleBbsCgi())))))
 	router.GET("/:board/subject.txt",
@@ -121,7 +121,7 @@ func handleTestDir(h httprouter.Handle) httprouter.Handle {
 	}
 }
 
-func parseForm(h httprouter.Handle) httprouter.Handle {
+func handleParseForm(h httprouter.Handle) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		r.ParseForm()
 		h(w, r, ps)
