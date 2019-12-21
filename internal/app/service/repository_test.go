@@ -1,6 +1,7 @@
 package service
 
 import (
+	"bytes"
 	"cloud.google.com/go/datastore"
 	"context"
 	"github.com/tempxla/stub2ch/configs/app/config"
@@ -9,7 +10,7 @@ import (
 	"time"
 )
 
-func TestGetBoard(t *testing.T) {
+func TestPutAndGetBoard(t *testing.T) {
 
 	ctx := context.Background()
 
@@ -59,42 +60,152 @@ func TestGetBoard(t *testing.T) {
 
 }
 
-// Already Test at TestGetBoard.
-// func TestPutBoard(t *testing.T) {
-// 	return
-// }
+func TestPutAndGetDat(t *testing.T) {
+	ctx := context.Background()
 
-// func TestGetDat(t *testing.T) {
-// 	err = repo.Client.Get(repo.Context, key, entity)
-// 	return
-// }
+	// Creates a client.
+	client, err := datastore.NewClient(ctx, config.PROJECT_ID)
+	if err != nil {
+		t.Fatalf("Failed to create client: %v", err)
+	}
 
-// func TestPutDat(t *testing.T) {
-// 	_, err = repo.Client.Put(repo.Context, key, entity)
-// 	return
-// }
+	// Clean Datastore
+	cleanDatastore(t, ctx, client)
 
-// func TestRunInTransaction(t *testing.T) {
-// 	_, err = repo.Client.RunInTransaction(repo.Context, f)
-// 	return
-// }
+	sv := NewBoardService(RepoConf(&BoardStore{
+		Client:  client,
+		Context: ctx,
+	}))
 
-// func TestTxGetBoard(t *testing.T) {
-// 	err = tx.Get(key, entity)
-// 	return
-// }
+	boardKey := sv.repo.BoardKey("news4test")
 
-// func TestTxPutBoard(t *testing.T) {
-// 	_, err = tx.Put(key, entity)
-// 	return
-// }
+	boardEntity := &BoardEntity{}
+	sv.repo.PutBoard(boardKey, boardEntity)
 
-// func TestTxGetDat(t *testing.T) {
-// 	err = tx.Get(key, entity)
-// 	return
-// }
+	datKey := sv.repo.DatKey("012", boardKey)
+	datEntity1 := &DatEntity{
+		Dat: []byte("hogepiyo"),
+	}
+	sv.repo.PutDat(datKey, datEntity1)
 
-// func TestTxPutDat(t *testing.T) {
-// 	_, err = tx.Put(key, entity)
-// 	return
-// }
+	datEntity2 := &DatEntity{}
+	sv.repo.GetDat(datKey, datEntity2)
+
+	if !bytes.Equal(datEntity1.Dat, datEntity2.Dat) {
+		t.Errorf("%s vs %s", datEntity1.Dat, datEntity2.Dat)
+	}
+}
+
+func TestTxPutAndGetBoard(t *testing.T) {
+
+	ctx := context.Background()
+
+	// Creates a client.
+	client, err := datastore.NewClient(ctx, config.PROJECT_ID)
+	if err != nil {
+		t.Fatalf("Failed to create client: %v", err)
+	}
+
+	// Clean Datastore
+	cleanDatastore(t, ctx, client)
+
+	sv := NewBoardService(RepoConf(&BoardStore{
+		Client:  client,
+		Context: ctx,
+	}))
+
+	key := sv.repo.BoardKey("news4test")
+
+	now, _ := time.ParseInLocation("2006-01-02 15:04:05.000",
+		"2019-11-23 22:29:01.123", time.Local)
+
+	// Put
+	entity1 := &BoardEntity{
+		Subjects: []Subject{
+			{
+				ThreadKey:    "0123",
+				ThreadTitle:  "xxx",
+				MessageCount: 1,
+				LastModified: now,
+			},
+		},
+	}
+	err = sv.repo.RunInTransaction(func(tx *datastore.Transaction) error {
+		sv.repo.TxPutBoard(tx, key, entity1)
+		return nil
+	})
+	if err != nil {
+		t.Error(err)
+	}
+
+	// Get
+	entity2 := &BoardEntity{}
+	err = sv.repo.RunInTransaction(func(tx *datastore.Transaction) error {
+		sv.repo.TxPutBoard(tx, key, entity1)
+		err = sv.repo.TxGetBoard(tx, key, entity2)
+		return nil
+	})
+	if err != nil {
+		t.Error(err)
+	}
+
+	if len(entity1.Subjects) != len(entity2.Subjects) {
+		t.Errorf("len is not equal %v vs %v", len(entity1.Subjects), len(entity2.Subjects))
+	}
+	for i, sbj := range entity1.Subjects {
+		if sbj != entity2.Subjects[i] {
+			t.Errorf("%v vs %v", sbj, entity2.Subjects[i])
+		}
+	}
+}
+
+func TestTxPutAndGetDat(t *testing.T) {
+	ctx := context.Background()
+
+	// Creates a client.
+	client, err := datastore.NewClient(ctx, config.PROJECT_ID)
+	if err != nil {
+		t.Fatalf("Failed to create client: %v", err)
+	}
+
+	// Clean Datastore
+	cleanDatastore(t, ctx, client)
+
+	sv := NewBoardService(RepoConf(&BoardStore{
+		Client:  client,
+		Context: ctx,
+	}))
+
+	// Put
+	datEntity1 := &DatEntity{
+		Dat: []byte("hogepiyo"),
+	}
+	err = sv.repo.RunInTransaction(func(tx *datastore.Transaction) error {
+		boardKey := sv.repo.BoardKey("news4test")
+		datKey := sv.repo.DatKey("012", boardKey)
+		sv.repo.TxPutDat(tx, datKey, datEntity1)
+		return nil
+	})
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	// Get
+	datEntity2 := &DatEntity{}
+	err = sv.repo.RunInTransaction(func(tx *datastore.Transaction) error {
+		boardKey := sv.repo.BoardKey("news4test")
+		datKey := sv.repo.DatKey("012", boardKey)
+		sv.repo.TxGetDat(tx, datKey, datEntity2)
+		return nil
+	})
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	if !bytes.Equal(datEntity1.Dat, datEntity2.Dat) {
+		t.Errorf("%s vs %s", datEntity1.Dat, datEntity2.Dat)
+	}
+
+}
