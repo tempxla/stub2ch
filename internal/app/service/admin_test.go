@@ -217,7 +217,7 @@ func TestLogout(t *testing.T) {
 	}
 	mem.Set(item)
 
-	err = admin.Logout("xxx")
+	err = admin.Logout()
 
 	if err != nil {
 		t.Error(err)

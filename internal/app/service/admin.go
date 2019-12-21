@@ -50,7 +50,7 @@ func (admin *AdminFunction) Login(passphrase, signature string) (string, error) 
 	return sessionId, nil
 }
 
-func (admin *AdminFunction) Logout(sessionId string) error {
+func (admin *AdminFunction) Logout() error {
 
 	if err := admin.mem.Delete(admincfg.LOGIN_COOKIE_NAME); err != nil {
 		return err

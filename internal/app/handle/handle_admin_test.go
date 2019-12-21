@@ -245,3 +245,45 @@ func TestHandleAdminLogin_WrongSignature(t *testing.T) {
 		t.Errorf("%v", body)
 	}
 }
+
+func TestHandleLogout(t *testing.T) {
+
+	sv, _ := service.DefaultBoardService()
+
+	// Session Cookie
+	passphrase, err := ioutil.ReadFile("/tmp/pass_stub2ch.txt")
+	if err != nil {
+		t.Error(err)
+	}
+
+	base64Sig, err := ioutil.ReadFile("/tmp/sig_stub2ch.txt")
+	if err != nil {
+		t.Error(err)
+	}
+
+	sid, err := sv.Admin.Login(string(passphrase), string(base64Sig))
+	if err != nil {
+		t.Errorf("setup failed. %v", err)
+	}
+
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest("POST", "/test/_admin/logout", nil)
+	request.AddCookie(&http.Cookie{
+		Name:  admincfg.LOGIN_COOKIE_NAME,
+		Value: sid,
+	})
+
+	router := NewBoardRouter(sv)
+
+	// Exercise
+	router.ServeHTTP(writer, request)
+
+	// Verify
+	if writer.Code != 200 {
+		t.Errorf("Response code is %v", writer.Code)
+	}
+
+	if body := writer.Body.String(); !strings.Contains(body, "success") {
+		t.Errorf("%v", body)
+	}
+}

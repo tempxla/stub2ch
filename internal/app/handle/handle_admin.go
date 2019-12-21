@@ -1,6 +1,7 @@
 package handle
 
 import (
+	"fmt"
 	"github.com/julienschmidt/httprouter"
 	"github.com/tempxla/stub2ch/configs/app/admincfg"
 	"github.com/tempxla/stub2ch/internal/app/service"
@@ -63,6 +64,17 @@ func handleAdminLogin() ServiceHandle {
 		http.SetCookie(w, cookie)
 
 		executeAdminIndex(w, r)
+	}
+}
+
+func handleAdminLogout() ServiceHandle {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params, sv *service.BoardService) {
+		err := sv.Admin.Logout()
+		if err != nil {
+			fmt.Fprint(w, "Logout failed.")
+			return
+		}
+		fmt.Fprint(w, "Logout success.")
 	}
 }
 

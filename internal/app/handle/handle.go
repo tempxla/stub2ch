@@ -41,6 +41,12 @@ func NewBoardRouter(sv *service.BoardService) *httprouter.Router {
 				injectService(sv)(
 					authenticate(
 						handleAdmin())))))
+	router.POST("/:board/_admin/logout",
+		handleTestDir(
+			handleParseForm(
+				injectService(sv)(
+					authenticate(
+						handleAdminLogout())))))
 	// 掲示板
 	router.POST("/:board/bbs.cgi",
 		protect(config.KEEP_OUT)(
