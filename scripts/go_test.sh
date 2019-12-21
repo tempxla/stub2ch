@@ -24,7 +24,15 @@ pass_path=/tmp/pass_stub2ch.txt
 cp tools/auth/passphrase.txt $pass_path
 
 ##### TESTING #####
-go test ./... -cover
+cover_out=/tmp/stub2ch_cover.out
+go test ./... -coverprofile=$cover_out
+if [ $# -eq 1 ]; then
+    if [ $1 = "html" ]; then
+        go tool cover -html=$cover_out
+    elif [ $1 = "func" ]; then
+        go tool cover -func=$cover_out
+    fi
+fi
 
 ##### TearDown #####
 
