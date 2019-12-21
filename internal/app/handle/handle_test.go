@@ -3,30 +3,29 @@ package handle
 import (
 	"fmt"
 	"github.com/julienschmidt/httprouter"
-	"github.com/tempxla/stub2ch/internal/app/service"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
 // トップページ表示
 func TestHandleIndex(t *testing.T) {
 	// Setup
-	var repo service.BoardRepository
-	var sysEnv service.BoardEnvironment
-	sv := service.NewBoardService(service.RepoConf(repo), service.EnvConf(sysEnv))
-
-	// request
 	writer := httptest.NewRecorder()
 	request, _ := http.NewRequest("GET", "/", nil)
 
 	// Exercise
-	router := NewBoardRouter(sv)
+	router := NewBoardRouter(nil)
 	router.ServeHTTP(writer, request)
 
 	// Verify
-	if err := indexTmpl.Execute(writer, nil); err != nil {
-		t.Errorf("Error executing template: %v", err)
+	if writer.Code != 200 {
+		t.Errorf("Response code is %v", writer.Code)
+	}
+	body := writer.Body.String()
+	if !strings.Contains(body, "やあ （´・ω・｀)") {
+		t.Errorf("body is %v", body)
 	}
 }
 
