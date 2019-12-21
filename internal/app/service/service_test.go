@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"cloud.google.com/go/datastore"
 	"context"
+	"fmt"
 	"github.com/tempxla/stub2ch/configs/app/config"
+	"github.com/tempxla/stub2ch/configs/app/secretcfg"
 	. "github.com/tempxla/stub2ch/internal/app/types"
 	"github.com/tempxla/stub2ch/tools/app/testutil"
 	"strconv"
@@ -34,6 +36,16 @@ func cleanDatastore(t *testing.T, ctx context.Context, client *datastore.Client)
 	}
 	if err := client.DeleteMulti(ctx, keys); err != nil {
 		t.Fatalf("Failed clean board. delete dat  %v", err)
+	}
+}
+
+func TestDefaultBoardService(t *testing.T) {
+	sv, err := DefaultBoardService()
+	if err != nil {
+		t.Error(err)
+	}
+	if sv.env.SaltComputeId() != secretcfg.COMPUTE_ID_SALT {
+		t.Error("unexpected COMPUTE_ID_SALT")
 	}
 }
 
@@ -359,6 +371,110 @@ func TestCreateNewThread_NoSuchBoard(t *testing.T) {
 	}
 }
 
+func TestWriteDat(t *testing.T) {
+	// Setup
+	// ----------------------------------
+	ctx := context.Background()
+
+	// Creates a client.
+	client, err := datastore.NewClient(ctx, config.PROJECT_ID)
+	if err != nil {
+		t.Fatalf("Failed to create client: %v", err)
+	}
+
+	// Clean Datastore
+	cleanDatastore(t, ctx, client)
+
+	// Sets the kind for the new entity.
+	kind := "Board"
+	// Sets the name/ID for the new entity.
+	name := "news4test"
+	// Creates a Key instance.
+	boardKey := datastore.NameKey(kind, name, nil)
+
+	// Creates a Board instance.
+	board := BoardEntity{
+		Subjects: []Subject{},
+	}
+
+	// Saves the new entity.
+	if _, err := client.Put(ctx, boardKey, &board); err != nil {
+		t.Fatalf("Failed to save board: %v", err)
+	}
+
+	// Injection
+	startedAt, _ := time.ParseInLocation("2006-01-02 15:04:05.000",
+		"2019-11-24 23:26:02.789", time.Local)
+	sv := NewBoardService(RepoConf(
+		&BoardStore{
+			Context: ctx,
+			Client:  client,
+		}),
+		EnvConf(&SysEnv{
+			StartedTime:   startedAt,
+			ComputeIdSalt: "1x",
+		}),
+	)
+
+	// Create new thread.
+	date1, _ := time.ParseInLocation("2006-01-02 15:04:05.000",
+		"2019-11-23 22:29:01.123", time.Local)
+	threadKey, err := sv.CreateThread("news4test",
+		"テスタ", "age", date1, "ABC", "これはテストスレ", "スレ立てテスト")
+
+	// Exercise
+	// ----------------------------------
+	sv.WriteDat("news4test", threadKey, "名前2", "メール2", "id2", "カキ２")
+
+	// Verify
+	// ----------------------------------
+	if err != nil {
+		t.Errorf("err is %v", err)
+	}
+	// Get Board
+	key := datastore.NameKey("Board", "news4test", nil)
+	e := new(BoardEntity)
+	if err := client.Get(ctx, key, e); err != nil {
+		t.Fatalf("Failed to get board  %v", err)
+	}
+	if len(e.Subjects) != 1 {
+		t.Fatalf("subject count  %d", len(e.Subjects))
+	}
+	// Verify Board
+	subject := e.Subjects[0]
+	expectedSubject := Subject{
+		ThreadKey:    threadKey,
+		ThreadTitle:  "スレ立てテスト",
+		MessageCount: 2,
+		LastModified: sv.StartedAt(),
+	}
+	if subject != expectedSubject {
+		t.Errorf("Fail: contents of subject. actual %v", subject)
+		t.Fatalf("Fail: contents of subject. expect %v", expectedSubject)
+	}
+	// Get Dat
+	ancestor := datastore.NameKey("Board", "news4test", nil)
+	query := datastore.NewQuery("Dat").Ancestor(ancestor)
+	var datList []*DatEntity
+	if _, err := client.GetAll(ctx, query, &datList); err != nil {
+		t.Fatalf("Failed to get dat  %v", err)
+	}
+	if len(datList) != 1 {
+		t.Fatalf("dat count  %d", len(datList))
+	}
+	// Verify Dat
+	dateStr := fmt.Sprintf("%s(%s) %s",
+		sv.StartedAt().Format(dat_date_layout),
+		week_days_jp[sv.StartedAt().Weekday()],
+		sv.StartedAt().Format(dat_time_layout),
+	)
+	if bytes.Equal(datList[0].Dat,
+		[]byte("名前<>メール<>2019/11/23(土) 22:29:01.123 ID:ABC<> 本文 <>スレタイ"+
+			"\n名前2<>メール2<>"+dateStr+" ID:id2<> カキ２ <>")) {
+		t.Fatalf("content of dat  %v", datList[0].Dat)
+	}
+}
+
 func TestUpdateSubjectsWhenWriteDat_age(t *testing.T) {
 	// Setup
 	t1 := time.Now().Add(time.Duration(-1) * time.Hour)
@@ -523,5 +639,17 @@ func TestComputeId(t *testing.T) {
 	// if id != "0hGpPuA0" {
 	if id != "WmvlSQ2M" {
 		t.Errorf("value: %v", id)
+	}
+}
+
+func TestStartedAt(t *testing.T) {
+	startedAt := time.Now()
+	env := &SysEnv{
+		StartedTime: startedAt,
+	}
+	sv := NewBoardService(EnvConf(env))
+
+	if sv.StartedAt() != startedAt {
+		t.Errorf("\n1: %v\n2: %v", startedAt, sv.StartedAt())
 	}
 }
