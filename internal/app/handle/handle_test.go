@@ -3,10 +3,12 @@ package handle
 import (
 	"fmt"
 	"github.com/julienschmidt/httprouter"
+	"github.com/tempxla/stub2ch/internal/app/service"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
 
 // トップページ表示
@@ -26,6 +28,61 @@ func TestHandleIndex(t *testing.T) {
 	body := writer.Body.String()
 	if !strings.Contains(body, "やあ （´・ω・｀)") {
 		t.Errorf("body is %v", body)
+	}
+}
+
+func TestInjectService_NotDefault(t *testing.T) {
+	handleOK := func(w http.ResponseWriter, r *http.Request,
+		ps httprouter.Params, sv *service.BoardService) {
+		fmt.Fprint(w, sv.StartedAt())
+		return
+	}
+
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest("PUT", "/", nil)
+
+	now := time.Now()
+	sv := service.NewBoardService(service.EnvConf(&service.SysEnv{StartedTime: now}))
+
+	// Exercise
+	router := NewBoardRouter(nil)
+	router.PUT("/", injectService(sv)(handleOK))
+	router.ServeHTTP(writer, request)
+
+	// Verify
+	if writer.Code != 200 {
+		t.Errorf("Response code is %v", writer.Code)
+	}
+	body := writer.Body.String()
+	if body != fmt.Sprintf("%v", now) {
+		t.Errorf("body is %v", body)
+	}
+}
+
+func TestInjectService_Default(t *testing.T) {
+	handleOK := func(w http.ResponseWriter, r *http.Request,
+		ps httprouter.Params, sv *service.BoardService) {
+		fmt.Fprint(w, sv.StartedAt())
+		return
+	}
+
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest("PUT", "/", nil)
+
+	early := time.Now()
+
+	// Exercise
+	router := NewBoardRouter(nil)
+	router.PUT("/", injectService(nil)(handleOK))
+	router.ServeHTTP(writer, request)
+
+	// Verify
+	if writer.Code != 200 {
+		t.Errorf("Response code is %v", writer.Code)
+	}
+	body := writer.Body.String()
+	if es := fmt.Sprintf("%v", early); es >= body {
+		t.Errorf("value \n%v\n%v", es, body)
 	}
 }
 
