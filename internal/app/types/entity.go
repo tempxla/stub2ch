@@ -39,7 +39,3 @@ type Subject struct {
 type DatEntity struct {
 	Dat []byte
 }
-
-func f(k BoardKey) {
-
-}
