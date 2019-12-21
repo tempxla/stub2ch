@@ -3,7 +3,6 @@ package service
 import (
 	"cloud.google.com/go/datastore"
 	"context"
-	"fmt"
 	"github.com/tempxla/stub2ch/configs/app/config"
 	. "github.com/tempxla/stub2ch/internal/app/types"
 	"testing"
@@ -48,14 +47,16 @@ func TestGetBoard(t *testing.T) {
 	entity2 := &BoardEntity{}
 	err = sv.repo.GetBoard(key, entity2)
 
-	// kuso code
-	if fmt.Sprintf("%v", entity1) != "&{[{0123 xxx 1 2019-11-23 22:29:01.123 +0900 JST}]}" {
-		t.Errorf("unexpected  %s", fmt.Sprintf("%v", entity1))
+	if len(entity1.Subjects) != len(entity2.Subjects) {
+		t.Errorf("len is not equal %v vs %v", len(entity1.Subjects), len(entity2.Subjects))
 	}
 
-	if fmt.Sprintf("%v", entity1) != fmt.Sprintf("%v", entity2) {
-		t.Errorf("put or get failed.\n%v\n%v", entity1, entity2)
+	for i, sbj := range entity1.Subjects {
+		if sbj != entity2.Subjects[i] {
+			t.Errorf("%v vs %v", sbj, entity2.Subjects[i])
+		}
 	}
+
 }
 
 // Already Test at TestGetBoard.
