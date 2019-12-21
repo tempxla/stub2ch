@@ -82,6 +82,10 @@ func TestAuthenticate_CookieMissing(t *testing.T) {
 	if writer.Code != 403 {
 		t.Errorf("Response code is %v", writer.Code)
 	}
+	body := writer.Body.String()
+	if body == "OK" {
+		t.Error("body is OK.")
+	}
 }
 
 func TestAuthenticate_WrongSession(t *testing.T) {
@@ -109,5 +113,9 @@ func TestAuthenticate_WrongSession(t *testing.T) {
 	// Verify
 	if writer.Code != 403 {
 		t.Errorf("Response code is %v", writer.Code)
+	}
+	body := writer.Body.String()
+	if body == "OK" {
+		t.Error("body is OK.")
 	}
 }
