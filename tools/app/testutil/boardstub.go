@@ -12,8 +12,20 @@ type BoardStub struct {
 	DatMap   map[string]map[string]*DatEntity
 }
 
-func (repo *BoardStub) GetBoard(key *datastore.Key, entity *BoardEntity) (err error) {
-	if e, ok := repo.BoardMap[key.Name]; ok {
+func (repo *BoardStub) BoardKey(name string) (key *BoardKey) {
+	k := datastore.NameKey(KIND_BOARD, name, nil)
+	key = &BoardKey{Key: k}
+	return
+}
+
+func (repo *BoardStub) DatKey(name string, parent *BoardKey) (key *DatKey) {
+	k := datastore.NameKey(KIND_DAT, name, parent.Key)
+	key = &DatKey{Key: k}
+	return
+}
+
+func (repo *BoardStub) GetBoard(key *BoardKey, entity *BoardEntity) (err error) {
+	if e, ok := repo.BoardMap[key.Key.Name]; ok {
 		entity.Subjects = e.Subjects
 		return
 	} else {
@@ -21,15 +33,15 @@ func (repo *BoardStub) GetBoard(key *datastore.Key, entity *BoardEntity) (err er
 	}
 }
 
-func (repo *BoardStub) PutBoard(key *datastore.Key, entity *BoardEntity) (err error) {
-	repo.BoardMap[key.Name] = entity
+func (repo *BoardStub) PutBoard(key *BoardKey, entity *BoardEntity) (err error) {
+	repo.BoardMap[key.Key.Name] = entity
 	return
 }
 
-func (repo *BoardStub) GetDat(key *datastore.Key, entity *DatEntity) (err error) {
-	if board, ok := repo.DatMap[key.Parent.Name]; !ok {
+func (repo *BoardStub) GetDat(key *DatKey, entity *DatEntity) (err error) {
+	if board, ok := repo.DatMap[key.Key.Parent.Name]; !ok {
 		return datastore.ErrNoSuchEntity
-	} else if e, ok := board[key.Name]; ok {
+	} else if e, ok := board[key.Key.Name]; ok {
 		entity.Dat = e.Dat
 		return
 	} else {
@@ -37,8 +49,8 @@ func (repo *BoardStub) GetDat(key *datastore.Key, entity *DatEntity) (err error)
 	}
 }
 
-func (repo *BoardStub) PutDat(key *datastore.Key, entity *DatEntity) (err error) {
-	repo.DatMap[key.Parent.Name][key.Name] = entity
+func (repo *BoardStub) PutDat(key *DatKey, entity *DatEntity) (err error) {
+	repo.DatMap[key.Key.Parent.Name][key.Key.Name] = entity
 	return
 }
 
@@ -46,22 +58,22 @@ func (repo *BoardStub) RunInTransaction(f func(tx *datastore.Transaction) error)
 	return f(nil)
 }
 
-func (repo *BoardStub) TxGetBoard(tx *datastore.Transaction, key *datastore.Key, entity *BoardEntity) (err error) {
+func (repo *BoardStub) TxGetBoard(tx *datastore.Transaction, key *BoardKey, entity *BoardEntity) (err error) {
 	err = repo.GetBoard(key, entity)
 	return
 }
 
-func (repo *BoardStub) TxPutBoard(tx *datastore.Transaction, key *datastore.Key, entity *BoardEntity) (err error) {
+func (repo *BoardStub) TxPutBoard(tx *datastore.Transaction, key *BoardKey, entity *BoardEntity) (err error) {
 	err = repo.PutBoard(key, entity)
 	return
 }
 
-func (repo *BoardStub) TxGetDat(tx *datastore.Transaction, key *datastore.Key, entity *DatEntity) (err error) {
+func (repo *BoardStub) TxGetDat(tx *datastore.Transaction, key *DatKey, entity *DatEntity) (err error) {
 	err = repo.GetDat(key, entity)
 	return
 }
 
-func (repo *BoardStub) TxPutDat(tx *datastore.Transaction, key *datastore.Key, entity *DatEntity) (err error) {
+func (repo *BoardStub) TxPutDat(tx *datastore.Transaction, key *DatKey, entity *DatEntity) (err error) {
 	err = repo.PutDat(key, entity)
 	return
 }

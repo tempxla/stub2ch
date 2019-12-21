@@ -96,8 +96,7 @@ func MemConf(mem BoardMemcache) func(*BoardService) *BoardService {
 // データストアからエンティティを取得しdatを返す
 func (sv *BoardService) MakeDat(boardName string, threadKey string) (_ []byte, err error) {
 	// Creates a Key instance.
-	key := datastore.NameKey("Dat", threadKey,
-		datastore.NameKey("Board", boardName, nil))
+	key := sv.repo.DatKey(threadKey, sv.repo.BoardKey(boardName))
 
 	// Gets a Board
 	e := new(DatEntity)
@@ -111,7 +110,7 @@ func (sv *BoardService) MakeDat(boardName string, threadKey string) (_ []byte, e
 // データストアからエンティティを取得しsubject.txtとして返す
 func (sv *BoardService) MakeSubjectTxt(boardName string) (_ []byte, err error) {
 	// Creates a Key instance.
-	key := datastore.NameKey("Board", boardName, nil)
+	key := sv.repo.BoardKey(boardName)
 
 	// Gets a Board
 	e := new(BoardEntity)
@@ -148,8 +147,8 @@ func (sv *BoardService) CreateThread(boardName string,
 	dat := createDat(name, mail, now, id, message, title)
 
 	// Key
-	boardKey := datastore.NameKey("Board", boardName, nil)
-	datKey := datastore.NameKey("Dat", threadKey, boardKey)
+	boardKey := sv.repo.BoardKey(boardName)
+	datKey := sv.repo.DatKey(threadKey, boardKey)
 
 	// Start transaction
 	err = sv.repo.RunInTransaction(func(tx *datastore.Transaction) error {
@@ -159,7 +158,7 @@ func (sv *BoardService) CreateThread(boardName string,
 			return err
 		}
 		for _, sbj := range board.Subjects {
-			if sbj.ThreadKey == datKey.Name {
+			if sbj.ThreadKey == datKey.Key.Name {
 				return fmt.Errorf("thread key is duplicate")
 			}
 		}
@@ -181,8 +180,8 @@ func (sv *BoardService) WriteDat(boardName, threadKey,
 	name, mail, id, message string) (resnum int, err error) {
 
 	// Creates a Key instance.
-	boardKey := datastore.NameKey("Board", boardName, nil)
-	datKey := datastore.NameKey("Dat", threadKey, boardKey)
+	boardKey := sv.repo.BoardKey(boardName)
+	datKey := sv.repo.DatKey(threadKey, boardKey)
 
 	err = sv.repo.RunInTransaction(func(tx *datastore.Transaction) error {
 		// Get Entities
