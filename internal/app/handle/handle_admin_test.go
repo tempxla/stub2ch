@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -117,5 +118,130 @@ func TestAuthenticate_WrongSession(t *testing.T) {
 	body := writer.Body.String()
 	if body == "OK" {
 		t.Error("body is OK.")
+	}
+}
+
+func TestHandleAdminLogin(t *testing.T) {
+	// Setup
+	passphrase, err := ioutil.ReadFile("/tmp/pass_stub2ch.txt")
+	if err != nil {
+		t.Error(err)
+	}
+
+	base64Sig, err := ioutil.ReadFile("/tmp/sig_stub2ch.txt")
+	if err != nil {
+		t.Error(err)
+	}
+
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest("POST", "/test/_admin/login", nil)
+	request.PostForm = make(map[string][]string)
+	request.PostForm.Add(admincfg.LOGIN_PASSPHRASE_PARAM, string(passphrase))
+	request.PostForm.Add(admincfg.LOGIN_SIGNATURE_PARAM, string(base64Sig))
+
+	sv, _ := service.DefaultBoardService()
+	router := NewBoardRouter(sv)
+
+	// Exercise
+	router.ServeHTTP(writer, request)
+
+	// Verify
+	if writer.Code != 200 {
+		t.Errorf("Response code is %v", writer.Code)
+	}
+
+	if body := writer.Body.String(); !strings.Contains(body, "Admin Console") {
+		t.Errorf("%v", body)
+	}
+
+	// Cookie TODO
+
+}
+
+func TestHandleAdminLogin_MissingPassphrase(t *testing.T) {
+	// Setup
+
+	base64Sig, err := ioutil.ReadFile("/tmp/sig_stub2ch.txt")
+	if err != nil {
+		t.Error(err)
+	}
+
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest("POST", "/test/_admin/login", nil)
+	request.PostForm = make(map[string][]string)
+	//request.PostForm.Add(admincfg.LOGIN_PASSPHRASE_PARAM, string(passphrase)) missing
+	request.PostForm.Add(admincfg.LOGIN_SIGNATURE_PARAM, string(base64Sig))
+
+	sv, _ := service.DefaultBoardService()
+	router := NewBoardRouter(sv)
+
+	// Exercise
+	router.ServeHTTP(writer, request)
+
+	// Verify
+	if writer.Code != 403 {
+		t.Errorf("Response code is %v", writer.Code)
+	}
+	if body := writer.Body.String(); strings.Contains(body, "Admin Console") {
+		t.Errorf("%v", body)
+	}
+
+}
+
+func TestHandleAdminLogin_MissingSignature(t *testing.T) {
+	// Setup
+	passphrase, err := ioutil.ReadFile("/tmp/pass_stub2ch.txt")
+	if err != nil {
+		t.Error(err)
+	}
+
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest("POST", "/test/_admin/login", nil)
+	request.PostForm = make(map[string][]string)
+	request.PostForm.Add(admincfg.LOGIN_PASSPHRASE_PARAM, string(passphrase))
+	//request.PostForm.Add(admincfg.LOGIN_SIGNATURE_PARAM, string(base64Sig)) missing
+
+	sv, _ := service.DefaultBoardService()
+	router := NewBoardRouter(sv)
+
+	// Exercise
+	router.ServeHTTP(writer, request)
+
+	// Verify
+	if writer.Code != 403 {
+		t.Errorf("Response code is %v", writer.Code)
+	}
+
+	if body := writer.Body.String(); strings.Contains(body, "Admin Console") {
+		t.Errorf("%v", body)
+	}
+}
+
+func TestHandleAdminLogin_WrongSignature(t *testing.T) {
+	// Setup
+	passphrase, err := ioutil.ReadFile("/tmp/pass_stub2ch.txt")
+	if err != nil {
+		t.Error(err)
+	}
+
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest("POST", "/test/_admin/login", nil)
+	request.PostForm = make(map[string][]string)
+	request.PostForm.Add(admincfg.LOGIN_PASSPHRASE_PARAM, string(passphrase))
+	request.PostForm.Add(admincfg.LOGIN_SIGNATURE_PARAM, "wrong sig")
+
+	sv, _ := service.DefaultBoardService()
+	router := NewBoardRouter(sv)
+
+	// Exercise
+	router.ServeHTTP(writer, request)
+
+	// Verify
+	if writer.Code != 403 {
+		t.Errorf("Response code is %v", writer.Code)
+	}
+
+	if body := writer.Body.String(); strings.Contains(body, "Admin Console") {
+		t.Errorf("%v", body)
 	}
 }
