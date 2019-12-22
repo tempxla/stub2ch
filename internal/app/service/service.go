@@ -162,8 +162,8 @@ func (sv *BoardService) CreateThread(boardName string,
 				return fmt.Errorf("thread key is duplicate")
 			}
 		}
-		// Add
-		board.Subjects = append(board.Subjects, subject)
+		// 先頭に追加
+		board.Subjects = append([]Subject{subject}, board.Subjects...)
 		// Save
 		if err := sv.repo.TxPutBoard(tx, boardKey, board); err != nil {
 			return err
