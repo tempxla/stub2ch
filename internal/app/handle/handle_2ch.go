@@ -42,7 +42,7 @@ func handleBbsCgi() ServiceHandle {
 				handleCreateThread(w, r, sv)
 			}
 		default:
-			fmt.Fprint(w, "SJISで書いてね？")
+			fmt.Fprint(w, util.UTF8toSJISString("SJISで書いてね？"))
 		}
 	}
 }
