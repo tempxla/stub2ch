@@ -223,3 +223,36 @@ func TestLogout(t *testing.T) {
 		t.Error(err)
 	}
 }
+
+func TestCreateBoard(t *testing.T) {
+	// Setup
+	// ----------------------------------
+	ctx := context.Background()
+
+	// Creates a client.
+	client, err := datastore.NewClient(ctx, config.PROJECT_ID)
+	if err != nil {
+		t.Fatalf("Failed to create client: %v", err)
+	}
+
+	cleanDatastore(t, ctx, client)
+
+	admin := &AdminFunction{
+		repo: &AdminBoardStore{
+			repo: &BoardStore{
+				Client:  client,
+				Context: ctx,
+			},
+		},
+	}
+
+	err = admin.CreateBoard("news4test")
+	if err != nil {
+		t.Errorf("first: %v", err)
+	}
+
+	err = admin.CreateBoard("news4test")
+	if err == nil {
+		t.Error("second: err is nil.")
+	}
+}

@@ -63,7 +63,7 @@ func handleAdminLogin() ServiceHandle {
 		}
 		http.SetCookie(w, cookie)
 
-		executeAdminIndex(w, r)
+		executeAdminIndex(w, r, nil)
 	}
 }
 
@@ -80,13 +80,22 @@ func handleAdminLogout() ServiceHandle {
 
 func handleAdmin() ServiceHandle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params, sv *service.BoardService) {
-
+		fp1 := ps.ByName("fp1")
+		fp2 := ps.ByName("fp2")
+		var msg error
+		switch fp1 {
+		case "":
+			msg = sv.Admin.CreateBoard(fp2)
+		default:
+			msg = fmt.Errorf("unknown func %v/%v", fp1, fp2)
+		}
+		executeAdminIndex(w, r, msg)
 	}
 }
 
-func executeAdminIndex(w http.ResponseWriter, r *http.Request) {
+func executeAdminIndex(w http.ResponseWriter, r *http.Request, msg error) {
 
-	if err := adminIndexTmpl.Execute(w, nil); err != nil {
+	if err := adminIndexTmpl.Execute(w, msg); err != nil {
 		log.Printf("Error executing template: %v", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 	}

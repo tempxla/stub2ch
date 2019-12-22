@@ -10,7 +10,8 @@ import (
 )
 
 type AdminFunction struct {
-	mem BoardMemcache
+	repo AdminBoardRepository
+	mem  BoardMemcache
 }
 
 func (admin *AdminFunction) VerifySession(sessionId string) error {
@@ -51,10 +52,9 @@ func (admin *AdminFunction) Login(passphrase, signature string) (string, error) 
 }
 
 func (admin *AdminFunction) Logout() error {
+	return admin.mem.Delete(admincfg.LOGIN_COOKIE_NAME)
+}
 
-	if err := admin.mem.Delete(admincfg.LOGIN_COOKIE_NAME); err != nil {
-		return err
-	}
-
-	return nil
+func (admin *AdminFunction) CreateBoard(boardName string) error {
+	return admin.repo.CreateBoard(boardName)
 }

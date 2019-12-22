@@ -12,6 +12,36 @@ import (
 	"testing"
 )
 
+func authenticatedRequest(t *testing.T,
+	sv *service.BoardService, method, path string) *http.Request {
+
+	t.Helper()
+
+	// Session Cookie
+	passphrase, err := ioutil.ReadFile("/tmp/pass_stub2ch.txt")
+	if err != nil {
+		t.Error(err)
+	}
+
+	base64Sig, err := ioutil.ReadFile("/tmp/sig_stub2ch.txt")
+	if err != nil {
+		t.Error(err)
+	}
+
+	sid, err := sv.Admin.Login(string(passphrase), string(base64Sig))
+	if err != nil {
+		t.Errorf("setup failed. %v", err)
+	}
+
+	request, _ := http.NewRequest(method, path, nil)
+	request.AddCookie(&http.Cookie{
+		Name:  admincfg.LOGIN_COOKIE_NAME,
+		Value: sid,
+	})
+
+	return request
+}
+
 func TestAuthenticate(t *testing.T) {
 	// Setup
 	handleOK := func(w http.ResponseWriter, r *http.Request,
@@ -286,4 +316,8 @@ func TestHandleLogout(t *testing.T) {
 	if body := writer.Body.String(); !strings.Contains(body, "success") {
 		t.Errorf("%v", body)
 	}
+}
+
+func TestHandleAdmin(t *testing.T) {
+	t.Error("no tests")
 }

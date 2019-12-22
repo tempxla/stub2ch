@@ -35,18 +35,19 @@ func NewBoardRouter(sv *service.BoardService) *httprouter.Router {
 			handleParseForm(
 				injectService(sv)(
 					handleAdminLogin()))))
-	router.POST("/:board/_admin/",
-		handleTestDir(
-			handleParseForm(
-				injectService(sv)(
-					authenticate(
-						handleAdmin())))))
 	router.POST("/:board/_admin/logout",
 		handleTestDir(
 			handleParseForm(
 				injectService(sv)(
 					authenticate(
 						handleAdminLogout())))))
+	router.POST("/:board/_admin/func/:fp1/:fp2",
+		handleTestDir(
+			handleParseForm(
+				injectService(sv)(
+					authenticate(
+						handleAdmin())))))
+
 	// 掲示板
 	router.POST("/:board/bbs.cgi",
 		protect(config.KEEP_OUT)(

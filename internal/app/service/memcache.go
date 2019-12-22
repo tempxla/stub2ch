@@ -22,7 +22,7 @@ type Item struct {
 }
 
 const (
-	kind = "MemcacheItem"
+	kind_memcache_item = "MemcacheItem"
 )
 
 type AlterMemcache struct {
@@ -31,13 +31,13 @@ type AlterMemcache struct {
 }
 
 func (mem *AlterMemcache) Set(item *Item) error {
-	key := datastore.NameKey(kind, item.Key, nil)
+	key := datastore.NameKey(kind_memcache_item, item.Key, nil)
 	_, err := mem.Client.Put(mem.Context, key, item)
 	return err
 }
 
 func (mem *AlterMemcache) Get(key string) (*Item, error) {
-	dkey := datastore.NameKey(kind, key, nil)
+	dkey := datastore.NameKey(kind_memcache_item, key, nil)
 	dst := &Item{}
 	err := mem.Client.Get(mem.Context, dkey, dst)
 	item := Item{Key: key, Value: dst.Value}
@@ -45,7 +45,7 @@ func (mem *AlterMemcache) Get(key string) (*Item, error) {
 }
 
 func (mem *AlterMemcache) Delete(key string) error {
-	dkey := datastore.NameKey(kind, key, nil)
+	dkey := datastore.NameKey(kind_memcache_item, key, nil)
 	err := mem.Client.Delete(mem.Context, dkey)
 	if err != nil && err != datastore.ErrNoSuchEntity {
 		return err

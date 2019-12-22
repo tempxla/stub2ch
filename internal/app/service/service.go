@@ -58,8 +58,11 @@ func DefaultBoardService() (*BoardService, error) {
 		Context: ctx,
 		Client:  client,
 	}
+	adminRepo := &AdminBoardStore{
+		repo: repo,
+	}
 
-	return NewBoardService(RepoConf(repo), EnvConf(sysEnv), MemConf(mem)), nil
+	return NewBoardService(RepoConf(repo), EnvConf(sysEnv), AdminConf(adminRepo, mem)), nil
 }
 
 func NewBoardService(config ...func(*BoardService) *BoardService) *BoardService {
@@ -86,8 +89,9 @@ func EnvConf(env BoardEnvironment) func(*BoardService) *BoardService {
 	}
 }
 
-func MemConf(mem BoardMemcache) func(*BoardService) *BoardService {
+func AdminConf(repo AdminBoardRepository, mem BoardMemcache) func(*BoardService) *BoardService {
 	return func(sv *BoardService) *BoardService {
+		sv.Admin.repo = repo
 		sv.Admin.mem = mem
 		return sv
 	}
