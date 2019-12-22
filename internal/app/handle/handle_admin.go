@@ -34,7 +34,7 @@ func handleAdminLogin() ServiceHandle {
 
 		const login_fail_message = "login failed."
 
-		pass, err := process(requireOne(r, admincfg.LOGIN_PASSPHRASE_PARAM), HtmlUnescapeString)
+		pass, err := process(requireOne(r, admincfg.LOGIN_PASSPHRASE_PARAM), htmlUnescapeString)
 		if err != nil {
 			log.Print(err)
 			http.Error(w, login_fail_message, http.StatusForbidden) // 403

@@ -8,10 +8,6 @@ import (
 	"strings"
 )
 
-func HtmlUnescapeString(s string) (string, error) {
-	return html.UnescapeString(s), nil
-}
-
 func requireOne(r *http.Request, name string) func() (string, error) {
 	return func() (str string, err error) {
 		if param, ok := r.PostForm[name]; !ok {
@@ -65,6 +61,10 @@ func maxLen(max int) func(string) (string, error) {
 		}
 		return
 	}
+}
+
+func htmlUnescapeString(s string) (string, error) {
+	return html.UnescapeString(s), nil
 }
 
 func process(src func() (string, error),
