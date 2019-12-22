@@ -318,6 +318,65 @@ func TestHandleLogout(t *testing.T) {
 	}
 }
 
-func TestHandleAdmin(t *testing.T) {
-	t.Error("no tests")
+func TestHandleAdmin_CreateBoard(t *testing.T) {
+
+	sv, _ := service.DefaultBoardService()
+	request := authenticatedRequest(t, sv, "POST", "/test/_admin/func/create-board/poverty")
+	writer := httptest.NewRecorder()
+
+	router := NewBoardRouter(sv)
+
+	// Exercise
+	router.ServeHTTP(writer, request)
+
+	// Verify
+	if writer.Code != 200 {
+		t.Errorf("Response code is %v", writer.Code)
+	}
+
+	if body := writer.Body.String(); !strings.Contains(body, "NO ERRORS.") {
+		t.Errorf("%v", body)
+	}
+}
+
+func TestHandleAdmin_UnknownFunc(t *testing.T) {
+
+	sv, _ := service.DefaultBoardService()
+	request := authenticatedRequest(t, sv, "POST", "/test/_admin/func/FUNCX/X")
+	writer := httptest.NewRecorder()
+
+	router := NewBoardRouter(sv)
+
+	// Exercise
+	router.ServeHTTP(writer, request)
+
+	// Verify
+	if writer.Code != 200 {
+		t.Errorf("Response code is %v", writer.Code)
+	}
+
+	if body := writer.Body.String(); strings.Contains(body, "NO ERRORS.") {
+		t.Errorf("%v", body)
+	}
+}
+
+func TestHandleAdmin_CreateBoard_NoSupports(t *testing.T) {
+
+	sv, _ := service.DefaultBoardService()
+	request := authenticatedRequest(t, sv, "POST", "/test/_admin/func/create-board/nosupp")
+	writer := httptest.NewRecorder()
+
+	router := NewBoardRouter(sv)
+
+	// Exercise
+	router.ServeHTTP(writer, request)
+
+	// Verify
+	if writer.Code != 200 {
+		t.Errorf("Response code is %v", writer.Code)
+	}
+
+	if body := writer.Body.String(); strings.Contains(body, "NO ERRORS.") {
+		t.Errorf("%v", body)
+	}
 }

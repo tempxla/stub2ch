@@ -82,18 +82,30 @@ func handleAdmin() ServiceHandle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params, sv *service.BoardService) {
 		fp1 := ps.ByName("fp1")
 		fp2 := ps.ByName("fp2")
-		var msg error
+		var err error
 		switch fp1 {
-		case "":
-			msg = sv.Admin.CreateBoard(fp2)
+		case "create-board":
+			switch fp2 {
+			case "news4vip", "poverty":
+				err = sv.Admin.CreateBoard(fp2)
+			default:
+				err = fmt.Errorf("unsupported: %v", fp2)
+			}
 		default:
-			msg = fmt.Errorf("unknown func %v/%v", fp1, fp2)
+			err = fmt.Errorf("unknown func %v/%v", fp1, fp2)
 		}
-		executeAdminIndex(w, r, msg)
+		executeAdminIndex(w, r, err)
 	}
 }
 
-func executeAdminIndex(w http.ResponseWriter, r *http.Request, msg error) {
+func executeAdminIndex(w http.ResponseWriter, r *http.Request, err error) {
+
+	var msg string
+	if err == nil {
+		msg = "NO ERRORS."
+	} else {
+		msg = fmt.Sprint(err)
+	}
 
 	if err := adminIndexTmpl.Execute(w, msg); err != nil {
 		log.Printf("Error executing template: %v", err)
