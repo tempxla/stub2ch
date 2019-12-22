@@ -21,8 +21,7 @@ const (
 	dat_date_layout = "2006/01/02"
 	dat_time_layout = "15:04:05.000"
 	// 名前<>メール欄<>年/月/日(曜) 時:分:秒.ミリ秒 ID:hogehoge0<> 本文 <>スレタイ
-	dat_format   = "%s<>%s<>%s(%s) %s ID:%s<> %s <>%s"
-	dat_format_n = "\n" + dat_format
+	dat_format = "%s<>%s<>%s(%s) %s ID:%s<> %s <>%s\n"
 )
 
 var (
@@ -258,7 +257,7 @@ func createDat(name string, mail string, date time.Time, id string, message stri
 func appendDat(dat *DatEntity,
 	name string, mail string, date time.Time, id string, message string) {
 
-	writeDat(dat, dat_format_n, name, mail, date, id, message, "")
+	writeDat(dat, dat_format, name, mail, date, id, message, "")
 }
 
 func writeDat(dat *DatEntity, format string,

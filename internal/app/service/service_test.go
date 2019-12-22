@@ -595,7 +595,7 @@ func TestCreateDat(t *testing.T) {
 	dat := createDat("名前", "メール", date, "ABC", "本文", "スレタイ")
 
 	// Verify
-	excepted := []byte("名前<>メール<>2019/11/23(土) 22:29:01.123 ID:ABC<> 本文 <>スレタイ")
+	excepted := []byte("名前<>メール<>2019/11/23(土) 22:29:01.123 ID:ABC<> 本文 <>スレタイ\n")
 	if !bytes.Equal(dat.Dat, excepted) {
 		t.Fatalf("fail \n actual: %v \n expect: %v", string(dat.Dat), string(excepted))
 	}
@@ -614,7 +614,7 @@ func TestAppendDat(t *testing.T) {
 
 	// Verify
 	excepted := []byte("名前<>メール<>2019/11/23(土) 22:29:01.123 ID:ABC<> 本文 <>スレタイ" +
-		"\n名前2<>メール2<>2019/11/24(日) 22:29:01.123 ID:XYZ<> 本文2 <>")
+		"\n名前2<>メール2<>2019/11/24(日) 22:29:01.123 ID:XYZ<> 本文2 <>\n")
 	if !bytes.Equal(dat.Dat, excepted) {
 		t.Fatalf("fail \n actual: %v \n expect: %v", string(dat.Dat), string(excepted))
 	}
