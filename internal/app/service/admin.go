@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/tempxla/stub2ch/configs/app/admincfg"
 	"github.com/tempxla/stub2ch/internal/app/util"
+	"log"
 	"time"
 )
 
@@ -56,5 +57,6 @@ func (admin *AdminFunction) Logout() error {
 }
 
 func (admin *AdminFunction) CreateBoard(boardName string) error {
+	log.Printf("CreateBoard: %v", boardName)
 	return admin.repo.CreateBoard(boardName)
 }
