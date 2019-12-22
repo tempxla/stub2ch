@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <script type="text/javascript">
+    function init() {
+      var frm = document.getElementById("f1");
+      frm.ADMIN_PASSPHRASE.value=document.getElementById("h1").innerHTML;
+    }
+    function login(btn) {
+      var frm = btn.parentNode;
+      frm.action = btn.value;
+      frm.submit();
+    }
+  </script>
+</head>
+<body onload="init()">
+<pre id="h1">
+すいません､
+ちょっと通りますよ…
+
+　　 ／⌒ヽ
+　　/´_&gt;｀)
+　 ｜　　 /
+　 ｜ /| /
+　 / / |｜
+　(ノ　Ｕ
+</pre>
+  <form id="f1" action="" method="POST">
+    <input type="hidden"  name="ADMIN_PASSPHRASE" value="">
+    <input type="password" name="ADMIN_SIGNATURE" value=""><br>
+    <input type="button" value="http://localhost:8080/test/_admin/login" onclick="login(this)"><br>
+    <input type="button" value="https://stub2ch.appspot.com/test/_admin/login" onclick="login(this)">
+  </form>
+</body>
+</html>
