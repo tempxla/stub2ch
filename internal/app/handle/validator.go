@@ -8,6 +8,13 @@ import (
 	"strings"
 )
 
+const (
+	BBS_SUBJECT_COUNT = 128
+	BBS_NAME_COUNT    = 96
+	BBS_MAIL_COUNT    = 32
+	BBS_MESSAGE_COUNT = 4096
+)
+
 func requireOne(r *http.Request, name string) func() (string, error) {
 	return func() (str string, err error) {
 		if param, ok := r.PostForm[name]; !ok {
@@ -63,6 +70,17 @@ func maxLen(max int) func(string) (string, error) {
 	}
 }
 
+func maxByte(max int) func(string) (string, error) {
+	return func(s string) (str string, err error) {
+		if len([]byte(s)) > max {
+			err = fmt.Errorf(" byte len %s > %d", s, max)
+		} else {
+			str = s
+		}
+		return
+	}
+}
+
 func delBadChar(s string) (string, error) {
 	f := func(r rune) rune {
 		if '\u0000' <= r && r < '\u0009' { // NUL <= r < HT
@@ -105,7 +123,9 @@ func process(src func() (string, error),
 }
 
 func requireBoardName(w http.ResponseWriter, r *http.Request) (string, bool) {
-	boardName, err := process(requireOne(r, "bbs"), maxLen(10), between("0", "zzzzzzzzzz"))
+	boardName, err := process(requireOne(r, "bbs"),
+		maxLen(10), between("0", "zzzzzzzzzz"))
+
 	if err != nil {
 		http.Error(w, fmt.Sprintf(param_error_format, "bbs", err), http.StatusBadRequest)
 		return "", false
@@ -114,7 +134,9 @@ func requireBoardName(w http.ResponseWriter, r *http.Request) (string, bool) {
 }
 
 func requireThreadKey(w http.ResponseWriter, r *http.Request) (string, bool) {
-	threadKey, err := process(requireOne(r, "key"), maxLen(10), between("0000000000", "9999999999"))
+	threadKey, err := process(requireOne(r, "key"),
+		maxLen(10), between("0000000000", "9999999999"))
+
 	if err != nil {
 		http.Error(w, fmt.Sprintf(param_error_format, "key", err), http.StatusBadRequest)
 		return "", false
@@ -124,6 +146,7 @@ func requireThreadKey(w http.ResponseWriter, r *http.Request) (string, bool) {
 
 func requireTime(w http.ResponseWriter, r *http.Request) (string, bool) {
 	t, err := process(requireOne(r, "time"), notEmpty)
+
 	if err != nil {
 		http.Error(w, fmt.Sprintf(param_error_format, "time", err), http.StatusBadRequest)
 		return "", false
@@ -132,7 +155,9 @@ func requireTime(w http.ResponseWriter, r *http.Request) (string, bool) {
 }
 
 func requireName(w http.ResponseWriter, r *http.Request) (string, bool) {
-	name, err := process(requireOne(r, "FROM"), sjisToUtf8String, delBadChar)
+	name, err := process(requireOne(r, "FROM"),
+		maxByte(BBS_NAME_COUNT), sjisToUtf8String, delBadChar)
+
 	if err != nil {
 		http.Error(w, fmt.Sprintf(param_error_format, "FROM", err), http.StatusBadRequest)
 		return "", false
@@ -144,7 +169,9 @@ func requireName(w http.ResponseWriter, r *http.Request) (string, bool) {
 }
 
 func requireMail(w http.ResponseWriter, r *http.Request) (string, bool) {
-	mail, err := process(requireOne(r, "mail"), sjisToUtf8String, delBadChar)
+	mail, err := process(requireOne(r, "mail"),
+		maxByte(BBS_MAIL_COUNT), sjisToUtf8String, delBadChar)
+
 	if err != nil {
 		http.Error(w, fmt.Sprintf(param_error_format, "mail", err), http.StatusBadRequest)
 		return "", false
@@ -153,7 +180,9 @@ func requireMail(w http.ResponseWriter, r *http.Request) (string, bool) {
 }
 
 func requireMessage(w http.ResponseWriter, r *http.Request) (string, bool) {
-	message, err := process(requireOne(r, "MESSAGE"), sjisToUtf8String, delBadChar, notBlank)
+	message, err := process(requireOne(r, "MESSAGE"),
+		maxByte(BBS_MESSAGE_COUNT), sjisToUtf8String, delBadChar, notBlank)
+
 	if err != nil {
 		http.Error(w, fmt.Sprintf(param_error_format, "MESSAGE", err), http.StatusBadRequest)
 		return "", false
@@ -162,7 +191,9 @@ func requireMessage(w http.ResponseWriter, r *http.Request) (string, bool) {
 }
 
 func requireTitle(w http.ResponseWriter, r *http.Request) (string, bool) {
-	title, err := process(requireOne(r, "subject"), sjisToUtf8String, delBadChar, notBlank)
+	title, err := process(requireOne(r, "subject"),
+		maxByte(BBS_SUBJECT_COUNT), sjisToUtf8String, delBadChar, notBlank)
+
 	if err != nil {
 		http.Error(w, fmt.Sprintf(param_error_format, "subject", err), http.StatusBadRequest)
 		return "", false
