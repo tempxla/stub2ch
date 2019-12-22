@@ -63,6 +63,22 @@ func maxLen(max int) func(string) (string, error) {
 	}
 }
 
+func delBadChar(s string) (string, error) {
+	f := func(r rune) rune {
+		if '\u0000' <= r && r < '\u0009' { // NUL <= r < HT
+			return ' '
+		}
+		if '\u000A' < r && r <= '\u001F' { // LF < r < US
+			return ' '
+		}
+		if '\u007F' == r { // r == DEL
+			return ' '
+		}
+		return r
+	}
+	return strings.Map(f, s), nil
+}
+
 func htmlUnescapeString(s string) (string, error) {
 	return html.UnescapeString(s), nil
 }
@@ -116,7 +132,7 @@ func requireTime(w http.ResponseWriter, r *http.Request) (string, bool) {
 }
 
 func requireName(w http.ResponseWriter, r *http.Request) (string, bool) {
-	name, err := process(requireOne(r, "FROM"), sjisToUtf8String)
+	name, err := process(requireOne(r, "FROM"), sjisToUtf8String, delBadChar)
 	if err != nil {
 		http.Error(w, fmt.Sprintf(param_error_format, "FROM", err), http.StatusBadRequest)
 		return "", false
@@ -128,7 +144,7 @@ func requireName(w http.ResponseWriter, r *http.Request) (string, bool) {
 }
 
 func requireMail(w http.ResponseWriter, r *http.Request) (string, bool) {
-	mail, err := process(requireOne(r, "mail"), sjisToUtf8String)
+	mail, err := process(requireOne(r, "mail"), sjisToUtf8String, delBadChar)
 	if err != nil {
 		http.Error(w, fmt.Sprintf(param_error_format, "mail", err), http.StatusBadRequest)
 		return "", false
@@ -137,7 +153,7 @@ func requireMail(w http.ResponseWriter, r *http.Request) (string, bool) {
 }
 
 func requireMessage(w http.ResponseWriter, r *http.Request) (string, bool) {
-	message, err := process(requireOne(r, "MESSAGE"), sjisToUtf8String, notBlank)
+	message, err := process(requireOne(r, "MESSAGE"), sjisToUtf8String, delBadChar, notBlank)
 	if err != nil {
 		http.Error(w, fmt.Sprintf(param_error_format, "MESSAGE", err), http.StatusBadRequest)
 		return "", false
@@ -146,7 +162,7 @@ func requireMessage(w http.ResponseWriter, r *http.Request) (string, bool) {
 }
 
 func requireTitle(w http.ResponseWriter, r *http.Request) (string, bool) {
-	title, err := process(requireOne(r, "subject"), sjisToUtf8String, notBlank)
+	title, err := process(requireOne(r, "subject"), sjisToUtf8String, delBadChar, notBlank)
 	if err != nil {
 		http.Error(w, fmt.Sprintf(param_error_format, "subject", err), http.StatusBadRequest)
 		return "", false

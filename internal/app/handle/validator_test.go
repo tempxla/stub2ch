@@ -143,6 +143,17 @@ func TestMaxLen(t *testing.T) {
 	}
 }
 
+func TestDelBadChar(t *testing.T) {
+	rs := []rune{'a', '\n', 'b', '\t', 'c', '[', '\u0000', '\u000B', '\u001F', '\u007F', ']'}
+
+	act, _ := delBadChar(string(rs))
+	exp := "a\nb\tc[    ]"
+
+	if act != exp {
+		t.Errorf("\nact: %#v\nexp: %#v", act, exp)
+	}
+}
+
 func TestProcessParam(t *testing.T) {
 	// case 1
 	f := func() (string, error) { return "s", fmt.Errorf("errrrrr") }

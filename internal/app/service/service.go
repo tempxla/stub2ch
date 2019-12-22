@@ -138,7 +138,7 @@ func (sv *BoardService) CreateThread(boardName string,
 	threadKey = strconv.FormatInt(now.Unix(), 10)
 	subject := Subject{
 		ThreadKey:    threadKey,
-		ThreadTitle:  title,
+		ThreadTitle:  escapeDat(html.EscapeString(title)),
 		MessageCount: 1,
 		LastModified: now,
 	}
@@ -267,20 +267,26 @@ func writeDat(dat *DatEntity, format string,
 	// 名前<>メール欄<>年/月/日(曜) 時:分:秒.ミリ秒 ID:hogehoge0<> 本文 <>スレタイ
 	// 2行目以降はスレタイは無し
 	fmt.Fprintf(wr, format,
-		html.EscapeString(name),               // 名前
-		html.EscapeString(mail),               // メール
-		date.Format(dat_date_layout),          // 年月日
-		week_days_jp[date.Weekday()],          // 曜
-		date.Format(dat_time_layout),          // 時分秒
-		id,                                    // ID
-		escapeDat(html.EscapeString(message)), // 本文
-		html.EscapeString(title))              // スレタイ
+		escapeDat(html.EscapeString(name)),           // 名前
+		escapeDat(html.EscapeString(mail)),           // メール
+		date.Format(dat_date_layout),                 // 年月日
+		week_days_jp[date.Weekday()],                 // 曜
+		date.Format(dat_time_layout),                 // 時分秒
+		id,                                           // ID
+		escapeDatMessage(html.EscapeString(message)), // 本文
+		escapeDat(html.EscapeString(title)),          // スレタイ
+	)
 
 	dat.Dat = wr.Bytes()
 }
 
-func escapeDat(str string) string {
+func escapeDatMessage(str string) string {
 	return strings.ReplaceAll(str, "\n", "<br>")
+}
+
+func escapeDat(str string) string {
+	s := strings.ReplaceAll(str, "\n", "")
+	return s
 }
 
 func (sv *BoardService) ComputeId(ipAddr, boardName string) string {
