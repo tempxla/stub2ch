@@ -122,6 +122,9 @@ func requireName(w http.ResponseWriter, r *http.Request) (string, bool) {
 		http.Error(w, fmt.Sprintf(param_error_format, "FROM", err), http.StatusBadRequest)
 		return "", false
 	}
+	if name == "" {
+		name = "名無しさん@スタブ"
+	}
 	return name, true
 }
 
