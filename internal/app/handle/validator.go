@@ -5,7 +5,6 @@ import (
 	"github.com/tempxla/stub2ch/internal/app/util"
 	"html"
 	"net/http"
-	"net/url"
 	"strings"
 )
 
@@ -117,7 +116,7 @@ func requireTime(w http.ResponseWriter, r *http.Request) (string, bool) {
 }
 
 func requireName(w http.ResponseWriter, r *http.Request) (string, bool) {
-	name, err := process(requireOne(r, "FROM"), sjisToUtf8String, url.QueryUnescape)
+	name, err := process(requireOne(r, "FROM"), sjisToUtf8String)
 	if err != nil {
 		http.Error(w, fmt.Sprintf(param_error_format, "FROM", err), http.StatusBadRequest)
 		return "", false
@@ -129,7 +128,7 @@ func requireName(w http.ResponseWriter, r *http.Request) (string, bool) {
 }
 
 func requireMail(w http.ResponseWriter, r *http.Request) (string, bool) {
-	mail, err := process(requireOne(r, "mail"), sjisToUtf8String, url.QueryUnescape)
+	mail, err := process(requireOne(r, "mail"), sjisToUtf8String)
 	if err != nil {
 		http.Error(w, fmt.Sprintf(param_error_format, "mail", err), http.StatusBadRequest)
 		return "", false
@@ -138,7 +137,7 @@ func requireMail(w http.ResponseWriter, r *http.Request) (string, bool) {
 }
 
 func requireMessage(w http.ResponseWriter, r *http.Request) (string, bool) {
-	message, err := process(requireOne(r, "MESSAGE"), sjisToUtf8String, url.QueryUnescape, notBlank)
+	message, err := process(requireOne(r, "MESSAGE"), sjisToUtf8String, notBlank)
 	if err != nil {
 		http.Error(w, fmt.Sprintf(param_error_format, "MESSAGE", err), http.StatusBadRequest)
 		return "", false
@@ -147,7 +146,7 @@ func requireMessage(w http.ResponseWriter, r *http.Request) (string, bool) {
 }
 
 func requireTitle(w http.ResponseWriter, r *http.Request) (string, bool) {
-	title, err := process(requireOne(r, "subject"), sjisToUtf8String, url.QueryUnescape, notBlank)
+	title, err := process(requireOne(r, "subject"), sjisToUtf8String, notBlank)
 	if err != nil {
 		http.Error(w, fmt.Sprintf(param_error_format, "subject", err), http.StatusBadRequest)
 		return "", false

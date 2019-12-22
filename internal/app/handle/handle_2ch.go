@@ -9,7 +9,6 @@ import (
 	"github.com/tempxla/stub2ch/internal/app/util"
 	"log"
 	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -22,7 +21,7 @@ const (
 func handleBbsCgi() ServiceHandle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params, sv *service.BoardService) {
 
-		submit, err := process(requireOne(r, "submit"), sjisToUtf8String, url.QueryUnescape)
+		submit, err := process(requireOne(r, "submit"), sjisToUtf8String)
 		if err != nil {
 			http.Error(w, fmt.Sprintf(param_error_format, "submit", err), http.StatusBadRequest)
 			return
