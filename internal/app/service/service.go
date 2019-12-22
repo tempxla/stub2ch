@@ -123,11 +123,8 @@ func (sv *BoardService) MakeSubjectTxt(boardName string) (_ []byte, err error) {
 	}
 
 	buf := new(bytes.Buffer)
-	for i, s := range e.Subjects {
-		if i > 0 {
-			fmt.Fprintf(buf, "\n")
-		}
-		fmt.Fprintf(buf, "%s.dat<>%s \t (%d)", s.ThreadKey, s.ThreadTitle, s.MessageCount)
+	for _, s := range e.Subjects {
+		fmt.Fprintf(buf, "%s.dat<>%s \t (%d)\n", s.ThreadKey, s.ThreadTitle, s.MessageCount)
 	}
 
 	return buf.Bytes(), nil

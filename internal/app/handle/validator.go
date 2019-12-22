@@ -2,6 +2,7 @@ package handle
 
 import (
 	"fmt"
+	"github.com/tempxla/stub2ch/internal/app/util"
 	"html"
 	"net/http"
 	"net/url"
@@ -67,6 +68,10 @@ func htmlUnescapeString(s string) (string, error) {
 	return html.UnescapeString(s), nil
 }
 
+func sjisToUtf8String(s string) (string, error) {
+	return util.SJIStoUTF8String(s), nil
+}
+
 func process(src func() (string, error),
 	funcs ...func(string) (string, error)) (s string, e error) {
 
@@ -112,7 +117,7 @@ func requireTime(w http.ResponseWriter, r *http.Request) (string, bool) {
 }
 
 func requireName(w http.ResponseWriter, r *http.Request) (string, bool) {
-	name, err := process(requireOne(r, "FROM"), url.QueryUnescape)
+	name, err := process(requireOne(r, "FROM"), sjisToUtf8String, url.QueryUnescape)
 	if err != nil {
 		http.Error(w, fmt.Sprintf(param_error_format, "FROM", err), http.StatusBadRequest)
 		return "", false
@@ -121,7 +126,7 @@ func requireName(w http.ResponseWriter, r *http.Request) (string, bool) {
 }
 
 func requireMail(w http.ResponseWriter, r *http.Request) (string, bool) {
-	mail, err := process(requireOne(r, "mail"), url.QueryUnescape)
+	mail, err := process(requireOne(r, "mail"), sjisToUtf8String, url.QueryUnescape)
 	if err != nil {
 		http.Error(w, fmt.Sprintf(param_error_format, "mail", err), http.StatusBadRequest)
 		return "", false
@@ -130,7 +135,7 @@ func requireMail(w http.ResponseWriter, r *http.Request) (string, bool) {
 }
 
 func requireMessage(w http.ResponseWriter, r *http.Request) (string, bool) {
-	message, err := process(requireOne(r, "MESSAGE"), url.QueryUnescape, notBlank)
+	message, err := process(requireOne(r, "MESSAGE"), sjisToUtf8String, url.QueryUnescape, notBlank)
 	if err != nil {
 		http.Error(w, fmt.Sprintf(param_error_format, "MESSAGE", err), http.StatusBadRequest)
 		return "", false
@@ -139,7 +144,7 @@ func requireMessage(w http.ResponseWriter, r *http.Request) (string, bool) {
 }
 
 func requireTitle(w http.ResponseWriter, r *http.Request) (string, bool) {
-	title, err := process(requireOne(r, "subject"), url.QueryUnescape, notBlank)
+	title, err := process(requireOne(r, "subject"), sjisToUtf8String, url.QueryUnescape, notBlank)
 	if err != nil {
 		http.Error(w, fmt.Sprintf(param_error_format, "subject", err), http.StatusBadRequest)
 		return "", false

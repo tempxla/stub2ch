@@ -134,7 +134,7 @@ func TestMakeSubjectTxt_ok(t *testing.T) {
 		t.Errorf("subject.txt err: %v", err)
 	}
 	if !bytes.Equal(txt,
-		[]byte("222.dat<>YYY \t (200)\n111.dat<>XXX \t (100)\n333.dat<>ZZZ \t (300)")) {
+		[]byte("222.dat<>YYY \t (200)\n111.dat<>XXX \t (100)\n333.dat<>ZZZ \t (300)\n")) {
 		t.Errorf("subject.txt actual: %v", txt)
 	}
 }

@@ -22,7 +22,7 @@ const (
 func handleBbsCgi() ServiceHandle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params, sv *service.BoardService) {
 
-		submit, err := process(requireOne(r, "submit"), url.QueryUnescape)
+		submit, err := process(requireOne(r, "submit"), sjisToUtf8String, url.QueryUnescape)
 		if err != nil {
 			http.Error(w, fmt.Sprintf(param_error_format, "submit", err), http.StatusBadRequest)
 			return
@@ -73,10 +73,10 @@ func handleWriteDat(w http.ResponseWriter, r *http.Request, sv *service.BoardSer
 		return
 	}
 	// クッキー確認
-	if executeWriteDatConfirmTmpl(w, r,
-		boardName, name, mail, message, sv.StartedAt(), Nothing(), Just(threadKey)) {
-		return
-	}
+	// if executeWriteDatConfirmTmpl(w, r,
+	// 	boardName, name, mail, message, sv.StartedAt(), Nothing(), Just(threadKey)) {
+	// 	return
+	// }
 	// 書き込み
 	id := sv.ComputeId(r.RemoteAddr, boardName)
 	resnum, err := sv.WriteDat(boardName, threadKey, name, mail, id, message)
@@ -185,10 +185,10 @@ func handleCreateThread(w http.ResponseWriter, r *http.Request, sv *service.Boar
 		return
 	}
 	// クッキー確認
-	if executeWriteDatConfirmTmpl(w, r,
-		boardName, name, mail, message, sv.StartedAt(), Just(title), Nothing()) {
-		return
-	}
+	// if executeWriteDatConfirmTmpl(w, r,
+	// 	boardName, name, mail, message, sv.StartedAt(), Just(title), Nothing()) {
+	// 	return
+	// }
 	// スレ立て
 	id := sv.ComputeId(r.RemoteAddr, boardName)
 	threadKey, err := sv.CreateThread(boardName, name, mail, sv.StartedAt(), id, message, title)
