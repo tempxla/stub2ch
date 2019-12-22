@@ -34,3 +34,33 @@ func TestSJIStoUTF8(t *testing.T) {
 		t.Errorf("%v", utf8)
 	}
 }
+
+func TestUTF8toSJISString(t *testing.T) {
+	utf8 := "あいうえお"
+	sjis := UTF8toSJISString(utf8)
+
+	if sjis != string([]byte{
+		0x82, 0xa0, // あ
+		0x82, 0xa2, // い
+		0x82, 0xa4, // う
+		0x82, 0xa6, // え
+		0x82, 0xa8, // お
+	}) {
+		t.Errorf("%v", sjis)
+	}
+}
+
+func TestSJIStoUTF8String(t *testing.T) {
+	sjis := []byte{
+		0x82, 0xa0, // あ
+		0x82, 0xa2, // い
+		0x82, 0xa4, // う
+		0x82, 0xa6, // え
+		0x82, 0xa8, // お
+	}
+
+	utf8 := SJIStoUTF8String(string(sjis))
+	if utf8 != "あいうえお" {
+		t.Errorf("%v", utf8)
+	}
+}
