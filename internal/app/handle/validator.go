@@ -9,10 +9,10 @@ import (
 )
 
 const (
-	BBS_SUBJECT_COUNT = 128
-	BBS_NAME_COUNT    = 96
-	BBS_MAIL_COUNT    = 32
-	BBS_MESSAGE_COUNT = 4096
+	bbs_subject_count = 128
+	bbs_name_count    = 96
+	bbs_mail_count    = 32
+	bbs_message_count = 4096
 )
 
 func requireOne(r *http.Request, name string) func() (string, error) {
@@ -156,7 +156,7 @@ func requireTime(w http.ResponseWriter, r *http.Request) (string, bool) {
 
 func requireName(w http.ResponseWriter, r *http.Request) (string, bool) {
 	name, err := process(requireOne(r, "FROM"),
-		maxByte(BBS_NAME_COUNT), sjisToUtf8String, delBadChar)
+		maxByte(bbs_name_count), sjisToUtf8String, delBadChar)
 
 	if err != nil {
 		http.Error(w, fmt.Sprintf(param_error_format, "FROM", err), http.StatusBadRequest)
@@ -170,7 +170,7 @@ func requireName(w http.ResponseWriter, r *http.Request) (string, bool) {
 
 func requireMail(w http.ResponseWriter, r *http.Request) (string, bool) {
 	mail, err := process(requireOne(r, "mail"),
-		maxByte(BBS_MAIL_COUNT), sjisToUtf8String, delBadChar)
+		maxByte(bbs_mail_count), sjisToUtf8String, delBadChar)
 
 	if err != nil {
 		http.Error(w, fmt.Sprintf(param_error_format, "mail", err), http.StatusBadRequest)
@@ -181,7 +181,7 @@ func requireMail(w http.ResponseWriter, r *http.Request) (string, bool) {
 
 func requireMessage(w http.ResponseWriter, r *http.Request) (string, bool) {
 	message, err := process(requireOne(r, "MESSAGE"),
-		maxByte(BBS_MESSAGE_COUNT), sjisToUtf8String, delBadChar, notBlank)
+		maxByte(bbs_message_count), sjisToUtf8String, delBadChar, notBlank)
 
 	if err != nil {
 		http.Error(w, fmt.Sprintf(param_error_format, "MESSAGE", err), http.StatusBadRequest)
@@ -192,7 +192,7 @@ func requireMessage(w http.ResponseWriter, r *http.Request) (string, bool) {
 
 func requireTitle(w http.ResponseWriter, r *http.Request) (string, bool) {
 	title, err := process(requireOne(r, "subject"),
-		maxByte(BBS_SUBJECT_COUNT), sjisToUtf8String, delBadChar, notBlank)
+		maxByte(bbs_subject_count), sjisToUtf8String, delBadChar, notBlank)
 
 	if err != nil {
 		http.Error(w, fmt.Sprintf(param_error_format, "subject", err), http.StatusBadRequest)
