@@ -11,6 +11,7 @@ import (
 	"github.com/tempxla/stub2ch/configs/app/config"
 	"github.com/tempxla/stub2ch/configs/app/secretcfg"
 	. "github.com/tempxla/stub2ch/internal/app/types"
+	"github.com/tempxla/stub2ch/internal/app/util"
 	"html"
 	"strconv"
 	"strings"
@@ -22,6 +23,8 @@ const (
 	dat_time_layout = "15:04:05.000"
 	// 名前<>メール欄<>年/月/日(曜) 時:分:秒.ミリ秒 ID:hogehoge0<> 本文 <>スレタイ
 	dat_format = "%s<>%s<>%s(%s) %s ID:%s<> %s <>%s\n"
+
+	bbs_thread_capacity = 500 * 1024 // 500kB
 )
 
 var (
@@ -194,6 +197,11 @@ func (sv *BoardService) WriteDat(boardName, threadKey,
 			return err
 		}
 
+		// 容量オーバー
+		if len(util.UTF8toSJIS(dat.Dat)) >= bbs_thread_capacity {
+			return fmt.Errorf("容量超過: これ以上書き込めません。。。")
+		}
+
 		// 書き込み
 		appendDat(dat, name, mail, sv.env.StartedAt(), id, message)
 
@@ -230,7 +238,13 @@ func updateSubjectsWhenWriteDat(board *BoardEntity,
 		err = fmt.Errorf("fail update subjects. len:%v key:%v", sbjLen, threadKey)
 		return
 	}
+
 	resnum = board.Subjects[pos].MessageCount + 1
+	if resnum > 1000 {
+		err = fmt.Errorf("1001: これ以上書き込めません。。。")
+		return
+	}
+
 	board.Subjects[pos].MessageCount = resnum
 	board.Subjects[pos].LastModified = now
 
