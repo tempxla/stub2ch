@@ -154,6 +154,24 @@ func TestDelBadChar(t *testing.T) {
 	}
 }
 
+func TestTrip(t *testing.T) {
+	tests := []struct {
+		name     string
+		expected string
+	}{
+		{"名無し", "名無し"},
+		{"名無し◆ABC◆XYZ", "名無し◇ABC◇XYZ"},
+		{"名無し##9CA39C423D4881A6..", "名無し </b>◆moussy./hk <b>"},
+		{"名無し<>", "名無し&lt;&gt;"},
+	}
+	for _, tt := range tests {
+		actual, _ := trip(tt.name)
+		if actual != tt.expected {
+			t.Errorf("%v : %v", tt.name, actual)
+		}
+	}
+}
+
 func TestProcessParam(t *testing.T) {
 	// case 1
 	f := func() (string, error) { return "s", fmt.Errorf("errrrrr") }

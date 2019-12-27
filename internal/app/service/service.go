@@ -281,12 +281,13 @@ func writeDat(dat *DatEntity, format string,
 	// 名前<>メール欄<>年/月/日(曜) 時:分:秒.ミリ秒 ID:hogehoge0<> 本文 <>スレタイ
 	// 2行目以降はスレタイは無し
 	fmt.Fprintf(wr, format,
-		escapeDat(html.EscapeString(name)),           // 名前
-		escapeDat(html.EscapeString(mail)),           // メール
-		date.Format(dat_date_layout),                 // 年月日
-		week_days_jp[date.Weekday()],                 // 曜
-		date.Format(dat_time_layout),                 // 時分秒
-		id,                                           // ID
+		// 名前: トリップの関係でhtml.EscapeStringはトリップのところでやる
+		escapeDat(name),
+		escapeDat(html.EscapeString(mail)), // メール
+		date.Format(dat_date_layout),       // 年月日
+		week_days_jp[date.Weekday()],       // 曜
+		date.Format(dat_time_layout),       // 時分秒
+		id,                                 // ID
 		escapeDatMessage(html.EscapeString(message)), // 本文
 		escapeDat(html.EscapeString(title)),          // スレタイ
 	)

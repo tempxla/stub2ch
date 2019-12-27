@@ -105,6 +105,18 @@ func sjisToUtf8String(s string) (string, error) {
 	return util.SJIStoUTF8String(s), nil
 }
 
+// トリップの関係でhtml.EscapeStringはここでやる
+func trip(s string) (string, error) {
+	s = strings.ReplaceAll(s, "◆", "◇")
+	idx := strings.IndexRune(s, '#')
+	if idx != -1 {
+		trip := util.ComputeTrip(util.UTF8toSJISString(s[idx+1:]))
+		return fmt.Sprintf("%s </b>◆%s <b>", html.EscapeString(s[:idx]), trip), nil
+	} else {
+		return html.EscapeString(s), nil
+	}
+}
+
 func process(src func() (string, error),
 	funcs ...func(string) (string, error)) (s string, e error) {
 
@@ -156,7 +168,11 @@ func requireTime(w http.ResponseWriter, r *http.Request) (string, bool) {
 
 func requireName(w http.ResponseWriter, r *http.Request) (string, bool) {
 	name, err := process(requireOne(r, "FROM"),
-		maxByte(bbs_name_count), sjisToUtf8String, delBadChar)
+		maxByte(bbs_name_count),
+		sjisToUtf8String,
+		trip, // 制御文字とかどうなるんやろ＞トリップ
+		delBadChar,
+	)
 
 	if err != nil {
 		http.Error(w, fmt.Sprintf(param_error_format, "FROM", err), http.StatusBadRequest)
