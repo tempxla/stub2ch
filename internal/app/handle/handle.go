@@ -5,6 +5,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"github.com/tempxla/stub2ch/configs/app/config"
 	"github.com/tempxla/stub2ch/internal/app/service"
+	"github.com/tempxla/stub2ch/internal/app/util"
 	"html/template"
 	"log"
 	"net/http"
@@ -32,37 +33,43 @@ func NewBoardRouter(sv *service.BoardService) *httprouter.Router {
 	// 管理ページ
 	router.POST("/:board/_admin/login",
 		handleTestDir(
-			handleParseForm(
-				injectService(sv)(
-					handleAdminLogin()))))
+			handleUserAgent(
+				handleParseForm(
+					injectService(sv)(
+						handleAdminLogin())))))
 	router.POST("/:board/_admin/logout",
 		handleTestDir(
-			handleParseForm(
-				injectService(sv)(
-					authenticate(
-						handleAdminLogout())))))
+			handleUserAgent(
+				handleParseForm(
+					injectService(sv)(
+						authenticate(
+							handleAdminLogout()))))))
 	router.POST("/:board/_admin/func/:fp1/:fp2",
 		handleTestDir(
-			handleParseForm(
-				injectService(sv)(
-					authenticate(
-						handleAdmin())))))
+			handleUserAgent(
+				handleParseForm(
+					injectService(sv)(
+						authenticate(
+							handleAdmin()))))))
 
 	// 掲示板
 	router.POST("/:board/bbs.cgi",
 		protect(config.KEEP_OUT)(
 			handleTestDir(
-				handleParseForm(
-					injectService(sv)(
-						handleBbsCgi())))))
+				handleUserAgent(
+					handleParseForm(
+						injectService(sv)(
+							handleBbsCgi()))))))
 	router.GET("/:board/subject.txt",
 		protect(config.KEEP_OUT)(
-			injectService(sv)(
-				handleSubjectTxt())))
+			handleUserAgent(
+				injectService(sv)(
+					handleSubjectTxt()))))
 	router.GET("/:board/dat/:dat",
 		protect(config.KEEP_OUT)(
-			injectService(sv)(
-				handleDat())))
+			handleUserAgent(
+				injectService(sv)(
+					handleDat()))))
 
 	// 静的ファイル
 	// GAEの設定はapp.yamlなので、これは開発用
@@ -131,6 +138,18 @@ func handleTestDir(h httprouter.Handle) httprouter.Handle {
 func handleParseForm(h httprouter.Handle) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		r.ParseForm()
+		h(w, r, ps)
+	}
+}
+
+func handleUserAgent(h httprouter.Handle) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		const expected = "Monazilla/1.00"
+		if len(r.UserAgent()) < len(expected) {
+			w.Header().Add("Content-Type", "text/html; charset=Shift_JIS")
+			http.Error(w, util.UTF8toSJISString("m9(^Д^)"), http.StatusBadRequest)
+			return
+		}
 		h(w, r, ps)
 	}
 }

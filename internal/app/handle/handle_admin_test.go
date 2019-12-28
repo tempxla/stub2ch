@@ -165,6 +165,7 @@ func TestHandleAdminLogin(t *testing.T) {
 
 	writer := httptest.NewRecorder()
 	request, _ := http.NewRequest("POST", "/test/_admin/login", nil)
+	request.Header.Add("User-Agent", "Monazilla/1.00")
 	request.PostForm = make(map[string][]string)
 	request.PostForm.Add(admincfg.LOGIN_PASSPHRASE_PARAM, string(passphrase))
 	request.PostForm.Add(admincfg.LOGIN_SIGNATURE_PARAM, string(base64Sig))
@@ -198,6 +199,7 @@ func TestHandleAdminLogin_MissingPassphrase(t *testing.T) {
 
 	writer := httptest.NewRecorder()
 	request, _ := http.NewRequest("POST", "/test/_admin/login", nil)
+	request.Header.Add("User-Agent", "Monazilla/1.00")
 	request.PostForm = make(map[string][]string)
 	//request.PostForm.Add(admincfg.LOGIN_PASSPHRASE_PARAM, string(passphrase)) missing
 	request.PostForm.Add(admincfg.LOGIN_SIGNATURE_PARAM, string(base64Sig))
@@ -227,6 +229,7 @@ func TestHandleAdminLogin_MissingSignature(t *testing.T) {
 
 	writer := httptest.NewRecorder()
 	request, _ := http.NewRequest("POST", "/test/_admin/login", nil)
+	request.Header.Add("User-Agent", "Monazilla/1.00")
 	request.PostForm = make(map[string][]string)
 	request.PostForm.Add(admincfg.LOGIN_PASSPHRASE_PARAM, string(passphrase))
 	//request.PostForm.Add(admincfg.LOGIN_SIGNATURE_PARAM, string(base64Sig)) missing
@@ -256,6 +259,7 @@ func TestHandleAdminLogin_WrongSignature(t *testing.T) {
 
 	writer := httptest.NewRecorder()
 	request, _ := http.NewRequest("POST", "/test/_admin/login", nil)
+	request.Header.Add("User-Agent", "Monazilla/1.00")
 	request.PostForm = make(map[string][]string)
 	request.PostForm.Add(admincfg.LOGIN_PASSPHRASE_PARAM, string(passphrase))
 	request.PostForm.Add(admincfg.LOGIN_SIGNATURE_PARAM, "wrong sig")
@@ -298,6 +302,7 @@ func TestHandleLogout(t *testing.T) {
 
 	writer := httptest.NewRecorder()
 	request, _ := http.NewRequest("POST", "/test/_admin/logout", nil)
+	request.Header.Add("User-Agent", "Monazilla/1.00")
 	request.AddCookie(&http.Cookie{
 		Name:  admincfg.LOGIN_COOKIE_NAME,
 		Value: sid,
@@ -322,6 +327,7 @@ func TestHandleAdmin_CreateBoard(t *testing.T) {
 
 	sv, _ := service.DefaultBoardService()
 	request := authenticatedRequest(t, sv, "POST", "/test/_admin/func/create-board/poverty")
+	request.Header.Add("User-Agent", "Monazilla/1.00")
 	writer := httptest.NewRecorder()
 
 	router := NewBoardRouter(sv)
@@ -343,6 +349,7 @@ func TestHandleAdmin_UnknownFunc(t *testing.T) {
 
 	sv, _ := service.DefaultBoardService()
 	request := authenticatedRequest(t, sv, "POST", "/test/_admin/func/FUNCX/X")
+	request.Header.Add("User-Agent", "Monazilla/1.00")
 	writer := httptest.NewRecorder()
 
 	router := NewBoardRouter(sv)
@@ -364,6 +371,7 @@ func TestHandleAdmin_CreateBoard_NoSupports(t *testing.T) {
 
 	sv, _ := service.DefaultBoardService()
 	request := authenticatedRequest(t, sv, "POST", "/test/_admin/func/create-board/nosupp")
+	request.Header.Add("User-Agent", "Monazilla/1.00")
 	writer := httptest.NewRecorder()
 
 	router := NewBoardRouter(sv)

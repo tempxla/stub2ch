@@ -62,6 +62,7 @@ func TestHandleBbsCgi_WrongSubmit(t *testing.T) {
 	// request
 	writer := httptest.NewRecorder()
 	request, _ := http.NewRequest("POST", "/test/bbs.cgi", nil)
+	request.Header.Add("User-Agent", "Monazilla/1.00")
 	request.PostForm = make(map[string][]string)
 	request.PostForm.Add("submit", "カキカキ")
 
@@ -99,6 +100,7 @@ func TestHandleBbsCgi_writeDatOK(t *testing.T) {
 	// request
 	writer := httptest.NewRecorder()
 	request, _ := http.NewRequest("POST", "/test/bbs.cgi", nil)
+	request.Header.Add("User-Agent", "Monazilla/1.00")
 	request.PostForm = map[string][]string{
 		"submit":  []string{util.UTF8toSJISString("書き込む")},
 		"bbs":     []string{"news4test"},
@@ -146,6 +148,7 @@ func TestHandleBbsCgi_writeDatOKthroughConfirm(t *testing.T) {
 	// request
 	writer := httptest.NewRecorder()
 	request, _ := http.NewRequest("POST", "/test/bbs.cgi", nil)
+	request.Header.Add("User-Agent", "Monazilla/1.00")
 	request.PostForm = map[string][]string{
 		"submit":  []string{util.UTF8toSJISString("上記全てを承諾して書き込む")},
 		"bbs":     []string{"news4test"},
@@ -187,6 +190,7 @@ func TestHandleBbsCgi_createThreadOK(t *testing.T) {
 	// request
 	writer := httptest.NewRecorder()
 	request, _ := http.NewRequest("POST", "/test/bbs.cgi", nil)
+	request.Header.Add("User-Agent", "Monazilla/1.00")
 	request.PostForm = map[string][]string{
 		"submit":  []string{util.UTF8toSJISString("新規スレッド作成")},
 		"bbs":     []string{"news4test"},
@@ -228,6 +232,7 @@ func TestHandleBbsCgi_createThreadOKthroughConfirm(t *testing.T) {
 	// request
 	writer := httptest.NewRecorder()
 	request, _ := http.NewRequest("POST", "/test/bbs.cgi", nil)
+	request.Header.Add("User-Agent", "Monazilla/1.00")
 	request.PostForm = map[string][]string{
 		"submit":  []string{util.UTF8toSJISString("上記全てを承諾して書き込む")},
 		"bbs":     []string{"news4test"},
@@ -732,6 +737,7 @@ func TestHandleDat_200(t *testing.T) {
 	// request
 	writer := httptest.NewRecorder()
 	request, _ := http.NewRequest("GET", "/news4test/dat/123.dat", nil)
+	request.Header.Add("User-Agent", "Monazilla/1.00")
 
 	// Exercise
 	router := NewBoardRouter(sv)
@@ -764,6 +770,7 @@ func TestHandleDat_404(t *testing.T) {
 	// request
 	writer := httptest.NewRecorder()
 	request, _ := http.NewRequest("GET", "/news4test/dat/999.dat", nil)
+	request.Header.Add("User-Agent", "Monazilla/1.00")
 
 	// Exercise
 	router := NewBoardRouter(sv)
@@ -802,6 +809,7 @@ func TestHandleSubjectTxt_200(t *testing.T) {
 	// request
 	writer := httptest.NewRecorder()
 	request, _ := http.NewRequest("GET", "/news4test/subject.txt", nil)
+	request.Header.Add("User-Agent", "Monazilla/1.00")
 
 	// Exercise
 	router := NewBoardRouter(sv)
@@ -829,6 +837,7 @@ func TestHandleSubjectTxt_404(t *testing.T) {
 	// request
 	writer := httptest.NewRecorder()
 	request, _ := http.NewRequest("GET", "/news4test2/subject.txt", nil)
+	request.Header.Add("User-Agent", "Monazilla/1.00")
 
 	// Exercise
 	router := NewBoardRouter(sv)
