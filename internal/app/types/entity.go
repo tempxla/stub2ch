@@ -27,10 +27,10 @@ type BoardEntity struct {
 type Subjects []Subject
 
 type Subject struct {
-	ThreadKey    string
-	ThreadTitle  string
-	MessageCount int
-	LastModified time.Time
+	ThreadKey    string    `datastore:",noindex"`
+	ThreadTitle  string    `datastore:",noindex"`
+	MessageCount int       `datastore:",noindex"`
+	LastModified time.Time `datastore:",noindex"`
 }
 
 // Kind=Dat

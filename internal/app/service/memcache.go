@@ -16,9 +16,9 @@ type BoardMemcache interface {
 // Kind=MemcacheItem
 // Key=Key
 type Item struct {
-	Key        string
-	Value      []byte
-	Expiration time.Duration
+	Key        string        `datastore:",noindex"`
+	Value      []byte        `datastore:",noindex"`
+	Expiration time.Duration `datastore:",noindex"`
 }
 
 const (
