@@ -77,7 +77,11 @@ func handleWriteDat(w http.ResponseWriter, r *http.Request, sv *service.BoardSer
 	// 	return
 	// }
 	// 書き込み
-	id := sv.ComputeId(strings.Split(r.RemoteAddr, ":")[0], boardName)
+	ipAddr := r.RemoteAddr
+	if i := strings.LastIndexByte(ipAddr, ':'); i != -1 {
+		ipAddr = ipAddr[:i]
+	}
+	id := sv.ComputeId(ipAddr, boardName)
 	resnum, err := sv.WriteDat(boardName, threadKey, name, mail, id, message)
 	if err != nil {
 		// 存在しない or dat落ち or 1001 or 容量オーバー
@@ -189,7 +193,11 @@ func handleCreateThread(w http.ResponseWriter, r *http.Request, sv *service.Boar
 	// 	return
 	// }
 	// スレ立て
-	id := sv.ComputeId(strings.Split(r.RemoteAddr, ":")[0], boardName)
+	ipAddr := r.RemoteAddr
+	if i := strings.LastIndexByte(ipAddr, ':'); i != -1 {
+		ipAddr = ipAddr[:i]
+	}
+	id := sv.ComputeId(ipAddr, boardName)
 	threadKey, err := sv.CreateThread(boardName, name, mail, sv.StartedAt(), id, message, title)
 	if err != nil {
 		// スレ立て失敗
