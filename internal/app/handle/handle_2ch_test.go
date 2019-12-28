@@ -343,9 +343,6 @@ func TestWriteDat_400(t *testing.T) {
 
 func TestWriteDat_CookieMissing(t *testing.T) {
 
-	// まだ実装してない
-	t.Skip("NO SUPPORTS")
-
 	// Setup
 	var repo service.BoardRepository
 	sysEnv := &service.SysEnv{
@@ -579,9 +576,6 @@ func TestCreateThread_400(t *testing.T) {
 }
 
 func TestCreateThread_CookieMissing(t *testing.T) {
-
-	// まだ実装してない
-	t.Skip("NO SUPPORTS")
 
 	// Setup
 	var repo service.BoardRepository

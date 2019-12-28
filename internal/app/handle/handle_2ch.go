@@ -72,10 +72,10 @@ func handleWriteDat(w http.ResponseWriter, r *http.Request, sv *service.BoardSer
 		return
 	}
 	// クッキー確認
-	// if executeWriteDatConfirmTmpl(w, r,
-	// 	boardName, name, mail, message, sv.StartedAt(), Nothing(), Just(threadKey)) {
-	// 	return
-	// }
+	if executeWriteDatConfirmTmpl(w, r,
+		boardName, name, mail, message, sv.StartedAt(), Nothing(), Just(threadKey)) {
+		return
+	}
 	// 書き込み
 	ipAddr := r.RemoteAddr
 	if i := strings.LastIndexByte(ipAddr, ':'); i != -1 {
@@ -140,15 +140,20 @@ func executeWriteDatConfirmTmpl(w http.ResponseWriter, r *http.Request,
 	w.Header().Add("Content-Type", "text/html; charset=Shift_JIS")
 	w.Header().Add("Date", startedAt.UTC().Format(http.TimeFormat))
 	// Domain属性を指定しないCookieは、Cookieを発行したホストのみに送信される
-	expires := startedAt.Add(time.Duration(7*24) * time.Hour)
-	w.Header().Add("Set-Cookie", fmt.Sprintf("PON=%s; expires=%s; path=/", r.RemoteAddr, expires))
+	expires := startedAt.Add(time.Duration(7*24) * time.Hour).UTC().Format(http.TimeFormat)
+	ipAddr := r.RemoteAddr
+	if i := strings.LastIndexByte(ipAddr, ':'); i != -1 {
+		ipAddr = ipAddr[:i]
+	}
+	w.Header().Add("Set-Cookie", fmt.Sprintf("PON=%s; expires=%s; path=/", ipAddr, expires))
 	w.Header().Add("Set-Cookie", fmt.Sprintf("yuki=akari; expires=%s; path=/", expires))
+
 	// Body
 	view := map[string]string{
-		"Title":     FromMaybe(title, ""),
-		"Name":      name,
-		"Mail":      mail,
-		"Message":   message,
+		"Title":     util.UTF8toSJISString(FromMaybe(title, "")),
+		"Name":      util.UTF8toSJISString(name),
+		"Mail":      util.UTF8toSJISString(mail),
+		"Message":   util.UTF8toSJISString(message),
 		"BoardName": boardName,
 		"Time":      strconv.FormatInt(startedAt.Unix(), 10),
 	}
@@ -188,10 +193,10 @@ func handleCreateThread(w http.ResponseWriter, r *http.Request, sv *service.Boar
 		return
 	}
 	// クッキー確認
-	// if executeWriteDatConfirmTmpl(w, r,
-	// 	boardName, name, mail, message, sv.StartedAt(), Just(title), Nothing()) {
-	// 	return
-	// }
+	if executeWriteDatConfirmTmpl(w, r,
+		boardName, name, mail, message, sv.StartedAt(), Just(title), Nothing()) {
+		return
+	}
 	// スレ立て
 	ipAddr := r.RemoteAddr
 	if i := strings.LastIndexByte(ipAddr, ':'); i != -1 {
@@ -250,6 +255,7 @@ func handleSubjectTxt() ServiceHandle {
 			}
 			return
 		}
+
 		fmt.Fprintf(w, string(util.UTF8toSJIS(subjectTxt)))
 	}
 }
