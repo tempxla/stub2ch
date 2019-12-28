@@ -588,6 +588,40 @@ func TestUpdateSubjectsWhenWriteDat_fail(t *testing.T) {
 	}
 }
 
+func TestUpdateSubjectsWhenWriteDat_1001(t *testing.T) {
+	// Setup
+	t1 := time.Now().Add(time.Duration(-1) * time.Hour)
+	board := &BoardEntity{[]Subject{
+		{
+			ThreadKey:    "123",
+			MessageCount: 999,
+			LastModified: t1,
+		},
+	}}
+	threadKey := "123"
+	mail := "sage"
+	now := time.Now()
+
+	// Exercise
+	resnum, err := updateSubjectsWhenWriteDat(board, threadKey, mail, now)
+	if err != nil {
+		t.Errorf("%v", err)
+	}
+
+	// Verify
+	if len(board.Subjects) != 1 {
+		t.Errorf("board count: %v", len(board.Subjects))
+	}
+	if resnum != 1000 {
+		t.Errorf("wrong resnum: %v", resnum)
+	}
+	if board.Subjects[0].ThreadKey != "123" ||
+		board.Subjects[0].MessageCount != 1001 ||
+		board.Subjects[0].LastModified != now {
+		t.Errorf("board content: %v", board.Subjects)
+	}
+}
+
 func TestCreateDat(t *testing.T) {
 	// Exercise
 	date, _ := time.ParseInLocation("2006-01-02 15:04:05.000",

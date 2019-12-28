@@ -37,5 +37,5 @@ type Subject struct {
 // Ancestor=Board
 // Key=ThreadKey
 type DatEntity struct {
-	Dat []byte
+	Dat []byte `datastore:",noindex"`
 }

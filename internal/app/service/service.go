@@ -22,7 +22,8 @@ const (
 	dat_date_layout = "2006/01/02"
 	dat_time_layout = "15:04:05.000"
 	// 名前<>メール欄<>年/月/日(曜) 時:分:秒.ミリ秒 ID:hogehoge0<> 本文 <>スレタイ
-	dat_format = "%s<>%s<>%s(%s) %s ID:%s<> %s <>%s\n"
+	dat_format      = "%s<>%s<>%s(%s) %s ID:%s<> %s <>%s\n"
+	dat_format_1001 = "1001<><>Over 1000 Thread<> このスレッドは１０００を超えました。 <br> 新しいスレッドを立ててください。 <>\n"
 
 	bbs_thread_capacity = 500 * 1024 // 500kB
 )
@@ -211,6 +212,11 @@ func (sv *BoardService) WriteDat(boardName, threadKey,
 			return err
 		}
 
+		// 1001カキコ
+		if resnum == 1000 {
+			dat.Dat = append(dat.Dat, []byte(dat_format_1001)...)
+		}
+
 		// Push Entities
 		if err := sv.repo.TxPutDat(tx, datKey, dat); err != nil {
 			return err
@@ -245,7 +251,11 @@ func updateSubjectsWhenWriteDat(board *BoardEntity,
 		return
 	}
 
-	board.Subjects[pos].MessageCount = resnum
+	if resnum == 1000 {
+		board.Subjects[pos].MessageCount = resnum + 1
+	} else {
+		board.Subjects[pos].MessageCount = resnum
+	}
 	board.Subjects[pos].LastModified = now
 
 	// (´∀`∩)↑age↑
