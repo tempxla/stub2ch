@@ -7,7 +7,8 @@ import (
 	"fmt"
 	"github.com/tempxla/stub2ch/configs/app/config"
 	"github.com/tempxla/stub2ch/configs/app/secretcfg"
-	. "github.com/tempxla/stub2ch/internal/app/types"
+	"github.com/tempxla/stub2ch/internal/app/types/entity/board"
+	"github.com/tempxla/stub2ch/internal/app/types/entity/dat"
 	"github.com/tempxla/stub2ch/tools/app/testutil"
 	"strconv"
 	"testing"
@@ -23,7 +24,7 @@ func cleanDatastore(t *testing.T, ctx context.Context, client *datastore.Client)
 	query := datastore.NewQuery("Dat").KeysOnly()
 	var keys []*datastore.Key
 	var err error
-	if keys, err = client.GetAll(ctx, query, []*DatEntity{}); err != nil {
+	if keys, err = client.GetAll(ctx, query, []*dat.Entity{}); err != nil {
 		t.Fatalf("Failed clean dat. get dat  %v", err)
 	}
 	if err := client.DeleteMulti(ctx, keys); err != nil {
@@ -31,7 +32,7 @@ func cleanDatastore(t *testing.T, ctx context.Context, client *datastore.Client)
 	}
 	// delete all Board
 	query = datastore.NewQuery("Board").KeysOnly()
-	if keys, err = client.GetAll(ctx, query, []*BoardEntity{}); err != nil {
+	if keys, err = client.GetAll(ctx, query, []*board.Entity{}); err != nil {
 		t.Fatalf("Failed clean board. get dat  %v", err)
 	}
 	if err := client.DeleteMulti(ctx, keys); err != nil {
@@ -192,12 +193,12 @@ func TestCreateNewThread_AtFirst(t *testing.T) {
 	boardKey := datastore.NameKey(kind, name, nil)
 
 	// Creates a Board instance.
-	board := BoardEntity{
-		Subjects: []Subject{},
+	boardEntity := board.Entity{
+		Subjects: []board.Subject{},
 	}
 
 	// Saves the new entity.
-	if _, err := client.Put(ctx, boardKey, &board); err != nil {
+	if _, err := client.Put(ctx, boardKey, &boardEntity); err != nil {
 		t.Fatalf("Failed to save board: %v", err)
 	}
 
@@ -225,7 +226,7 @@ func TestCreateNewThread_AtFirst(t *testing.T) {
 	}
 	// Get Board
 	key := datastore.NameKey("Board", "news4test", nil)
-	e := new(BoardEntity)
+	e := new(board.Entity)
 	if err := client.Get(ctx, key, e); err != nil {
 		t.Fatalf("Failed to get board  %v", err)
 	}
@@ -234,7 +235,7 @@ func TestCreateNewThread_AtFirst(t *testing.T) {
 	}
 	// Verify Board
 	subject := e.Subjects[0]
-	expectedSubject := Subject{
+	expectedSubject := board.Subject{
 		ThreadKey:    strconv.FormatInt(now.Unix(), 10),
 		ThreadTitle:  "スレ立てテスト",
 		MessageCount: 1,
@@ -247,7 +248,7 @@ func TestCreateNewThread_AtFirst(t *testing.T) {
 	// Get Dat
 	ancestor := datastore.NameKey("Board", "news4test", nil)
 	query := datastore.NewQuery("Dat").Ancestor(ancestor)
-	var datList []*DatEntity
+	var datList []*dat.Entity
 	if _, err := client.GetAll(ctx, query, &datList); err != nil {
 		t.Fatalf("Failed to get dat  %v", err)
 	}
@@ -255,9 +256,9 @@ func TestCreateNewThread_AtFirst(t *testing.T) {
 		t.Fatalf("dat count  %d", len(datList))
 	}
 	// Verify Dat
-	if bytes.Equal(datList[0].Dat,
+	if bytes.Equal(datList[0].Bytes,
 		[]byte("名前<>メール<>2019/11/23(土) 22:29:01.123 ID:ABC<> 本文 <>スレタイ")) {
-		t.Fatalf("content of dat  %v", datList[0].Dat)
+		t.Fatalf("content of dat  %v", datList[0].Bytes)
 	}
 }
 
@@ -283,12 +284,12 @@ func TestCreateNewThread_More(t *testing.T) {
 	boardKey := datastore.NameKey(kind, name, nil)
 
 	// Creates a Board instance.
-	board := BoardEntity{
-		Subjects: []Subject{},
+	boardEntity := board.Entity{
+		Subjects: []board.Subject{},
 	}
 
 	// Saves the new entity.
-	if _, err := client.Put(ctx, boardKey, &board); err != nil {
+	if _, err := client.Put(ctx, boardKey, &boardEntity); err != nil {
 		t.Fatalf("Failed to save board: %v", err)
 	}
 
@@ -323,7 +324,7 @@ func TestCreateNewThread_More(t *testing.T) {
 	// ----------------------------------
 	// Get Board
 	key := datastore.NameKey("Board", "news4test", nil)
-	e := new(BoardEntity)
+	e := new(board.Entity)
 	if err := client.Get(ctx, key, e); err != nil {
 		t.Fatalf("Failed to get board  %v", err)
 	}
@@ -393,12 +394,12 @@ func TestWriteDat(t *testing.T) {
 	boardKey := datastore.NameKey(kind, name, nil)
 
 	// Creates a Board instance.
-	board := BoardEntity{
-		Subjects: []Subject{},
+	boardEntity := board.Entity{
+		Subjects: []board.Subject{},
 	}
 
 	// Saves the new entity.
-	if _, err := client.Put(ctx, boardKey, &board); err != nil {
+	if _, err := client.Put(ctx, boardKey, &boardEntity); err != nil {
 		t.Fatalf("Failed to save board: %v", err)
 	}
 
@@ -433,7 +434,7 @@ func TestWriteDat(t *testing.T) {
 	}
 	// Get Board
 	key := datastore.NameKey("Board", "news4test", nil)
-	e := new(BoardEntity)
+	e := new(board.Entity)
 	if err := client.Get(ctx, key, e); err != nil {
 		t.Fatalf("Failed to get board  %v", err)
 	}
@@ -442,7 +443,7 @@ func TestWriteDat(t *testing.T) {
 	}
 	// Verify Board
 	subject := e.Subjects[0]
-	expectedSubject := Subject{
+	expectedSubject := board.Subject{
 		ThreadKey:    threadKey,
 		ThreadTitle:  "スレ立てテスト",
 		MessageCount: 2,
@@ -455,7 +456,7 @@ func TestWriteDat(t *testing.T) {
 	// Get Dat
 	ancestor := datastore.NameKey("Board", "news4test", nil)
 	query := datastore.NewQuery("Dat").Ancestor(ancestor)
-	var datList []*DatEntity
+	var datList []*dat.Entity
 	if _, err := client.GetAll(ctx, query, &datList); err != nil {
 		t.Fatalf("Failed to get dat  %v", err)
 	}
@@ -468,10 +469,10 @@ func TestWriteDat(t *testing.T) {
 		week_days_jp[sv.StartedAt().Weekday()],
 		sv.StartedAt().Format(dat_time_layout),
 	)
-	if bytes.Equal(datList[0].Dat,
+	if bytes.Equal(datList[0].Bytes,
 		[]byte("名前<>メール<>2019/11/23(土) 22:29:01.123 ID:ABC<> 本文 <>スレタイ"+
 			"\n名前2<>メール2<>"+dateStr+" ID:id2<> カキ２ <>")) {
-		t.Fatalf("content of dat  %v", datList[0].Dat)
+		t.Fatalf("content of dat  %v", datList[0].Bytes)
 	}
 }
 
@@ -480,7 +481,7 @@ func TestUpdateSubjectsWhenWriteDat_age(t *testing.T) {
 	t1 := time.Now().Add(time.Duration(-1) * time.Hour)
 	t2 := time.Now().Add(time.Duration(-2) * time.Hour)
 	t3 := time.Now().Add(time.Duration(-3) * time.Hour)
-	board := &BoardEntity{[]Subject{
+	board := &board.Entity{[]board.Subject{
 		{
 			ThreadKey:    "123",
 			MessageCount: 100,
@@ -531,7 +532,7 @@ func TestUpdateSubjectsWhenWriteDat_sage(t *testing.T) {
 	// Setup
 	t1 := time.Now().Add(time.Duration(-1) * time.Hour)
 	t2 := time.Now().Add(time.Duration(-2) * time.Hour)
-	board := &BoardEntity{[]Subject{
+	board := &board.Entity{[]board.Subject{
 		{
 			ThreadKey:    "123",
 			MessageCount: 100,
@@ -572,8 +573,8 @@ func TestUpdateSubjectsWhenWriteDat_sage(t *testing.T) {
 
 func TestUpdateSubjectsWhenWriteDat_fail(t *testing.T) {
 	// Setup
-	board := &BoardEntity{
-		[]Subject{},
+	board := &board.Entity{
+		[]board.Subject{},
 	}
 	threadKey := "888"
 	mail := "sage"
@@ -591,7 +592,7 @@ func TestUpdateSubjectsWhenWriteDat_fail(t *testing.T) {
 func TestUpdateSubjectsWhenWriteDat_1001(t *testing.T) {
 	// Setup
 	t1 := time.Now().Add(time.Duration(-1) * time.Hour)
-	board := &BoardEntity{[]Subject{
+	board := &board.Entity{[]board.Subject{
 		{
 			ThreadKey:    "123",
 			MessageCount: 999,
@@ -630,8 +631,8 @@ func TestCreateDat(t *testing.T) {
 
 	// Verify
 	excepted := []byte("名前<>メール<>2019/11/23(土) 22:29:01.123 ID:ABC<> 本文 <>スレタイ\n")
-	if !bytes.Equal(dat.Dat, excepted) {
-		t.Fatalf("fail \n actual: %v \n expect: %v", string(dat.Dat), string(excepted))
+	if !bytes.Equal(dat.Bytes, excepted) {
+		t.Fatalf("fail \n actual: %v \n expect: %v", string(dat.Bytes), string(excepted))
 	}
 }
 
@@ -649,8 +650,8 @@ func TestAppendDat(t *testing.T) {
 	// Verify
 	excepted := []byte("名前<>メール<>2019/11/23(土) 22:29:01.123 ID:ABC<> 本文 <>スレタイ" +
 		"\n名前2<>メール2<>2019/11/24(日) 22:29:01.123 ID:XYZ<> 本文2 <>\n")
-	if !bytes.Equal(dat.Dat, excepted) {
-		t.Fatalf("fail \n actual: %v \n expect: %v", string(dat.Dat), string(excepted))
+	if !bytes.Equal(dat.Bytes, excepted) {
+		t.Fatalf("fail \n actual: %v \n expect: %v", string(dat.Bytes), string(excepted))
 	}
 }
 

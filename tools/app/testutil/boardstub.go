@@ -2,30 +2,31 @@ package testutil
 
 import (
 	"cloud.google.com/go/datastore"
-	. "github.com/tempxla/stub2ch/internal/app/types"
+	"github.com/tempxla/stub2ch/internal/app/types/entity/board"
+	"github.com/tempxla/stub2ch/internal/app/types/entity/dat"
 	"time"
 )
 
 // A injection for google datastore
 type BoardStub struct {
-	BoardMap map[string]*BoardEntity
-	DatMap   map[string]map[string]*DatEntity
+	BoardMap map[string]*board.Entity
+	DatMap   map[string]map[string]*dat.Entity
 }
 
-func (repo *BoardStub) BoardKey(name string) (key *BoardKey) {
-	k := datastore.NameKey(KIND_BOARD, name, nil)
-	key = &BoardKey{Key: k}
+func (repo *BoardStub) BoardKey(name string) (key *board.Key) {
+	k := datastore.NameKey(board.KIND, name, nil)
+	key = &board.Key{DSKey: k}
 	return
 }
 
-func (repo *BoardStub) DatKey(name string, parent *BoardKey) (key *DatKey) {
-	k := datastore.NameKey(KIND_DAT, name, parent.Key)
-	key = &DatKey{Key: k}
+func (repo *BoardStub) DatKey(name string, parent *board.Key) (key *dat.Key) {
+	k := datastore.NameKey(dat.KIND, name, parent.DSKey)
+	key = &dat.Key{DSKey: k}
 	return
 }
 
-func (repo *BoardStub) GetBoard(key *BoardKey, entity *BoardEntity) (err error) {
-	if e, ok := repo.BoardMap[key.Key.Name]; ok {
+func (repo *BoardStub) GetBoard(key *board.Key, entity *board.Entity) (err error) {
+	if e, ok := repo.BoardMap[key.DSKey.Name]; ok {
 		entity.Subjects = e.Subjects
 		return
 	} else {
@@ -33,24 +34,24 @@ func (repo *BoardStub) GetBoard(key *BoardKey, entity *BoardEntity) (err error) 
 	}
 }
 
-func (repo *BoardStub) PutBoard(key *BoardKey, entity *BoardEntity) (err error) {
-	repo.BoardMap[key.Key.Name] = entity
+func (repo *BoardStub) PutBoard(key *board.Key, entity *board.Entity) (err error) {
+	repo.BoardMap[key.DSKey.Name] = entity
 	return
 }
 
-func (repo *BoardStub) GetDat(key *DatKey, entity *DatEntity) (err error) {
-	if board, ok := repo.DatMap[key.Key.Parent.Name]; !ok {
+func (repo *BoardStub) GetDat(key *dat.Key, entity *dat.Entity) (err error) {
+	if board, ok := repo.DatMap[key.DSKey.Parent.Name]; !ok {
 		return datastore.ErrNoSuchEntity
-	} else if e, ok := board[key.Key.Name]; ok {
-		entity.Dat = e.Dat
+	} else if e, ok := board[key.DSKey.Name]; ok {
+		entity.Bytes = e.Bytes
 		return
 	} else {
 		return datastore.ErrNoSuchEntity
 	}
 }
 
-func (repo *BoardStub) PutDat(key *DatKey, entity *DatEntity) (err error) {
-	repo.DatMap[key.Key.Parent.Name][key.Key.Name] = entity
+func (repo *BoardStub) PutDat(key *dat.Key, entity *dat.Entity) (err error) {
+	repo.DatMap[key.DSKey.Parent.Name][key.DSKey.Name] = entity
 	return
 }
 
@@ -58,22 +59,22 @@ func (repo *BoardStub) RunInTransaction(f func(tx *datastore.Transaction) error)
 	return f(nil)
 }
 
-func (repo *BoardStub) TxGetBoard(tx *datastore.Transaction, key *BoardKey, entity *BoardEntity) (err error) {
+func (repo *BoardStub) TxGetBoard(tx *datastore.Transaction, key *board.Key, entity *board.Entity) (err error) {
 	err = repo.GetBoard(key, entity)
 	return
 }
 
-func (repo *BoardStub) TxPutBoard(tx *datastore.Transaction, key *BoardKey, entity *BoardEntity) (err error) {
+func (repo *BoardStub) TxPutBoard(tx *datastore.Transaction, key *board.Key, entity *board.Entity) (err error) {
 	err = repo.PutBoard(key, entity)
 	return
 }
 
-func (repo *BoardStub) TxGetDat(tx *datastore.Transaction, key *DatKey, entity *DatEntity) (err error) {
+func (repo *BoardStub) TxGetDat(tx *datastore.Transaction, key *dat.Key, entity *dat.Entity) (err error) {
 	err = repo.GetDat(key, entity)
 	return
 }
 
-func (repo *BoardStub) TxPutDat(tx *datastore.Transaction, key *DatKey, entity *DatEntity) (err error) {
+func (repo *BoardStub) TxPutDat(tx *datastore.Transaction, key *dat.Key, entity *dat.Entity) (err error) {
 	err = repo.PutDat(key, entity)
 	return
 }
@@ -88,31 +89,31 @@ type ThreadStub struct {
 
 func EmptyBoardStub() *BoardStub {
 	return &BoardStub{
-		BoardMap: make(map[string]*BoardEntity),
-		DatMap:   make(map[string]map[string]*DatEntity),
+		BoardMap: make(map[string]*board.Entity),
+		DatMap:   make(map[string]map[string]*dat.Entity),
 	}
 }
 
 func NewBoardStub(boardName string, threads []ThreadStub) *BoardStub {
 	stub := &BoardStub{
-		BoardMap: map[string]*BoardEntity{
-			boardName: &BoardEntity{
-				Subjects: []Subject{},
+		BoardMap: map[string]*board.Entity{
+			boardName: &board.Entity{
+				Subjects: []board.Subject{},
 			},
 		},
-		DatMap: map[string]map[string]*DatEntity{
-			boardName: make(map[string]*DatEntity),
+		DatMap: map[string]map[string]*dat.Entity{
+			boardName: make(map[string]*dat.Entity),
 		},
 	}
-	board := stub.BoardMap[boardName]
+	boardEntity := stub.BoardMap[boardName]
 	for _, v := range threads {
-		board.Subjects = append(board.Subjects, Subject{
+		boardEntity.Subjects = append(boardEntity.Subjects, board.Subject{
 			ThreadKey:    v.ThreadKey,
 			ThreadTitle:  v.ThreadTitle,
 			MessageCount: v.MessageCount,
 			LastModified: v.LastModified,
 		})
-		stub.DatMap[boardName][v.ThreadKey] = &DatEntity{Dat: []byte(v.Dat)}
+		stub.DatMap[boardName][v.ThreadKey] = &dat.Entity{Bytes: []byte(v.Dat)}
 	}
 	return stub
 }

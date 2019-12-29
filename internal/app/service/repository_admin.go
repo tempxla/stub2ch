@@ -3,7 +3,7 @@ package service
 import (
 	"cloud.google.com/go/datastore"
 	"fmt"
-	. "github.com/tempxla/stub2ch/internal/app/types"
+	"github.com/tempxla/stub2ch/internal/app/types/entity/board"
 )
 
 type AdminBoardRepository interface {
@@ -19,10 +19,10 @@ type AdminBoardStore struct {
 func (admin *AdminBoardStore) CreateBoard(boardName string) (err error) {
 
 	key := admin.repo.BoardKey(boardName)
-	newEntity := &BoardEntity{
-		Subjects: []Subject{},
+	newEntity := &board.Entity{
+		Subjects: []board.Subject{},
 	}
-	entity := &BoardEntity{}
+	entity := &board.Entity{}
 	err = admin.repo.RunInTransaction(func(tx *datastore.Transaction) error {
 		err := admin.repo.GetBoard(key, entity)
 		if err != nil && err != datastore.ErrNoSuchEntity {

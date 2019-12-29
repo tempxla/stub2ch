@@ -5,7 +5,8 @@ import (
 	"cloud.google.com/go/datastore"
 	"context"
 	"github.com/tempxla/stub2ch/configs/app/config"
-	. "github.com/tempxla/stub2ch/internal/app/types"
+	"github.com/tempxla/stub2ch/internal/app/types/entity/board"
+	"github.com/tempxla/stub2ch/internal/app/types/entity/dat"
 	"testing"
 	"time"
 )
@@ -33,8 +34,8 @@ func TestPutAndGetBoard(t *testing.T) {
 	now, _ := time.ParseInLocation("2006-01-02 15:04:05.000",
 		"2019-11-23 22:29:01.123", time.Local)
 
-	entity1 := &BoardEntity{
-		Subjects: []Subject{
+	entity1 := &board.Entity{
+		Subjects: []board.Subject{
 			{
 				ThreadKey:    "0123",
 				ThreadTitle:  "xxx",
@@ -45,7 +46,7 @@ func TestPutAndGetBoard(t *testing.T) {
 	}
 	sv.repo.PutBoard(key, entity1)
 
-	entity2 := &BoardEntity{}
+	entity2 := &board.Entity{}
 	err = sv.repo.GetBoard(key, entity2)
 
 	if len(entity1.Subjects) != len(entity2.Subjects) {
@@ -79,20 +80,20 @@ func TestPutAndGetDat(t *testing.T) {
 
 	boardKey := sv.repo.BoardKey("news4test")
 
-	boardEntity := &BoardEntity{}
+	boardEntity := &board.Entity{}
 	sv.repo.PutBoard(boardKey, boardEntity)
 
 	datKey := sv.repo.DatKey("012", boardKey)
-	datEntity1 := &DatEntity{
-		Dat: []byte("hogepiyo"),
+	datEntity1 := &dat.Entity{
+		Bytes: []byte("hogepiyo"),
 	}
 	sv.repo.PutDat(datKey, datEntity1)
 
-	datEntity2 := &DatEntity{}
+	datEntity2 := &dat.Entity{}
 	sv.repo.GetDat(datKey, datEntity2)
 
-	if !bytes.Equal(datEntity1.Dat, datEntity2.Dat) {
-		t.Errorf("%s vs %s", datEntity1.Dat, datEntity2.Dat)
+	if !bytes.Equal(datEntity1.Bytes, datEntity2.Bytes) {
+		t.Errorf("%s vs %s", datEntity1.Bytes, datEntity2.Bytes)
 	}
 }
 
@@ -120,8 +121,8 @@ func TestTxPutAndGetBoard(t *testing.T) {
 		"2019-11-23 22:29:01.123", time.Local)
 
 	// Put
-	entity1 := &BoardEntity{
-		Subjects: []Subject{
+	entity1 := &board.Entity{
+		Subjects: []board.Subject{
 			{
 				ThreadKey:    "0123",
 				ThreadTitle:  "xxx",
@@ -139,7 +140,7 @@ func TestTxPutAndGetBoard(t *testing.T) {
 	}
 
 	// Get
-	entity2 := &BoardEntity{}
+	entity2 := &board.Entity{}
 	err = sv.repo.RunInTransaction(func(tx *datastore.Transaction) error {
 		sv.repo.TxPutBoard(tx, key, entity1)
 		err = sv.repo.TxGetBoard(tx, key, entity2)
@@ -177,8 +178,8 @@ func TestTxPutAndGetDat(t *testing.T) {
 	}))
 
 	// Put
-	datEntity1 := &DatEntity{
-		Dat: []byte("hogepiyo"),
+	datEntity1 := &dat.Entity{
+		Bytes: []byte("hogepiyo"),
 	}
 	err = sv.repo.RunInTransaction(func(tx *datastore.Transaction) error {
 		boardKey := sv.repo.BoardKey("news4test")
@@ -192,7 +193,7 @@ func TestTxPutAndGetDat(t *testing.T) {
 	}
 
 	// Get
-	datEntity2 := &DatEntity{}
+	datEntity2 := &dat.Entity{}
 	err = sv.repo.RunInTransaction(func(tx *datastore.Transaction) error {
 		boardKey := sv.repo.BoardKey("news4test")
 		datKey := sv.repo.DatKey("012", boardKey)
@@ -204,8 +205,8 @@ func TestTxPutAndGetDat(t *testing.T) {
 		t.Error(err)
 	}
 
-	if !bytes.Equal(datEntity1.Dat, datEntity2.Dat) {
-		t.Errorf("%s vs %s", datEntity1.Dat, datEntity2.Dat)
+	if !bytes.Equal(datEntity1.Bytes, datEntity2.Bytes) {
+		t.Errorf("%s vs %s", datEntity1.Bytes, datEntity2.Bytes)
 	}
 
 }

@@ -10,7 +10,8 @@ import (
 	"fmt"
 	"github.com/tempxla/stub2ch/configs/app/config"
 	"github.com/tempxla/stub2ch/configs/app/secretcfg"
-	. "github.com/tempxla/stub2ch/internal/app/types"
+	"github.com/tempxla/stub2ch/internal/app/types/entity/board"
+	"github.com/tempxla/stub2ch/internal/app/types/entity/dat"
 	"github.com/tempxla/stub2ch/internal/app/util"
 	"html"
 	"strconv"
@@ -106,12 +107,12 @@ func (sv *BoardService) MakeDat(boardName string, threadKey string) (_ []byte, e
 	key := sv.repo.DatKey(threadKey, sv.repo.BoardKey(boardName))
 
 	// Gets a Board
-	e := new(DatEntity)
+	e := new(dat.Entity)
 	if err = sv.repo.GetDat(key, e); err != nil {
 		return
 	}
 
-	return e.Dat, nil
+	return e.Bytes, nil
 }
 
 // データストアからエンティティを取得しsubject.txtとして返す
@@ -120,7 +121,7 @@ func (sv *BoardService) MakeSubjectTxt(boardName string) (_ []byte, err error) {
 	key := sv.repo.BoardKey(boardName)
 
 	// Gets a Board
-	e := new(BoardEntity)
+	e := new(board.Entity)
 	if err = sv.repo.GetBoard(key, e); err != nil {
 		return
 	}
@@ -140,7 +141,7 @@ func (sv *BoardService) CreateThread(boardName string,
 
 	// New subject
 	threadKey = strconv.FormatInt(now.Unix(), 10)
-	subject := Subject{
+	subject := board.Subject{
 		ThreadKey:    threadKey,
 		ThreadTitle:  escapeDat(html.EscapeString(title)),
 		MessageCount: 1,
@@ -157,19 +158,19 @@ func (sv *BoardService) CreateThread(boardName string,
 	// Start transaction
 	err = sv.repo.RunInTransaction(func(tx *datastore.Transaction) error {
 		// Get And Check
-		board := &BoardEntity{}
-		if err := sv.repo.TxGetBoard(tx, boardKey, board); err != nil {
+		boardEntity := &board.Entity{}
+		if err := sv.repo.TxGetBoard(tx, boardKey, boardEntity); err != nil {
 			return err
 		}
-		for _, sbj := range board.Subjects {
-			if sbj.ThreadKey == datKey.Key.Name {
+		for _, sbj := range boardEntity.Subjects {
+			if sbj.ThreadKey == datKey.DSKey.Name {
 				return fmt.Errorf("thread key is duplicate")
 			}
 		}
 		// 先頭に追加
-		board.Subjects = append([]Subject{subject}, board.Subjects...)
+		boardEntity.Subjects = append([]board.Subject{subject}, boardEntity.Subjects...)
 		// Save
-		if err := sv.repo.TxPutBoard(tx, boardKey, board); err != nil {
+		if err := sv.repo.TxPutBoard(tx, boardKey, boardEntity); err != nil {
 			return err
 		}
 		if err := sv.repo.TxPutDat(tx, datKey, dat); err != nil {
@@ -189,17 +190,17 @@ func (sv *BoardService) WriteDat(boardName, threadKey,
 
 	err = sv.repo.RunInTransaction(func(tx *datastore.Transaction) error {
 		// Get Entities
-		dat := new(DatEntity)
+		dat := new(dat.Entity)
 		if err := sv.repo.TxGetDat(tx, datKey, dat); err != nil {
 			return err
 		}
-		board := new(BoardEntity)
+		board := new(board.Entity)
 		if err := sv.repo.TxGetBoard(tx, boardKey, board); err != nil {
 			return err
 		}
 
 		// 容量オーバー
-		if len(util.UTF8toSJIS(dat.Dat)) >= bbs_thread_capacity {
+		if len(util.UTF8toSJIS(dat.Bytes)) >= bbs_thread_capacity {
 			return fmt.Errorf("容量超過: これ以上書き込めません。。。")
 		}
 
@@ -214,7 +215,7 @@ func (sv *BoardService) WriteDat(boardName, threadKey,
 
 		// 1001カキコ
 		if resnum == 1000 {
-			dat.Dat = append(dat.Dat, []byte(dat_format_1001)...)
+			dat.Bytes = append(dat.Bytes, []byte(dat_format_1001)...)
 		}
 
 		// Push Entities
@@ -229,7 +230,7 @@ func (sv *BoardService) WriteDat(boardName, threadKey,
 	return
 }
 
-func updateSubjectsWhenWriteDat(board *BoardEntity,
+func updateSubjectsWhenWriteDat(board *board.Entity,
 	threadKey string, mail string, now time.Time) (resnum int, err error) {
 
 	sbjLen := len(board.Subjects)
@@ -271,23 +272,23 @@ func updateSubjectsWhenWriteDat(board *BoardEntity,
 }
 
 // create dat. line: 1
-func createDat(name string, mail string, date time.Time, id string, message string, title string) *DatEntity {
-	dat := &DatEntity{}
+func createDat(name string, mail string, date time.Time, id string, message string, title string) *dat.Entity {
+	dat := &dat.Entity{}
 	writeDat(dat, dat_format, name, mail, date, id, message, title)
 	return dat
 }
 
 // append dat. line: 2..
-func appendDat(dat *DatEntity,
+func appendDat(dat *dat.Entity,
 	name string, mail string, date time.Time, id string, message string) {
 
 	writeDat(dat, dat_format, name, mail, date, id, message, "")
 }
 
-func writeDat(dat *DatEntity, format string,
+func writeDat(dat *dat.Entity, format string,
 	name string, mail string, date time.Time, id string, message string, title string) {
 
-	wr := bytes.NewBuffer(dat.Dat)
+	wr := bytes.NewBuffer(dat.Bytes)
 	// 名前<>メール欄<>年/月/日(曜) 時:分:秒.ミリ秒 ID:hogehoge0<> 本文 <>スレタイ
 	// 2行目以降はスレタイは無し
 	fmt.Fprintf(wr, format,
@@ -302,7 +303,7 @@ func writeDat(dat *DatEntity, format string,
 		escapeDat(html.EscapeString(title)),          // スレタイ
 	)
 
-	dat.Dat = wr.Bytes()
+	dat.Bytes = wr.Bytes()
 }
 
 func escapeDatMessage(str string) string {
