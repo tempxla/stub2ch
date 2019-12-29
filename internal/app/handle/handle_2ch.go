@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/julienschmidt/httprouter"
 	"github.com/tempxla/stub2ch/internal/app/service"
-	. "github.com/tempxla/stub2ch/internal/app/types"
+	mstring "github.com/tempxla/stub2ch/internal/app/types/maybe/string"
 	"github.com/tempxla/stub2ch/internal/app/util"
 	"log"
 	"net/http"
@@ -73,7 +73,7 @@ func handleWriteDat(w http.ResponseWriter, r *http.Request, sv *service.BoardSer
 	}
 	// クッキー確認
 	if executeWriteDatConfirmTmpl(w, r,
-		boardName, name, mail, message, sv.StartedAt(), Nothing(), Just(threadKey)) {
+		boardName, name, mail, message, sv.StartedAt(), mstring.Nothing(), mstring.Just(threadKey)) {
 		return
 	}
 	// 書き込み
@@ -129,7 +129,7 @@ func executeWriteDatNotFoundTmpl(w http.ResponseWriter, r *http.Request,
 
 // Returns false if Cookie Found.
 func executeWriteDatConfirmTmpl(w http.ResponseWriter, r *http.Request,
-	boardName, name, mail, message string, startedAt time.Time, title, threadKey Maybe) bool {
+	boardName, name, mail, message string, startedAt time.Time, title, threadKey *mstring.Maybe) bool {
 
 	if c, err := r.Cookie("PON"); err == nil && c.Value != "" {
 		if c, err := r.Cookie("yuki"); err == nil && c.Value == "akari" {
@@ -150,15 +150,15 @@ func executeWriteDatConfirmTmpl(w http.ResponseWriter, r *http.Request,
 
 	// Body
 	view := map[string]string{
-		"Title":     util.UTF8toSJISString(FromMaybe(title, "")),
+		"Title":     util.UTF8toSJISString(title.FromMaybe("")),
 		"Name":      util.UTF8toSJISString(name),
 		"Mail":      util.UTF8toSJISString(mail),
 		"Message":   util.UTF8toSJISString(message),
 		"BoardName": boardName,
 		"Time":      strconv.FormatInt(startedAt.Unix(), 10),
 	}
-	if IsJust(threadKey) {
-		view["ThreadKey"] = FromJust(threadKey)
+	if threadKey.IsJust() {
+		view["ThreadKey"] = threadKey.FromMaybe("")
 	}
 	if err := writeDatConfirmTmpl.Execute(w, view); err != nil {
 		log.Printf("Error executing template: %v", err)
@@ -194,7 +194,7 @@ func handleCreateThread(w http.ResponseWriter, r *http.Request, sv *service.Boar
 	}
 	// クッキー確認
 	if executeWriteDatConfirmTmpl(w, r,
-		boardName, name, mail, message, sv.StartedAt(), Just(title), Nothing()) {
+		boardName, name, mail, message, sv.StartedAt(), mstring.Just(title), mstring.Nothing()) {
 		return
 	}
 	// スレ立て
