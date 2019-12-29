@@ -102,17 +102,17 @@ func AdminConf(repo AdminBoardRepository, mem BoardMemcache) func(*BoardService)
 }
 
 // データストアからエンティティを取得しdatを返す
-func (sv *BoardService) MakeDat(boardName string, threadKey string) (_ []byte, err error) {
+func (sv *BoardService) MakeDat(boardName, threadKey string) (_ []byte, _ time.Time, err error) {
 	// Creates a Key instance.
 	key := sv.repo.DatKey(threadKey, sv.repo.BoardKey(boardName))
 
 	// Gets a Board
-	e := new(dat.Entity)
-	if err = sv.repo.GetDat(key, e); err != nil {
+	dat := new(dat.Entity)
+	if err = sv.repo.GetDat(key, dat); err != nil {
 		return
 	}
 
-	return e.Bytes, nil
+	return dat.Bytes, dat.LastModified, nil
 }
 
 // データストアからエンティティを取得しsubject.txtとして返す

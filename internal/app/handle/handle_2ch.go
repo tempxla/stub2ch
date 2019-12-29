@@ -98,7 +98,7 @@ func executeWriteDoneTmpl(w http.ResponseWriter, r *http.Request,
 	w.Header().Add("Date", startedAt.UTC().Format(http.TimeFormat))
 	w.Header().Add("Content-Type", "text/html; charset=Shift_JIS")
 	w.Header().Add("x-Resnum", strconv.Itoa(resnum))
-	//                              12345678901234567890
+	//                         01234567890123456789
 	mills := startedAt.Format("2006-01-02 15:04:05.000")[20:]
 	w.Header().Add("x-PostDate", strconv.FormatInt(startedAt.Unix(), 10)+"."+mills)
 	w.Header().Add("x-PosterID", id)
@@ -228,7 +228,7 @@ func handleDat() ServiceHandle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params, sv *service.BoardService) {
 		board := ps.ByName("board")
 		threadKey := strings.Replace(ps.ByName("dat"), ".dat", "", 1)
-		dat, err := sv.MakeDat(board, threadKey)
+		dat, lastModifiedTime, err := sv.MakeDat(board, threadKey)
 		if err != nil {
 			if err == datastore.ErrNoSuchEntity {
 				http.Error(w, "Not found", http.StatusNotFound)
@@ -238,8 +238,50 @@ func handleDat() ServiceHandle {
 			}
 			return
 		}
-		fmt.Fprintf(w, string(util.UTF8toSJIS(dat)))
+
+		sjisDat := util.UTF8toSJIS(dat)
+		lastModified := lastModifiedTime.UTC().Format(http.TimeFormat)
+
+		// 差分取得判定
+		ifModifiedSince := r.Header.Get("If-Modified-Since")
+		// 差分取得でない
+		if ifModifiedSince == "" {
+			w.Header().Add("Last-Modified", lastModified)
+			fmt.Fprintf(w, string(sjisDat))
+			return
+		}
+		// 更新されていない
+		if ifModifiedSince == lastModified {
+			w.WriteHeader(http.StatusNotModified) // 304
+			return
+		}
+		// 差分取得
+		rangeBytes, err := parseDatRange(r.Header.Get("Range"))
+		if err != nil {
+			// リクエストがおかしい
+			http.Error(w, "Need Range ?", http.StatusBadRequest) // 400
+		} else if rangeBytes > len(sjisDat) {
+			// あぼーん有り
+			w.WriteHeader(http.StatusRequestedRangeNotSatisfiable) // 416
+		} else {
+			// 差分DAT
+			w.Header().Add("Last-Modified", lastModified)
+			fmt.Fprintf(w, string(sjisDat[rangeBytes:]))
+		}
 	}
+}
+
+func parseDatRange(rangeHeader string) (int, error) {
+	//形式: bytes=3050-
+	start := 6                  // bytes=^3050-
+	end := len(rangeHeader) - 1 // bytes=3050^-
+	if strings.Index(rangeHeader, "bytes=") != 0 {
+		return -1, fmt.Errorf("parse error: %v", rangeHeader)
+	}
+	if strings.LastIndex(rangeHeader, "-") != end {
+		return -1, fmt.Errorf("parse error: %v", rangeHeader)
+	}
+	return strconv.Atoi(rangeHeader[start:end])
 }
 
 func handleSubjectTxt() ServiceHandle {

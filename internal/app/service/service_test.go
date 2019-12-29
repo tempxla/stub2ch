@@ -61,17 +61,19 @@ func TestNewBoardService(t *testing.T) {
 
 func TestMakeDat_ok(t *testing.T) {
 	// Setup
+	now := time.Now()
 	repo := testutil.NewBoardStub("news4test", []testutil.ThreadStub{
 		{
-			ThreadKey: "123",
-			Dat:       "1行目\n2行目",
+			ThreadKey:    "123",
+			Dat:          "1行目\n2行目",
+			LastModified: now,
 		},
 	})
 	env := &SysEnv{}
 	sv := NewBoardService(RepoConf(repo), EnvConf(env))
 
 	// Exercise
-	dat, err := sv.MakeDat("news4test", "123")
+	dat, lastModified, err := sv.MakeDat("news4test", "123")
 
 	// Verify
 	if err != nil {
@@ -79,6 +81,9 @@ func TestMakeDat_ok(t *testing.T) {
 	}
 	if !bytes.Equal(dat, []byte("1行目\n2行目")) {
 		t.Errorf("dat content err. actual: %v", dat)
+	}
+	if !lastModified.Equal(now) {
+		t.Errorf("lastModified: %v", lastModified)
 	}
 }
 
@@ -94,7 +99,7 @@ func TestMakeDat_err(t *testing.T) {
 	sv := NewBoardService(RepoConf(repo), EnvConf(env))
 
 	// Exercise
-	_, err := sv.MakeDat("news4test", "999")
+	_, _, err := sv.MakeDat("news4test", "999")
 
 	// Verify
 	if err == nil {

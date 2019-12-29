@@ -2,6 +2,7 @@ package dat
 
 import (
 	"cloud.google.com/go/datastore"
+	"time"
 )
 
 const (
@@ -16,5 +17,6 @@ type Key struct {
 // Ancestor=Board
 // Key=ThreadKey
 type Entity struct {
-	Bytes []byte `datastore:",noindex"`
+	Bytes        []byte    `datastore:",noindex"`
+	LastModified time.Time `datastore:",noindex"`
 }

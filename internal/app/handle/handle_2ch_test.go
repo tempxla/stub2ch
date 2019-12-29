@@ -1,6 +1,7 @@
 package handle
 
 import (
+	"fmt"
 	"github.com/tempxla/stub2ch/internal/app/service"
 	"github.com/tempxla/stub2ch/internal/app/util"
 	"github.com/tempxla/stub2ch/tools/app/testutil"
@@ -779,6 +780,159 @@ func TestHandleDat_404(t *testing.T) {
 	// Verify
 	if writer.Code != 404 {
 		t.Errorf("Response code is %v", writer.Code)
+	}
+}
+
+func TestHandleDat_IfModified_304(t *testing.T) {
+	// Setup
+	now := time.Now()
+	repo := testutil.NewBoardStub("news4test", []testutil.ThreadStub{
+		{
+			ThreadKey:    "123",
+			Dat:          "1行目\n2行目\n",
+			LastModified: now,
+		},
+	})
+	env := &service.SysEnv{
+		StartedTime: time.Now(),
+	}
+	sv := service.NewBoardService(service.RepoConf(repo), service.EnvConf(env))
+
+	// request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", "/news4test/dat/123.dat", nil)
+	request.Header.Add("User-Agent", "Monazilla/1.00")
+	request.Header.Add("If-Modified-Since", now.UTC().Format(http.TimeFormat))
+
+	// Exercise
+	router := NewBoardRouter(sv)
+	router.ServeHTTP(writer, request)
+
+	// Verify
+	if writer.Code != 304 {
+		t.Errorf("Response code is %v", writer.Code)
+	}
+}
+
+func TestHandleDat_IfModified_416(t *testing.T) {
+	// Setup
+	now := time.Now()
+	repo := testutil.NewBoardStub("news4test", []testutil.ThreadStub{
+		{
+			ThreadKey:    "123",
+			Dat:          "1行目\n2行目\n",
+			LastModified: now.Add(time.Duration(-1 * 24 * time.Hour)),
+		},
+	})
+	env := &service.SysEnv{
+		StartedTime: time.Now(),
+	}
+	sv := service.NewBoardService(service.RepoConf(repo), service.EnvConf(env))
+
+	// request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", "/news4test/dat/123.dat", nil)
+	request.Header.Add("User-Agent", "Monazilla/1.00")
+	request.Header.Add("If-Modified-Since", now.UTC().Format(http.TimeFormat))
+	request.Header.Add("Range", fmt.Sprintf("bytes=%d-", len(util.UTF8toSJISString("1行目\n2行目\n"))+1))
+
+	// Exercise
+	router := NewBoardRouter(sv)
+	router.ServeHTTP(writer, request)
+
+	// Verify
+	if writer.Code != 416 {
+		t.Errorf("Response code is %v", writer.Code)
+	}
+}
+
+func TestHandleDat_IfModified_200(t *testing.T) {
+	// Setup
+	now := time.Now()
+	repo := testutil.NewBoardStub("news4test", []testutil.ThreadStub{
+		{
+			ThreadKey:    "123",
+			Dat:          "1行目\n2行目\n",
+			LastModified: now.Add(time.Duration(-1 * 24 * time.Hour)),
+		},
+	})
+	env := &service.SysEnv{
+		StartedTime: time.Now(),
+	}
+	sv := service.NewBoardService(service.RepoConf(repo), service.EnvConf(env))
+
+	// request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", "/news4test/dat/123.dat", nil)
+	request.Header.Add("User-Agent", "Monazilla/1.00")
+	request.Header.Add("If-Modified-Since", now.UTC().Format(http.TimeFormat))
+	request.Header.Add("Range", fmt.Sprintf("bytes=%d-", len(util.UTF8toSJISString("1行目\n"))))
+
+	// Exercise
+	router := NewBoardRouter(sv)
+	router.ServeHTTP(writer, request)
+
+	// Verify
+	if writer.Code != 200 {
+		t.Errorf("Response code is %v", writer.Code)
+	}
+	body := util.SJIStoUTF8String(writer.Body.String())
+	if body != "2行目\n" {
+		t.Errorf("body: %v", body)
+	}
+}
+
+func TestHandleDat_IfModified_Err(t *testing.T) {
+	// Setup
+	now := time.Now()
+	repo := testutil.NewBoardStub("news4test", []testutil.ThreadStub{
+		{
+			ThreadKey:    "123",
+			Dat:          "1行目\n2行目\n",
+			LastModified: now.Add(time.Duration(-1 * 24 * time.Hour)),
+		},
+	})
+	env := &service.SysEnv{
+		StartedTime: time.Now(),
+	}
+	sv := service.NewBoardService(service.RepoConf(repo), service.EnvConf(env))
+
+	// request
+	writer := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", "/news4test/dat/123.dat", nil)
+	request.Header.Add("User-Agent", "Monazilla/1.00")
+	request.Header.Add("If-Modified-Since", now.UTC().Format(http.TimeFormat))
+	request.Header.Add("Range", "bytes=1000+")
+
+	// Exercise
+	router := NewBoardRouter(sv)
+	router.ServeHTTP(writer, request)
+
+	// Verify
+	if writer.Code != 400 {
+		t.Errorf("Response code is %v", writer.Code)
+	}
+}
+
+func TestParseDatRange(t *testing.T) {
+	not := func(x bool) bool { return !x }
+	id := func(x bool) bool { return x }
+	tests := []struct {
+		arg      string
+		cond     func(bool) bool
+		expected int
+	}{
+		{"bytes=3050-", id, 3050},
+		{"-bytes=3050-", not, 3050},
+		{"bytes=3050", not, 3050},
+		{"bytes=b3050-", not, 3050},
+	}
+
+	for i, tt := range tests {
+		a, err := parseDatRange(tt.arg)
+		if tt.cond(a != tt.expected) && tt.cond(err != nil) {
+			t.Errorf("case %d: %v, %v", i, a, err)
+		}
 	}
 }
 

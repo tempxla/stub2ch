@@ -44,6 +44,7 @@ func (repo *BoardStub) GetDat(key *dat.Key, entity *dat.Entity) (err error) {
 		return datastore.ErrNoSuchEntity
 	} else if e, ok := board[key.DSKey.Name]; ok {
 		entity.Bytes = e.Bytes
+		entity.LastModified = e.LastModified
 		return
 	} else {
 		return datastore.ErrNoSuchEntity
@@ -113,7 +114,10 @@ func NewBoardStub(boardName string, threads []ThreadStub) *BoardStub {
 			MessageCount: v.MessageCount,
 			LastModified: v.LastModified,
 		})
-		stub.DatMap[boardName][v.ThreadKey] = &dat.Entity{Bytes: []byte(v.Dat)}
+		stub.DatMap[boardName][v.ThreadKey] = &dat.Entity{
+			Bytes:        []byte(v.Dat),
+			LastModified: v.LastModified,
+		}
 	}
 	return stub
 }
