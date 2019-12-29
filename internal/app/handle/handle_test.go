@@ -229,20 +229,28 @@ func TestHandleUserAgent_OK(t *testing.T) {
 
 	// Exercise
 	router := httprouter.New()
-	router.GET("/", handleUserAgent((handleOK)))
+	router.GET("/", handleBbsHeader((handleOK)))
 	router.ServeHTTP(writer, request)
 
 	// Verify
 	if writer.Code != 200 {
 		t.Errorf("Response code is %v", writer.Code)
 	}
+	if ct := writer.Header().Get("Content-Type"); ct != "text/html; charset=Shift_JIS" {
+		t.Errorf("Content-Type: %v", ct)
+	}
+	// Dateはセットされない。GAEだとセットされる。
+	// if writer.Header().Get("Date") == "" {
+	// 	t.Errorf("Date Missing")
+	// }
+
 	body := writer.Body.String()
 	if body != "OK" {
 		t.Errorf("body is %v", body)
 	}
 }
 
-func TestHandleUserAgent_Missing(t *testing.T) {
+func TestHandleUserAgent_UAMissing(t *testing.T) {
 	// Setup
 	handleOK := func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		fmt.Fprintf(w, "OK")
@@ -255,7 +263,7 @@ func TestHandleUserAgent_Missing(t *testing.T) {
 
 	// Exercise
 	router := httprouter.New()
-	router.GET("/", handleUserAgent((handleOK)))
+	router.GET("/", handleBbsHeader((handleOK)))
 	router.ServeHTTP(writer, request)
 
 	// Verify

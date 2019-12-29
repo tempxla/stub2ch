@@ -95,8 +95,6 @@ func handleWriteDat(w http.ResponseWriter, r *http.Request, sv *service.BoardSer
 func executeWriteDoneTmpl(w http.ResponseWriter, r *http.Request,
 	boardName, threadKey, id string, resnum int, startedAt time.Time) {
 
-	w.Header().Add("Date", startedAt.UTC().Format(http.TimeFormat))
-	w.Header().Add("Content-Type", "text/html; charset=Shift_JIS")
 	w.Header().Add("x-Resnum", strconv.Itoa(resnum))
 	//                         01234567890123456789
 	mills := startedAt.Format("2006-01-02 15:04:05.000")[20:]
@@ -117,8 +115,6 @@ func executeWriteDoneTmpl(w http.ResponseWriter, r *http.Request,
 func executeWriteDatNotFoundTmpl(w http.ResponseWriter, r *http.Request,
 	boardName, threadKey string, startedAt time.Time) {
 
-	w.Header().Add("Content-Type", "text/html; charset=Shift_JIS")
-	w.Header().Add("Date", startedAt.UTC().Format(http.TimeFormat))
 	// //hebi.5ch.net/test/read.cgi/news4vip/1575543566/
 	view := fmt.Sprintf("//%s/test/read.cgi/%s/%s/", r.Host, boardName, threadKey)
 	if err := writeDatNotFoundTmpl.Execute(w, view); err != nil {
@@ -137,8 +133,6 @@ func executeWriteDatConfirmTmpl(w http.ResponseWriter, r *http.Request,
 			return false
 		}
 	}
-	w.Header().Add("Content-Type", "text/html; charset=Shift_JIS")
-	w.Header().Add("Date", startedAt.UTC().Format(http.TimeFormat))
 	// Domain属性を指定しないCookieは、Cookieを発行したホストのみに送信される
 	expires := startedAt.Add(time.Duration(7*24) * time.Hour).UTC().Format(http.TimeFormat)
 	ipAddr := r.RemoteAddr
@@ -214,9 +208,6 @@ func handleCreateThread(w http.ResponseWriter, r *http.Request, sv *service.Boar
 }
 
 func executeCreateThreadErrorTmpl(w http.ResponseWriter, r *http.Request, startedAt time.Time) {
-
-	w.Header().Add("Content-Type", "text/html; charset=Shift_JIS")
-	w.Header().Add("Date", startedAt.UTC().Format(http.TimeFormat))
 
 	if err := createThreadErrorTmpl.Execute(w, nil); err != nil {
 		log.Printf("Error executing template: %v", err)

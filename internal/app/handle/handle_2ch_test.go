@@ -22,6 +22,7 @@ func TestHandleBbsCgi_404(t *testing.T) {
 	// request
 	writer := httptest.NewRecorder()
 	request, _ := http.NewRequest("POST", "/test1/bbs.cgi", nil)
+	request.Header.Add("User-Agent", "Monazilla/1.00")
 
 	// Exercise
 	router := NewBoardRouter(sv)

@@ -33,41 +33,38 @@ func NewBoardRouter(sv *service.BoardService) *httprouter.Router {
 	// 管理ページ
 	router.POST("/:board/_admin/login",
 		handleTestDir(
-			handleUserAgent(
-				handleParseForm(
-					injectService(sv)(
-						handleAdminLogin())))))
+			handleParseForm(
+				injectService(sv)(
+					handleAdminLogin()))))
 	router.POST("/:board/_admin/logout",
 		handleTestDir(
-			handleUserAgent(
-				handleParseForm(
-					injectService(sv)(
-						authenticate(
-							handleAdminLogout()))))))
+			handleParseForm(
+				injectService(sv)(
+					authenticate(
+						handleAdminLogout())))))
 	router.POST("/:board/_admin/func/:fp1/:fp2",
 		handleTestDir(
-			handleUserAgent(
-				handleParseForm(
-					injectService(sv)(
-						authenticate(
-							handleAdmin()))))))
+			handleParseForm(
+				injectService(sv)(
+					authenticate(
+						handleAdmin())))))
 
 	// 掲示板
 	router.POST("/:board/bbs.cgi",
 		protect(config.KEEP_OUT)(
-			handleTestDir(
-				handleUserAgent(
+			handleBbsHeader(
+				handleTestDir(
 					handleParseForm(
 						injectService(sv)(
 							handleBbsCgi()))))))
 	router.GET("/:board/subject.txt",
 		protect(config.KEEP_OUT)(
-			handleUserAgent(
+			handleBbsHeader(
 				injectService(sv)(
 					handleSubjectTxt()))))
 	router.GET("/:board/dat/:dat",
 		protect(config.KEEP_OUT)(
-			handleUserAgent(
+			handleBbsHeader(
 				injectService(sv)(
 					handleDat()))))
 
@@ -142,14 +139,26 @@ func handleParseForm(h httprouter.Handle) httprouter.Handle {
 	}
 }
 
-func handleUserAgent(h httprouter.Handle) httprouter.Handle {
+// 掲示板のデフォルトの動作
+// * レスポンスの文字コードをSJISとする
+// * UserAgent必須
+// * Dateヘッダを(GAEが勝手)に付ける
+func handleBbsHeader(h httprouter.Handle) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		const expected = "Monazilla/1.00"
-		if len(r.UserAgent()) < len(expected) {
-			w.Header().Add("Content-Type", "text/html; charset=Shift_JIS")
+
+		// 文字コード
+		w.Header().Add("Content-Type", "text/html; charset=Shift_JIS")
+
+		// Dateヘッダ
+		// GAEにてつけられるのでつける必要なし
+		// https://cloud.google.com/appengine/docs/standard/go/reference/request-response-headers?hl=ja
+
+		// UAはあればよい感じ
+		if len(r.UserAgent()) < len("Monazilla/1.00") {
 			http.Error(w, util.UTF8toSJISString("m9(^Д^)"), http.StatusBadRequest)
 			return
 		}
+
 		h(w, r, ps)
 	}
 }
