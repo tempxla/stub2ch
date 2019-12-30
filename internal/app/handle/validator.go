@@ -2,17 +2,11 @@ package handle
 
 import (
 	"fmt"
+	"github.com/tempxla/stub2ch/configs/app/setting"
 	"github.com/tempxla/stub2ch/internal/app/util"
 	"html"
 	"net/http"
 	"strings"
-)
-
-const (
-	bbs_subject_count = 128
-	bbs_name_count    = 96
-	bbs_mail_count    = 32
-	bbs_message_count = 4096
 )
 
 func requireOne(r *http.Request, name string) func() (string, error) {
@@ -166,9 +160,9 @@ func requireTime(w http.ResponseWriter, r *http.Request) (string, bool) {
 	return t, true
 }
 
-func requireName(w http.ResponseWriter, r *http.Request) (string, bool) {
+func requireName(w http.ResponseWriter, r *http.Request, setting setting.BBS) (string, bool) {
 	name, err := process(requireOne(r, "FROM"),
-		maxByte(bbs_name_count),
+		maxByte(setting.BBS_NAME_COUNT()),
 		sjisToUtf8String,
 		trip, // 制御文字とかどうなるんやろ＞トリップ
 		delBadChar,
@@ -179,14 +173,14 @@ func requireName(w http.ResponseWriter, r *http.Request) (string, bool) {
 		return "", false
 	}
 	if name == "" {
-		name = "名無しさん@スタブ"
+		name = setting.BBS_NONAME_NAME()
 	}
 	return name, true
 }
 
-func requireMail(w http.ResponseWriter, r *http.Request) (string, bool) {
+func requireMail(w http.ResponseWriter, r *http.Request, setting setting.BBS) (string, bool) {
 	mail, err := process(requireOne(r, "mail"),
-		maxByte(bbs_mail_count), sjisToUtf8String, delBadChar)
+		maxByte(setting.BBS_MAIL_COUNT()), sjisToUtf8String, delBadChar)
 
 	if err != nil {
 		http.Error(w, fmt.Sprintf(param_error_format, "mail", err), http.StatusBadRequest)
@@ -195,9 +189,9 @@ func requireMail(w http.ResponseWriter, r *http.Request) (string, bool) {
 	return mail, true
 }
 
-func requireMessage(w http.ResponseWriter, r *http.Request) (string, bool) {
+func requireMessage(w http.ResponseWriter, r *http.Request, setting setting.BBS) (string, bool) {
 	message, err := process(requireOne(r, "MESSAGE"),
-		maxByte(bbs_message_count), sjisToUtf8String, delBadChar, notBlank)
+		maxByte(setting.BBS_MESSAGE_COUNT()), sjisToUtf8String, delBadChar, notBlank)
 
 	if err != nil {
 		http.Error(w, fmt.Sprintf(param_error_format, "MESSAGE", err), http.StatusBadRequest)
@@ -206,9 +200,9 @@ func requireMessage(w http.ResponseWriter, r *http.Request) (string, bool) {
 	return message, true
 }
 
-func requireTitle(w http.ResponseWriter, r *http.Request) (string, bool) {
+func requireTitle(w http.ResponseWriter, r *http.Request, setting setting.BBS) (string, bool) {
 	title, err := process(requireOne(r, "subject"),
-		maxByte(bbs_subject_count), sjisToUtf8String, delBadChar, notBlank)
+		maxByte(setting.BBS_SUBJECT_COUNT()), sjisToUtf8String, delBadChar, notBlank)
 
 	if err != nil {
 		http.Error(w, fmt.Sprintf(param_error_format, "subject", err), http.StatusBadRequest)

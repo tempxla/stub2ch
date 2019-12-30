@@ -4,6 +4,7 @@ import (
 	"cloud.google.com/go/datastore"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
+	"github.com/tempxla/stub2ch/configs/app/setting"
 	"github.com/tempxla/stub2ch/internal/app/service"
 	mstring "github.com/tempxla/stub2ch/internal/app/types/maybe/string"
 	"github.com/tempxla/stub2ch/internal/app/util"
@@ -59,15 +60,16 @@ func handleWriteDat(w http.ResponseWriter, r *http.Request, sv *service.BoardSer
 	if !ok {
 		return
 	}
-	name, ok := requireName(w, r)
+	setting := setting.GetSetting(boardName)
+	name, ok := requireName(w, r, setting)
 	if !ok {
 		return
 	}
-	mail, ok := requireMail(w, r)
+	mail, ok := requireMail(w, r, setting)
 	if !ok {
 		return
 	}
-	message, ok := requireMessage(w, r)
+	message, ok := requireMessage(w, r, setting)
 	if !ok {
 		return
 	}
@@ -173,7 +175,8 @@ func handleCreateThread(w http.ResponseWriter, r *http.Request, sv *service.Boar
 	if !ok {
 		return
 	}
-	title, ok := requireTitle(w, r)
+	setting := setting.GetSetting(boardName)
+	title, ok := requireTitle(w, r, setting)
 	if !ok {
 		return
 	}
@@ -181,15 +184,15 @@ func handleCreateThread(w http.ResponseWriter, r *http.Request, sv *service.Boar
 	if !ok {
 		return
 	}
-	name, ok := requireName(w, r)
+	name, ok := requireName(w, r, setting)
 	if !ok {
 		return
 	}
-	mail, ok := requireMail(w, r)
+	mail, ok := requireMail(w, r, setting)
 	if !ok {
 		return
 	}
-	message, ok := requireMessage(w, r)
+	message, ok := requireMessage(w, r, setting)
 	if !ok {
 		return
 	}
