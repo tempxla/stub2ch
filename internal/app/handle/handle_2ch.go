@@ -95,6 +95,8 @@ func handleWriteDat(w http.ResponseWriter, r *http.Request, sv *service.BoardSer
 func executeWriteDoneTmpl(w http.ResponseWriter, r *http.Request,
 	boardName, threadKey, id string, resnum int, startedAt time.Time) {
 
+	setContentTypeHtmlSjis(w)
+
 	w.Header().Add("x-Resnum", strconv.Itoa(resnum))
 	//                         01234567890123456789
 	mills := startedAt.Format("2006-01-02 15:04:05.000")[20:]
@@ -115,6 +117,8 @@ func executeWriteDoneTmpl(w http.ResponseWriter, r *http.Request,
 func executeWriteDatNotFoundTmpl(w http.ResponseWriter, r *http.Request,
 	boardName, threadKey string, startedAt time.Time) {
 
+	setContentTypeHtmlSjis(w)
+
 	// //hebi.5ch.net/test/read.cgi/news4vip/1575543566/
 	view := fmt.Sprintf("//%s/test/read.cgi/%s/%s/", r.Host, boardName, threadKey)
 	if err := writeDatNotFoundTmpl.Execute(w, view); err != nil {
@@ -133,6 +137,9 @@ func executeWriteDatConfirmTmpl(w http.ResponseWriter, r *http.Request,
 			return false
 		}
 	}
+
+	setContentTypeHtmlSjis(w)
+
 	// Domain属性を指定しないCookieは、Cookieを発行したホストのみに送信される
 	expires := startedAt.Add(time.Duration(7*24) * time.Hour).UTC().Format(http.TimeFormat)
 	ipAddr := r.RemoteAddr
@@ -209,6 +216,8 @@ func handleCreateThread(w http.ResponseWriter, r *http.Request, sv *service.Boar
 
 func executeCreateThreadErrorTmpl(w http.ResponseWriter, r *http.Request, startedAt time.Time) {
 
+	setContentTypeHtmlSjis(w)
+
 	if err := createThreadErrorTmpl.Execute(w, nil); err != nil {
 		log.Printf("Error executing template: %v", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -237,6 +246,7 @@ func handleDat() ServiceHandle {
 		ifModifiedSince := r.Header.Get("If-Modified-Since")
 		// 差分取得でない
 		if ifModifiedSince == "" {
+			setContentTypePlainSjis(w)
 			w.Header().Add("Last-Modified", lastModified)
 			fmt.Fprintf(w, string(sjisDat))
 			return
@@ -256,6 +266,7 @@ func handleDat() ServiceHandle {
 			w.WriteHeader(http.StatusRequestedRangeNotSatisfiable) // 416
 		} else {
 			// 差分DAT
+			setContentTypePlainSjis(w)
 			w.Header().Add("Last-Modified", lastModified)
 			fmt.Fprintf(w, string(sjisDat[rangeBytes:]))
 		}
@@ -289,6 +300,7 @@ func handleSubjectTxt() ServiceHandle {
 			return
 		}
 
+		setContentTypePlainSjis(w)
 		fmt.Fprintf(w, string(util.UTF8toSJIS(subjectTxt)))
 	}
 }

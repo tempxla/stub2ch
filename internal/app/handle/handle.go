@@ -12,6 +12,10 @@ import (
 	"path/filepath"
 )
 
+const (
+	user_agent = "Monazilla/1.00"
+)
+
 var (
 	indexTmpl             = template.Must(template.ParseFiles(filepath.Join("web", "template", "index.html")))
 	writeDatConfirmTmpl   = template.Must(template.ParseFiles(filepath.Join("web", "template", "write_dat_confirm.html")))
@@ -52,19 +56,19 @@ func NewBoardRouter(sv *service.BoardService) *httprouter.Router {
 	// 掲示板
 	router.POST("/:board/bbs.cgi",
 		protect(config.KEEP_OUT)(
-			handleBbsHeader(
+			handleUserAgent(
 				handleTestDir(
 					handleParseForm(
 						injectService(sv)(
 							handleBbsCgi()))))))
 	router.GET("/:board/subject.txt",
 		protect(config.KEEP_OUT)(
-			handleBbsHeader(
+			handleUserAgent(
 				injectService(sv)(
 					handleSubjectTxt()))))
 	router.GET("/:board/dat/:dat",
 		protect(config.KEEP_OUT)(
-			handleBbsHeader(
+			handleUserAgent(
 				injectService(sv)(
 					handleDat()))))
 
@@ -139,26 +143,24 @@ func handleParseForm(h httprouter.Handle) httprouter.Handle {
 	}
 }
 
-// 掲示板のデフォルトの動作
-// * レスポンスの文字コードをSJISとする
-// * UserAgent必須
-// * Dateヘッダを(GAEが勝手)に付ける
-func handleBbsHeader(h httprouter.Handle) httprouter.Handle {
+func handleUserAgent(h httprouter.Handle) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
-		// 文字コード
-		w.Header().Add("Content-Type", "text/html; charset=Shift_JIS")
-
-		// Dateヘッダ
-		// GAEにてつけられるのでつける必要なし
-		// https://cloud.google.com/appengine/docs/standard/go/reference/request-response-headers?hl=ja
-
 		// UAはあればよい感じ
-		if len(r.UserAgent()) < len("Monazilla/1.00") {
+		if len(r.UserAgent()) < len(user_agent) {
+			setContentTypePlainSjis(w)
 			http.Error(w, util.UTF8toSJISString("m9(^Д^)"), http.StatusBadRequest)
 			return
 		}
 
 		h(w, r, ps)
 	}
+}
+
+func setContentTypeHtmlSjis(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "text/html; charset=Shift_JIS")
+}
+
+func setContentTypePlainSjis(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "text/plain; charset=Shift_JIS")
 }
