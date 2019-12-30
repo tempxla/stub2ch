@@ -54,6 +54,11 @@ func NewBoardRouter(sv *service.BoardService) *httprouter.Router {
 						handleAdmin())))))
 
 	// 掲示板
+	router.GET("/:board/SETTING.txt",
+		protect(config.KEEP_OUT)(
+			handleUserAgent(
+				injectService(sv)(
+					handleSettingTxt()))))
 	router.POST("/:board/bbs.cgi",
 		protect(config.KEEP_OUT)(
 			handleUserAgent(

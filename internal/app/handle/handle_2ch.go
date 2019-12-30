@@ -61,6 +61,10 @@ func handleWriteDat(w http.ResponseWriter, r *http.Request, sv *service.BoardSer
 		return
 	}
 	setting := setting.GetSetting(boardName)
+	if setting == nil {
+		http.Error(w, "Not Found", http.StatusNotFound)
+		return
+	}
 	name, ok := requireName(w, r, setting)
 	if !ok {
 		return
@@ -176,6 +180,10 @@ func handleCreateThread(w http.ResponseWriter, r *http.Request, sv *service.Boar
 		return
 	}
 	setting := setting.GetSetting(boardName)
+	if setting == nil {
+		http.Error(w, "Not Found", http.StatusNotFound)
+		return
+	}
 	title, ok := requireTitle(w, r, setting)
 	if !ok {
 		return
@@ -306,5 +314,19 @@ func handleSubjectTxt() ServiceHandle {
 
 		setContentTypePlainSjis(w)
 		fmt.Fprintf(w, string(util.UTF8toSJIS(subjectTxt)))
+	}
+}
+
+func handleSettingTxt() ServiceHandle {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params, sv *service.BoardService) {
+		board := ps.ByName("board")
+		conf := setting.GetSetting(board)
+		if conf == nil {
+			http.Error(w, "Not Found", http.StatusNotFound)
+			return
+		}
+		settingTxt := setting.MakeSettingTxt(conf)
+		setContentTypePlainSjis(w)
+		fmt.Fprintf(w, string(util.UTF8toSJIS(settingTxt)))
 	}
 }

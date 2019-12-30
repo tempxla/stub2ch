@@ -84,7 +84,7 @@ func TestHandleBbsCgi_WrongSubmit(t *testing.T) {
 
 func TestHandleBbsCgi_writeDatOK(t *testing.T) {
 	// Setup
-	repo := testutil.NewBoardStub("news4test", []testutil.ThreadStub{
+	repo := testutil.NewBoardStub("news4vip", []testutil.ThreadStub{
 		{
 			ThreadKey:    "1234567890",
 			ThreadTitle:  "XXXX",
@@ -105,7 +105,7 @@ func TestHandleBbsCgi_writeDatOK(t *testing.T) {
 	request.Header.Add("User-Agent", "Monazilla/1.00")
 	request.PostForm = map[string][]string{
 		"submit":  []string{util.UTF8toSJISString("書き込む")},
-		"bbs":     []string{"news4test"},
+		"bbs":     []string{"news4vip"},
 		"key":     []string{"1234567890"},
 		"time":    []string{"1"},
 		"FROM":    []string{"xxxx"},
@@ -132,7 +132,7 @@ func TestHandleBbsCgi_writeDatOK(t *testing.T) {
 
 func TestHandleBbsCgi_writeDatOKthroughConfirm(t *testing.T) {
 	// Setup
-	repo := testutil.NewBoardStub("news4test", []testutil.ThreadStub{
+	repo := testutil.NewBoardStub("news4vip", []testutil.ThreadStub{
 		{
 			ThreadKey:    "1234567890",
 			ThreadTitle:  "XXXX",
@@ -153,7 +153,7 @@ func TestHandleBbsCgi_writeDatOKthroughConfirm(t *testing.T) {
 	request.Header.Add("User-Agent", "Monazilla/1.00")
 	request.PostForm = map[string][]string{
 		"submit":  []string{util.UTF8toSJISString("上記全てを承諾して書き込む")},
-		"bbs":     []string{"news4test"},
+		"bbs":     []string{"news4vip"},
 		"key":     []string{"1234567890"},
 		"time":    []string{"1"},
 		"FROM":    []string{"xxxx"},
@@ -180,7 +180,7 @@ func TestHandleBbsCgi_writeDatOKthroughConfirm(t *testing.T) {
 
 func TestHandleBbsCgi_createThreadOK(t *testing.T) {
 	// Setup
-	repo := testutil.NewBoardStub("news4test", []testutil.ThreadStub{
+	repo := testutil.NewBoardStub("news4vip", []testutil.ThreadStub{
 		{},
 	},
 	)
@@ -195,7 +195,7 @@ func TestHandleBbsCgi_createThreadOK(t *testing.T) {
 	request.Header.Add("User-Agent", "Monazilla/1.00")
 	request.PostForm = map[string][]string{
 		"submit":  []string{util.UTF8toSJISString("新規スレッド作成")},
-		"bbs":     []string{"news4test"},
+		"bbs":     []string{"news4vip"},
 		"subject": []string{"AAAA"},
 		"time":    []string{"1"},
 		"FROM":    []string{"xxxx"},
@@ -222,7 +222,7 @@ func TestHandleBbsCgi_createThreadOK(t *testing.T) {
 
 func TestHandleBbsCgi_createThreadOKthroughConfirm(t *testing.T) {
 	// Setup
-	repo := testutil.NewBoardStub("news4test", []testutil.ThreadStub{
+	repo := testutil.NewBoardStub("news4vip", []testutil.ThreadStub{
 		{},
 	},
 	)
@@ -237,7 +237,7 @@ func TestHandleBbsCgi_createThreadOKthroughConfirm(t *testing.T) {
 	request.Header.Add("User-Agent", "Monazilla/1.00")
 	request.PostForm = map[string][]string{
 		"submit":  []string{util.UTF8toSJISString("上記全てを承諾して書き込む")},
-		"bbs":     []string{"news4test"},
+		"bbs":     []string{"news4vip"},
 		"subject": []string{"AAAA"},
 		"time":    []string{"1"},
 		"FROM":    []string{"xxxx"},
@@ -273,7 +273,7 @@ func TestWriteDat_400(t *testing.T) {
 	params := []map[string]string{
 		// not 400
 		// map[string]string{
-		// 	"bbs":     "news4test",
+		// 	"bbs":     "news4vip",
 		// 	"key":     "1234567890",
 		// 	"time":    "1",
 		// 	"FROM":    "xxxx",
@@ -289,7 +289,7 @@ func TestWriteDat_400(t *testing.T) {
 			"MESSAGE": "aaaa",
 		},
 		{
-			"bbs":     "news4test",
+			"bbs":     "news4vip",
 			"key":     "12345678901", // too long
 			"time":    "1",
 			"FROM":    "xxxx",
@@ -297,7 +297,7 @@ func TestWriteDat_400(t *testing.T) {
 			"MESSAGE": "aaaa",
 		},
 		{
-			"bbs":     "news4test",
+			"bbs":     "news4vip",
 			"key":     "1234567890",
 			"time":    "", // empty
 			"FROM":    "xxxx",
@@ -305,7 +305,7 @@ func TestWriteDat_400(t *testing.T) {
 			"MESSAGE": "aaaa",
 		},
 		{
-			"bbs":  "news4test",
+			"bbs":  "news4vip",
 			"key":  "1234567890",
 			"time": "1",
 			// "FROM":    "xxxx", // missing
@@ -313,7 +313,7 @@ func TestWriteDat_400(t *testing.T) {
 			"MESSAGE": "aaaa",
 		},
 		{
-			"bbs":  "news4test",
+			"bbs":  "news4vip",
 			"key":  "1234567890",
 			"time": "1",
 			"FROM": "xxxx",
@@ -321,7 +321,7 @@ func TestWriteDat_400(t *testing.T) {
 			"MESSAGE": "aaaa",
 		},
 		{
-			"bbs":     "news4test",
+			"bbs":     "news4vip",
 			"key":     "1234567890",
 			"time":    "1",
 			"FROM":    "xxxx",
@@ -358,7 +358,7 @@ func TestWriteDat_CookieMissing(t *testing.T) {
 	sv := service.NewBoardService(service.RepoConf(repo), service.EnvConf(sysEnv))
 
 	param := map[string]string{
-		"bbs":     "news4test",
+		"bbs":     "news4vip",
 		"key":     "1234567890",
 		"time":    "1",
 		"FROM":    "xxxx",
@@ -413,7 +413,7 @@ func TestWriteDat_NotFound(t *testing.T) {
 	sv := service.NewBoardService(service.RepoConf(repo), service.EnvConf(sysEnv))
 
 	param := map[string]string{
-		"bbs":     "news4test",
+		"bbs":     "news4vip",
 		"key":     "1234567890",
 		"time":    "1",
 		"FROM":    "xxxx",
@@ -448,7 +448,7 @@ func TestWriteDat_NotFound(t *testing.T) {
 func TestWriteDat_Done(t *testing.T) {
 	// Setup
 	dat := "1行目\n2行目"
-	repo := testutil.NewBoardStub("news4test", []testutil.ThreadStub{
+	repo := testutil.NewBoardStub("news4vip", []testutil.ThreadStub{
 		{
 			ThreadKey:    "1234567890",
 			ThreadTitle:  "XXXX",
@@ -464,7 +464,7 @@ func TestWriteDat_Done(t *testing.T) {
 	sv := service.NewBoardService(service.RepoConf(repo), service.EnvConf(sysEnv))
 
 	param := map[string]string{
-		"bbs":     "news4test",
+		"bbs":     "news4vip",
 		"key":     "1234567890",
 		"time":    "1",
 		"FROM":    "xxxx",
@@ -507,7 +507,7 @@ func TestCreateThread_400(t *testing.T) {
 	params := []map[string]string{
 		// not 400
 		// {
-		// 	"bbs":     "news4test",
+		// 	"bbs":     "news4vip",
 		// 	"subject": "AAAAA",
 		// 	"time":    "1",
 		// 	"FROM":    "xxxx",
@@ -523,7 +523,7 @@ func TestCreateThread_400(t *testing.T) {
 			"MESSAGE": "aaaa",
 		},
 		{
-			"bbs":     "news4test",
+			"bbs":     "news4vip",
 			"subject": " ", // blank
 			"time":    "1",
 			"FROM":    "xxxx",
@@ -531,7 +531,7 @@ func TestCreateThread_400(t *testing.T) {
 			"MESSAGE": "aaaa",
 		},
 		{
-			"bbs":     "news4test",
+			"bbs":     "news4vip",
 			"subject": "AAAAA",
 			"time":    "", // empty
 			"FROM":    "xxxx",
@@ -539,7 +539,7 @@ func TestCreateThread_400(t *testing.T) {
 			"MESSAGE": "aaaa",
 		},
 		{
-			"bbs":     "news4test",
+			"bbs":     "news4vip",
 			"subject": "AAAAA",
 			"time":    "1",
 			// "FROM":    "xxxx", // missing
@@ -547,7 +547,7 @@ func TestCreateThread_400(t *testing.T) {
 			"MESSAGE": "aaaa",
 		},
 		{
-			"bbs":     "news4test",
+			"bbs":     "news4vip",
 			"subject": "AAAAA",
 			"time":    "1",
 			"FROM":    "xxxx",
@@ -555,7 +555,7 @@ func TestCreateThread_400(t *testing.T) {
 			"MESSAGE": "aaaa",
 		},
 		{
-			"bbs":     "news4test",
+			"bbs":     "news4vip",
 			"subject": "AAAAA",
 			"time":    "1",
 			"FROM":    "xxxx",
@@ -592,7 +592,7 @@ func TestCreateThread_CookieMissing(t *testing.T) {
 	sv := service.NewBoardService(service.RepoConf(repo), service.EnvConf(sysEnv))
 
 	param := map[string]string{
-		"bbs":     "news4test",
+		"bbs":     "news4vip",
 		"time":    "1",
 		"subject": "AAAAA",
 		"FROM":    "xxxx",
@@ -647,7 +647,7 @@ func TestCreateThread_NotFound(t *testing.T) {
 	sv := service.NewBoardService(service.RepoConf(repo), service.EnvConf(sysEnv))
 
 	param := map[string]string{
-		"bbs":     "news4test",
+		"bbs":     "news4vip",
 		"time":    "1",
 		"subject": "AAAAA",
 		"FROM":    "xxxx",
@@ -681,7 +681,7 @@ func TestCreateThread_NotFound(t *testing.T) {
 
 func TestCreateThread_Done(t *testing.T) {
 	// Setup
-	repo := testutil.NewBoardStub("news4test", []testutil.ThreadStub{
+	repo := testutil.NewBoardStub("news4vip", []testutil.ThreadStub{
 		{},
 	},
 	)
@@ -691,7 +691,7 @@ func TestCreateThread_Done(t *testing.T) {
 	sv := service.NewBoardService(service.RepoConf(repo), service.EnvConf(sysEnv))
 
 	param := map[string]string{
-		"bbs":     "news4test",
+		"bbs":     "news4vip",
 		"time":    "1",
 		"subject": "AAAAA",
 		"FROM":    "xxxx",
@@ -725,7 +725,7 @@ func TestCreateThread_Done(t *testing.T) {
 
 func TestHandleDat_200(t *testing.T) {
 	// Setup
-	repo := testutil.NewBoardStub("news4test", []testutil.ThreadStub{
+	repo := testutil.NewBoardStub("news4vip", []testutil.ThreadStub{
 		{
 			ThreadKey: "123",
 			Dat:       "1行目\n2行目",
@@ -738,7 +738,7 @@ func TestHandleDat_200(t *testing.T) {
 
 	// request
 	writer := httptest.NewRecorder()
-	request, _ := http.NewRequest("GET", "/news4test/dat/123.dat", nil)
+	request, _ := http.NewRequest("GET", "/news4vip/dat/123.dat", nil)
 	request.Header.Add("User-Agent", "Monazilla/1.00")
 
 	// Exercise
@@ -758,7 +758,7 @@ func TestHandleDat_200(t *testing.T) {
 
 func TestHandleDat_404(t *testing.T) {
 	// Setup
-	repo := testutil.NewBoardStub("news4test", []testutil.ThreadStub{
+	repo := testutil.NewBoardStub("news4vip", []testutil.ThreadStub{
 		{
 			ThreadKey: "123",
 			Dat:       "1行目\n2行目",
@@ -771,7 +771,7 @@ func TestHandleDat_404(t *testing.T) {
 
 	// request
 	writer := httptest.NewRecorder()
-	request, _ := http.NewRequest("GET", "/news4test/dat/999.dat", nil)
+	request, _ := http.NewRequest("GET", "/news4vip/dat/999.dat", nil)
 	request.Header.Add("User-Agent", "Monazilla/1.00")
 
 	// Exercise
@@ -787,7 +787,7 @@ func TestHandleDat_404(t *testing.T) {
 func TestHandleDat_IfModified_304(t *testing.T) {
 	// Setup
 	now := time.Now()
-	repo := testutil.NewBoardStub("news4test", []testutil.ThreadStub{
+	repo := testutil.NewBoardStub("news4vip", []testutil.ThreadStub{
 		{
 			ThreadKey:    "123",
 			Dat:          "1行目\n2行目\n",
@@ -801,7 +801,7 @@ func TestHandleDat_IfModified_304(t *testing.T) {
 
 	// request
 	writer := httptest.NewRecorder()
-	request, _ := http.NewRequest("GET", "/news4test/dat/123.dat", nil)
+	request, _ := http.NewRequest("GET", "/news4vip/dat/123.dat", nil)
 	request.Header.Add("User-Agent", "Monazilla/1.00")
 	request.Header.Add("If-Modified-Since", now.UTC().Format(http.TimeFormat))
 
@@ -818,7 +818,7 @@ func TestHandleDat_IfModified_304(t *testing.T) {
 func TestHandleDat_IfModified_416(t *testing.T) {
 	// Setup
 	now := time.Now()
-	repo := testutil.NewBoardStub("news4test", []testutil.ThreadStub{
+	repo := testutil.NewBoardStub("news4vip", []testutil.ThreadStub{
 		{
 			ThreadKey:    "123",
 			Dat:          "1行目\n2行目\n",
@@ -832,7 +832,7 @@ func TestHandleDat_IfModified_416(t *testing.T) {
 
 	// request
 	writer := httptest.NewRecorder()
-	request, _ := http.NewRequest("GET", "/news4test/dat/123.dat", nil)
+	request, _ := http.NewRequest("GET", "/news4vip/dat/123.dat", nil)
 	request.Header.Add("User-Agent", "Monazilla/1.00")
 	request.Header.Add("If-Modified-Since", now.UTC().Format(http.TimeFormat))
 	request.Header.Add("Range", fmt.Sprintf("bytes=%d-", len(util.UTF8toSJISString("1行目\n2行目\n"))+1))
@@ -850,7 +850,7 @@ func TestHandleDat_IfModified_416(t *testing.T) {
 func TestHandleDat_IfModified_206(t *testing.T) {
 	// Setup
 	now := time.Now()
-	repo := testutil.NewBoardStub("news4test", []testutil.ThreadStub{
+	repo := testutil.NewBoardStub("news4vip", []testutil.ThreadStub{
 		{
 			ThreadKey:    "123",
 			Dat:          "1行目\n2行目\n",
@@ -864,7 +864,7 @@ func TestHandleDat_IfModified_206(t *testing.T) {
 
 	// request
 	writer := httptest.NewRecorder()
-	request, _ := http.NewRequest("GET", "/news4test/dat/123.dat", nil)
+	request, _ := http.NewRequest("GET", "/news4vip/dat/123.dat", nil)
 	request.Header.Add("User-Agent", "Monazilla/1.00")
 	request.Header.Add("If-Modified-Since", now.UTC().Format(http.TimeFormat))
 	request.Header.Add("Range", fmt.Sprintf("bytes=%d-", len(util.UTF8toSJISString("1行目\n"))))
@@ -886,7 +886,7 @@ func TestHandleDat_IfModified_206(t *testing.T) {
 func TestHandleDat_IfModified_Err(t *testing.T) {
 	// Setup
 	now := time.Now()
-	repo := testutil.NewBoardStub("news4test", []testutil.ThreadStub{
+	repo := testutil.NewBoardStub("news4vip", []testutil.ThreadStub{
 		{
 			ThreadKey:    "123",
 			Dat:          "1行目\n2行目\n",
@@ -900,7 +900,7 @@ func TestHandleDat_IfModified_Err(t *testing.T) {
 
 	// request
 	writer := httptest.NewRecorder()
-	request, _ := http.NewRequest("GET", "/news4test/dat/123.dat", nil)
+	request, _ := http.NewRequest("GET", "/news4vip/dat/123.dat", nil)
 	request.Header.Add("User-Agent", "Monazilla/1.00")
 	request.Header.Add("If-Modified-Since", now.UTC().Format(http.TimeFormat))
 	request.Header.Add("Range", "bytes=1000+")
@@ -939,7 +939,7 @@ func TestParseDatRange(t *testing.T) {
 
 func TestHandleSubjectTxt_200(t *testing.T) {
 	// Setup
-	repo := testutil.NewBoardStub("news4test", []testutil.ThreadStub{
+	repo := testutil.NewBoardStub("news4vip", []testutil.ThreadStub{
 		{
 			ThreadKey:    "222",
 			ThreadTitle:  "YYY",
@@ -963,7 +963,7 @@ func TestHandleSubjectTxt_200(t *testing.T) {
 
 	// request
 	writer := httptest.NewRecorder()
-	request, _ := http.NewRequest("GET", "/news4test/subject.txt", nil)
+	request, _ := http.NewRequest("GET", "/news4vip/subject.txt", nil)
 	request.Header.Add("User-Agent", "Monazilla/1.00")
 
 	// Exercise
@@ -983,7 +983,7 @@ func TestHandleSubjectTxt_200(t *testing.T) {
 
 func TestHandleSubjectTxt_404(t *testing.T) {
 	// Setup
-	repo := testutil.NewBoardStub("news4test", []testutil.ThreadStub{})
+	repo := testutil.NewBoardStub("news4vip", []testutil.ThreadStub{})
 	env := &service.SysEnv{
 		StartedTime: time.Now(),
 	}
