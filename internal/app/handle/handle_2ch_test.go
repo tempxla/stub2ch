@@ -847,7 +847,7 @@ func TestHandleDat_IfModified_416(t *testing.T) {
 	}
 }
 
-func TestHandleDat_IfModified_200(t *testing.T) {
+func TestHandleDat_IfModified_206(t *testing.T) {
 	// Setup
 	now := time.Now()
 	repo := testutil.NewBoardStub("news4test", []testutil.ThreadStub{
@@ -874,7 +874,7 @@ func TestHandleDat_IfModified_200(t *testing.T) {
 	router.ServeHTTP(writer, request)
 
 	// Verify
-	if writer.Code != 200 {
+	if writer.Code != 206 {
 		t.Errorf("Response code is %v", writer.Code)
 	}
 	body := util.SJIStoUTF8String(writer.Body.String())
