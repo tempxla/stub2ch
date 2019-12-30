@@ -3,52 +3,58 @@ package service
 import (
 	"cloud.google.com/go/datastore"
 	"context"
-	"time"
+	"github.com/tempxla/stub2ch/internal/app/types/entity/memcache"
 )
 
 type BoardMemcache interface {
-	Set(item *Item) error
-	Get(key string) (*Item, error)
+	Set(item *memcache.Item) error
+	Get(key string) (*memcache.Item, error)
 	Delete(key string) error
 }
-
-// 見せかけのmemcache. 実態はdatastore.
-// Kind=MemcacheItem
-// Key=Key
-type Item struct {
-	Key        string        `datastore:",noindex"`
-	Value      []byte        `datastore:",noindex"`
-	Expiration time.Duration `datastore:",noindex"`
-}
-
-const (
-	kind_memcache_item = "MemcacheItem"
-)
 
 type AlterMemcache struct {
 	Context context.Context
 	Client  *datastore.Client
 }
 
-func (mem *AlterMemcache) Set(item *Item) error {
-	key := datastore.NameKey(kind_memcache_item, item.Key, nil)
-	_, err := mem.Client.Put(mem.Context, key, item)
+func (mem *AlterMemcache) Set(item *memcache.Item) error {
+	memItem := &memcache.MemcacheItem{
+		Value:      item.Value,
+		Expiration: item.Expiration,
+	}
+	key := datastore.NameKey(memcache.KIND, item.Key, nil)
+	_, err := mem.Client.Put(mem.Context, key, memItem)
 	return err
 }
 
-func (mem *AlterMemcache) Get(key string) (*Item, error) {
-	dkey := datastore.NameKey(kind_memcache_item, key, nil)
-	dst := &Item{}
-	err := mem.Client.Get(mem.Context, dkey, dst)
-	item := Item{Key: key, Value: dst.Value}
-	return &item, err
+func (mem *AlterMemcache) Get(key string) (*memcache.Item, error) {
+	dskey := datastore.NameKey(memcache.KIND, key, nil)
+	memItem := &memcache.MemcacheItem{}
+	err := mem.Client.Get(mem.Context, dskey, memItem)
+	if err != nil {
+		if err == datastore.ErrNoSuchEntity {
+			return nil, memcache.ErrCacheMiss
+		} else {
+			return nil, err
+		}
+	}
+	item := &memcache.Item{
+		Key:        key,
+		Value:      memItem.Value,
+		Expiration: memItem.Expiration,
+	}
+	return item, err
 }
 
 func (mem *AlterMemcache) Delete(key string) error {
-	dkey := datastore.NameKey(kind_memcache_item, key, nil)
-	err := mem.Client.Delete(mem.Context, dkey)
-	if err != nil && err != datastore.ErrNoSuchEntity {
-		return err
+	dskey := datastore.NameKey(memcache.KIND, key, nil)
+	err := mem.Client.Delete(mem.Context, dskey)
+	if err != nil {
+		if err == datastore.ErrNoSuchEntity {
+			return memcache.ErrCacheMiss
+		} else {
+			return err
+		}
 	}
 	return nil
 }

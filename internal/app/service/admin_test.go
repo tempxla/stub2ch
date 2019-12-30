@@ -5,6 +5,7 @@ import (
 	"context"
 	"github.com/tempxla/stub2ch/configs/app/admincfg"
 	"github.com/tempxla/stub2ch/configs/app/config"
+	"github.com/tempxla/stub2ch/internal/app/types/entity/memcache"
 	"io/ioutil"
 	"testing"
 )
@@ -58,7 +59,7 @@ func TestVerifySession_unmatch(t *testing.T) {
 		mem: mem,
 	}
 
-	item := &Item{
+	item := &memcache.Item{
 		Key:   admincfg.LOGIN_COOKIE_NAME,
 		Value: []byte("XXXX"),
 	}
@@ -93,7 +94,7 @@ func TestVerifySession(t *testing.T) {
 		mem: mem,
 	}
 
-	item := &Item{
+	item := &memcache.Item{
 		Key:   admincfg.LOGIN_COOKIE_NAME,
 		Value: []byte("XXXX"),
 	}
@@ -211,7 +212,7 @@ func TestLogout(t *testing.T) {
 		mem: mem,
 	}
 
-	item := &Item{
+	item := &memcache.Item{
 		Key:   admincfg.LOGIN_COOKIE_NAME,
 		Value: []byte("xxx"),
 	}

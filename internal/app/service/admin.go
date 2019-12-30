@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/tempxla/stub2ch/configs/app/admincfg"
+	"github.com/tempxla/stub2ch/internal/app/types/entity/memcache"
 	"github.com/tempxla/stub2ch/internal/app/util"
 	"log"
 	"time"
@@ -39,7 +40,7 @@ func (admin *AdminFunction) Login(passphrase, signature string) (string, error) 
 	}
 
 	sessionId := uuid.New().String()
-	item := &Item{
+	item := &memcache.Item{
 		Key:        admincfg.LOGIN_COOKIE_NAME,
 		Value:      []byte(sessionId),
 		Expiration: time.Duration(30) * time.Minute, // 30分たっても削除されないよ！
