@@ -5,6 +5,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"github.com/tempxla/stub2ch/configs/app/admincfg"
 	"github.com/tempxla/stub2ch/internal/app/service"
+	"github.com/tempxla/stub2ch/tools/app/testutil"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -324,6 +325,9 @@ func TestHandleLogout(t *testing.T) {
 }
 
 func TestHandleAdmin_CreateBoard(t *testing.T) {
+
+	// Clean Datastore
+	testutil.CleanDatastore(t)
 
 	sv, _ := service.DefaultBoardService()
 	request := authenticatedRequest(t, sv, "POST", "/test/_admin/func/create-board/poverty")

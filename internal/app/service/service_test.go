@@ -15,31 +15,6 @@ import (
 	"time"
 )
 
-// Setup Utilitiy
-func cleanDatastore(t *testing.T, ctx context.Context, client *datastore.Client) {
-
-	t.Helper()
-
-	// delete all Dat
-	query := datastore.NewQuery("Dat").KeysOnly()
-	var keys []*datastore.Key
-	var err error
-	if keys, err = client.GetAll(ctx, query, []*dat.Entity{}); err != nil {
-		t.Fatalf("Failed clean dat. get dat  %v", err)
-	}
-	if err := client.DeleteMulti(ctx, keys); err != nil {
-		t.Fatalf("Failed clean dat. delete dat  %v", err)
-	}
-	// delete all Board
-	query = datastore.NewQuery("Board").KeysOnly()
-	if keys, err = client.GetAll(ctx, query, []*board.Entity{}); err != nil {
-		t.Fatalf("Failed clean board. get dat  %v", err)
-	}
-	if err := client.DeleteMulti(ctx, keys); err != nil {
-		t.Fatalf("Failed clean board. delete dat  %v", err)
-	}
-}
-
 func TestDefaultBoardService(t *testing.T) {
 	sv, err := DefaultBoardService()
 	if err != nil {
@@ -188,7 +163,7 @@ func TestCreateNewThread_AtFirst(t *testing.T) {
 	}
 
 	// Clean Datastore
-	cleanDatastore(t, ctx, client)
+	testutil.CleanDatastoreBy(t, ctx, client)
 
 	// Sets the kind for the new entity.
 	kind := "Board"
@@ -279,7 +254,7 @@ func TestCreateNewThread_More(t *testing.T) {
 	}
 
 	// Clean Datastore
-	cleanDatastore(t, ctx, client)
+	testutil.CleanDatastoreBy(t, ctx, client)
 
 	// Sets the kind for the new entity.
 	kind := "Board"
@@ -350,7 +325,7 @@ func TestCreateNewThread_NoSuchBoard(t *testing.T) {
 	}
 
 	// Clean Datastore
-	cleanDatastore(t, ctx, client)
+	testutil.CleanDatastoreBy(t, ctx, client)
 
 	// Injection
 	sv := NewBoardService(RepoConf(
@@ -389,7 +364,7 @@ func TestWriteDat(t *testing.T) {
 	}
 
 	// Clean Datastore
-	cleanDatastore(t, ctx, client)
+	testutil.CleanDatastoreBy(t, ctx, client)
 
 	// Sets the kind for the new entity.
 	kind := "Board"

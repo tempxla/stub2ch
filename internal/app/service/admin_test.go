@@ -6,6 +6,7 @@ import (
 	"github.com/tempxla/stub2ch/configs/app/admincfg"
 	"github.com/tempxla/stub2ch/configs/app/config"
 	"github.com/tempxla/stub2ch/internal/app/types/entity/memcache"
+	"github.com/tempxla/stub2ch/tools/app/testutil"
 	"io/ioutil"
 	"testing"
 )
@@ -236,7 +237,7 @@ func TestCreateBoard(t *testing.T) {
 		t.Fatalf("Failed to create client: %v", err)
 	}
 
-	cleanDatastore(t, ctx, client)
+	testutil.CleanDatastoreBy(t, ctx, client)
 
 	admin := &AdminFunction{
 		repo: &AdminBoardStore{

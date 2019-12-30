@@ -7,6 +7,7 @@ import (
 	"github.com/tempxla/stub2ch/configs/app/config"
 	"github.com/tempxla/stub2ch/internal/app/types/entity/board"
 	"github.com/tempxla/stub2ch/internal/app/types/entity/dat"
+	"github.com/tempxla/stub2ch/tools/app/testutil"
 	"testing"
 	"time"
 )
@@ -22,7 +23,7 @@ func TestPutAndGetBoard(t *testing.T) {
 	}
 
 	// Clean Datastore
-	cleanDatastore(t, ctx, client)
+	testutil.CleanDatastoreBy(t, ctx, client)
 
 	sv := NewBoardService(RepoConf(&BoardStore{
 		Client:  client,
@@ -71,7 +72,7 @@ func TestPutAndGetDat(t *testing.T) {
 	}
 
 	// Clean Datastore
-	cleanDatastore(t, ctx, client)
+	testutil.CleanDatastoreBy(t, ctx, client)
 
 	sv := NewBoardService(RepoConf(&BoardStore{
 		Client:  client,
@@ -108,7 +109,7 @@ func TestTxPutAndGetBoard(t *testing.T) {
 	}
 
 	// Clean Datastore
-	cleanDatastore(t, ctx, client)
+	testutil.CleanDatastoreBy(t, ctx, client)
 
 	sv := NewBoardService(RepoConf(&BoardStore{
 		Client:  client,
@@ -170,7 +171,7 @@ func TestTxPutAndGetDat(t *testing.T) {
 	}
 
 	// Clean Datastore
-	cleanDatastore(t, ctx, client)
+	testutil.CleanDatastoreBy(t, ctx, client)
 
 	sv := NewBoardService(RepoConf(&BoardStore{
 		Client:  client,
