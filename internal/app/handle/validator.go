@@ -101,13 +101,13 @@ func sjisToUtf8String(s string) (string, error) {
 
 // トリップの関係でhtml.EscapeStringはここでやる
 func trip(s string) (string, error) {
-	s = strings.ReplaceAll(s, "◆", "◇")
 	idx := strings.IndexRune(s, '#')
 	if idx != -1 {
 		trip := util.ComputeTrip(util.UTF8toSJISString(s[idx+1:]))
-		return fmt.Sprintf("%s </b>◆%s <b>", html.EscapeString(s[:idx]), trip), nil
+		return fmt.Sprintf("%s </b>◆%s <b>",
+			strings.ReplaceAll(html.EscapeString(s[:idx]), "◆", "◇"), trip), nil
 	} else {
-		return html.EscapeString(s), nil
+		return strings.ReplaceAll(html.EscapeString(s), "◆", "◇"), nil
 	}
 }
 
