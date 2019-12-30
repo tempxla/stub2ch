@@ -59,13 +59,11 @@ func NewBoardRouter(sv *service.BoardService) *httprouter.Router {
 			handleUserAgent(
 				injectService(sv)(
 					handleSettingTxt()))))
-	router.POST("/:board/bbs.cgi",
+	router.GET("/:board/head.txt",
 		protect(config.KEEP_OUT)(
 			handleUserAgent(
-				handleTestDir(
-					handleParseForm(
-						injectService(sv)(
-							handleBbsCgi()))))))
+				injectService(sv)(
+					handleHeadTxt()))))
 	router.GET("/:board/subject.txt",
 		protect(config.KEEP_OUT)(
 			handleUserAgent(
@@ -76,6 +74,13 @@ func NewBoardRouter(sv *service.BoardService) *httprouter.Router {
 			handleUserAgent(
 				injectService(sv)(
 					handleDat()))))
+	router.POST("/:board/bbs.cgi",
+		protect(config.KEEP_OUT)(
+			handleUserAgent(
+				handleTestDir(
+					handleParseForm(
+						injectService(sv)(
+							handleBbsCgi()))))))
 
 	// 静的ファイル
 	// GAEの設定はapp.yamlなので、これは開発用

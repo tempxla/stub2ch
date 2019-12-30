@@ -4,6 +4,7 @@ import (
 	"cloud.google.com/go/datastore"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
+	"github.com/tempxla/stub2ch/configs/app/head"
 	"github.com/tempxla/stub2ch/configs/app/setting"
 	"github.com/tempxla/stub2ch/internal/app/service"
 	mstring "github.com/tempxla/stub2ch/internal/app/types/maybe/string"
@@ -328,5 +329,19 @@ func handleSettingTxt() ServiceHandle {
 		settingTxt := setting.MakeSettingTxt(conf)
 		setContentTypePlainSjis(w)
 		fmt.Fprintf(w, string(util.UTF8toSJIS(settingTxt)))
+	}
+}
+
+func handleHeadTxt() ServiceHandle {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params, sv *service.BoardService) {
+		board := ps.ByName("board")
+		headTxt := head.MakeHeadTxt(board)
+		if headTxt == nil {
+			http.Error(w, "Not Found", http.StatusNotFound)
+			return
+		}
+
+		setContentTypePlainSjis(w)
+		fmt.Fprintf(w, string(util.UTF8toSJIS(headTxt)))
 	}
 }
