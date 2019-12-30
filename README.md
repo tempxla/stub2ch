@@ -17,6 +17,6 @@
 |read.cgiを作る|未|
 |板トップを作る|未|
 |head.txt|無|
-|SETTING.TXT|無|
+|SETTING.TXT|完了|
 |/\_service/|無|
 |1001.txt|無|
