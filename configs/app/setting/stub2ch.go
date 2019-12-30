@@ -2,7 +2,7 @@ package setting
 
 type Stub2ch struct{}
 
-func (_ *Stub2ch) BBS_TITLE() string        { return "ニュース速報(VIP)" }
+func (_ *Stub2ch) BBS_TITLE() string        { return "スタブ" }
 func (_ *Stub2ch) BBS_NONAME_NAME() string  { return "名無しさん＠スタブ" }
 func (_ *Stub2ch) BBS_UNICODE() string      { return "pass" }
 func (_ *Stub2ch) BBS_SUBJECT_COUNT() int   { return 128 }

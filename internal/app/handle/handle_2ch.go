@@ -279,7 +279,7 @@ func handleDat() ServiceHandle {
 			// 差分DAT
 			setContentTypePlainSjis(w)
 			w.Header().Add("Last-Modified", lastModified)
-			w.WriteHeader(http.StatusPartialContent) // 216
+			w.WriteHeader(http.StatusPartialContent) // 206
 			fmt.Fprintf(w, string(sjisDat[rangeBytes:]))
 		}
 	}
