@@ -304,6 +304,7 @@ func writeDat(dat *dat.Entity, format string,
 	)
 
 	dat.Bytes = wr.Bytes()
+	dat.LastModified = date
 }
 
 func escapeDatMessage(str string) string {

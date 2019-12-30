@@ -454,6 +454,10 @@ func TestWriteDat(t *testing.T) {
 			"\n名前2<>メール2<>"+dateStr+" ID:id2<> カキ２ <>")) {
 		t.Fatalf("content of dat  %v", datList[0].Bytes)
 	}
+	startedAtStr := sv.StartedAt().Format("2006-01-02 15:04:05.000")
+	if datList[0].LastModified.Format("2006-01-02 15:04:05.000") != startedAtStr {
+		t.Errorf("last modified: %v", datList[0].LastModified)
+	}
 }
 
 func TestUpdateSubjectsWhenWriteDat_age(t *testing.T) {
