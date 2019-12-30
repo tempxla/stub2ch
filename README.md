@@ -16,7 +16,7 @@
 |HEADに対応する|未|
 |read.cgiを作る|未|
 |板トップを作る|未|
-|head.txt|未|
-|SETTING.TXT|未|
-|/\_service/|未|
-|1001.txt|完？|
+|head.txt|無|
+|SETTING.TXT|無|
+|/\_service/|無|
+|1001.txt|無|
