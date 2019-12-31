@@ -8,6 +8,8 @@ import (
 
 type AdminBoardRepository interface {
 	CreateBoard(boardName string) (err error)
+	GetWriteCount() (count int, err error)
+	ResetWriteCount() (err error)
 }
 
 type AdminBoardStore struct {
@@ -36,5 +38,38 @@ func (admin *AdminBoardStore) CreateBoard(boardName string) (err error) {
 		// err == datastore.ErrNoSuchEntity
 		return admin.repo.PutBoard(key, newEntity)
 	})
+	return
+}
+
+func (admin *AdminBoardStore) GetWriteCount() (_ int, err error) {
+
+	var entities []board.Entity
+	_, err = admin.repo.Client.GetAll(admin.repo.Context, datastore.NewQuery(board.KIND), &entities)
+
+	if err != nil {
+		return
+	}
+
+	count := 0
+	for _, entity := range entities {
+		count += entity.WriteCount
+	}
+
+	return count, nil
+}
+
+func (admin *AdminBoardStore) ResetWriteCount() (err error) {
+
+	var entities []board.Entity
+	keys, err := admin.repo.Client.GetAll(admin.repo.Context, datastore.NewQuery(board.KIND), &entities)
+	if err != nil {
+		return err
+	}
+
+	for i, _ := range keys {
+		entities[i].WriteCount = 0
+	}
+	_, err = admin.repo.Client.PutMulti(admin.repo.Context, keys, entities)
+
 	return
 }

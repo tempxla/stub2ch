@@ -38,14 +38,23 @@
   <div class="container">
     <div class="row">
       <div class="" style="margin-top: 5%; margin-bottom: 5%;">
-        <h4>Admin Console</h4>
-        <p>{{ . }}</p>
+        <h5>Admin Console</h5>
+        <p>{{ .Message }}</p>
       </div>
     </div>
     <div class="row">
-      <a class="button three columns" href="#" onclick="Logout()">Logout</a>
+      <div class="three columns">Create Board</div>
       <a class="button three columns" href="#" onclick="CreateBoard('news4vip')">news4vip</a>
       <a class="button three columns" href="#" onclick="CreateBoard('poverty')">poverty</a>
+    </div>
+    <div class="row">
+      <div class="three columns">Write Count {{ .WriteCount }}</div>
+      <a class="button three columns" href="#" onclick="WriteCount('get')">Get</a>
+      <a class="button three columns" href="#" onclick="WriteCount('reset')">Reset</a>
+    </div>
+    <div class="row">
+      <div class="three columns">System</div>
+      <a class="button three columns" href="#" onclick="Logout()">Logout</a>
     </div>
   </div>
 

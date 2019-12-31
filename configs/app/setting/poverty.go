@@ -20,7 +20,7 @@ func (_ *Poverty) BBS_YMD_WEEKS() string        { return "" }
 func (_ *Poverty) BBS_ARR() string              { return "" }
 func (_ *Poverty) BBS_SOKO() string             { return "ononon" }
 func (_ *Poverty) BBS_DISP_MSEC() int           { return 3 }
-func (_ *Poverty) STUB_WRITE_ENTITY_LIMIT() int { return 5000 }
+func (_ *Poverty) STUB_WRITE_ENTITY_LIMIT() int { return 4000 } // 5000までいける
 func (_ *Poverty) STUB_THREAD_COUNT() int       { return 500 }
 func (_ *Poverty) STUB_MESSAGE_COUNT() int      { return 1000 }
 func (_ *Poverty) STUB_DAT_CAPACITY() int       { return 500 * 1024 }

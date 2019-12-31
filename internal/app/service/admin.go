@@ -61,3 +61,11 @@ func (admin *AdminFunction) CreateBoard(boardName string) error {
 	log.Printf("CreateBoard: %v", boardName)
 	return admin.repo.CreateBoard(boardName)
 }
+
+func (admin *AdminFunction) GetWriteCount() (int, error) {
+	return admin.repo.GetWriteCount()
+}
+
+func (admin *AdminFunction) ResetWriteCount() error {
+	return admin.repo.ResetWriteCount()
+}

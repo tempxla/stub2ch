@@ -63,7 +63,7 @@ func handleAdminLogin() ServiceHandle {
 		}
 		http.SetCookie(w, cookie)
 
-		executeAdminIndex(w, r, nil)
+		executeAdminIndex(w, r, newAdminView())
 	}
 }
 
@@ -78,36 +78,59 @@ func handleAdminLogout() ServiceHandle {
 	}
 }
 
+type adminView struct {
+	Error      error
+	Message    string
+	WriteCount int
+}
+
+func newAdminView() *adminView {
+	return &adminView{
+		WriteCount: -1,
+	}
+}
+
 func handleAdmin() ServiceHandle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params, sv *service.BoardService) {
+
+		view := newAdminView()
+
 		fp1 := ps.ByName("fp1")
 		fp2 := ps.ByName("fp2")
-		var err error
+
 		switch fp1 {
 		case "create-board":
 			switch fp2 {
 			case "news4vip", "poverty":
-				err = sv.Admin.CreateBoard(fp2)
+				view.Error = sv.Admin.CreateBoard(fp2)
 			default:
-				err = fmt.Errorf("unsupported: %v", fp2)
+				view.Error = fmt.Errorf("unsupported: %v", fp2)
+			}
+		case "write-limit":
+			switch fp2 {
+			case "get":
+				view.WriteCount, view.Error = sv.Admin.GetWriteCount()
+			case "reset":
+				view.Error = sv.Admin.ResetWriteCount()
+			default:
+				view.Error = fmt.Errorf("unsupported: %v", fp2)
 			}
 		default:
-			err = fmt.Errorf("unknown func %v/%v", fp1, fp2)
+			view.Error = fmt.Errorf("unknown func %v/%v", fp1, fp2)
 		}
-		executeAdminIndex(w, r, err)
+		executeAdminIndex(w, r, view)
 	}
 }
 
-func executeAdminIndex(w http.ResponseWriter, r *http.Request, err error) {
+func executeAdminIndex(w http.ResponseWriter, r *http.Request, view *adminView) {
 
-	var msg string
-	if err == nil {
-		msg = "NO ERRORS."
+	if view.Error == nil {
+		view.Message = "NO ERRORS."
 	} else {
-		msg = fmt.Sprint(err)
+		view.Message = fmt.Sprint(view.Error)
 	}
 
-	if err := adminIndexTmpl.Execute(w, msg); err != nil {
+	if err := adminIndexTmpl.Execute(w, view); err != nil {
 		log.Printf("Error executing template: %v", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 	}

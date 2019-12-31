@@ -134,7 +134,7 @@ func (sv *BoardService) MakeSubjectTxt(boardName string) (_ []byte, err error) {
 }
 
 // Creates a Thread
-func (sv *BoardService) CreateThread(boardName string,
+func (sv *BoardService) CreateThread(stng setting.BBS, boardName string,
 	name string, mail string, now time.Time, id string, message string,
 	title string) (threadKey string, err error) {
 
@@ -166,8 +166,19 @@ func (sv *BoardService) CreateThread(boardName string,
 				return fmt.Errorf("thread key is duplicate")
 			}
 		}
+
+		// 制限チェキ
+		if n := len(boardEntity.Subjects); n >= stng.STUB_THREAD_COUNT() {
+			return fmt.Errorf("%d: これ以上スレ立てできません。。。", n)
+		}
+		if n := boardEntity.WriteCount; n >= stng.STUB_WRITE_ENTITY_LIMIT() {
+			return fmt.Errorf("%d: 今日はこれ以上スレ立てできません。。。", n)
+		}
+
 		// 先頭に追加
 		boardEntity.Subjects = append([]board.Subject{subject}, boardEntity.Subjects...)
+		boardEntity.WriteCount++
+
 		// Save
 		if err := sv.repo.TxPutBoard(tx, boardKey, boardEntity); err != nil {
 			return err
@@ -246,7 +257,7 @@ func updateSubjectsWhenWriteDat(stng setting.BBS, board *board.Entity,
 	}
 
 	// データストア制限チェック
-	if board.WriteCount > stng.STUB_WRITE_ENTITY_LIMIT() {
+	if board.WriteCount >= stng.STUB_WRITE_ENTITY_LIMIT() {
 		err = fmt.Errorf("%d: 今日はこれ以上書き込めません。。。", board.WriteCount)
 		return
 	}

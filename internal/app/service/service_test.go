@@ -190,13 +190,14 @@ func TestCreateNewThread_AtFirst(t *testing.T) {
 		}),
 		EnvConf(&SysEnv{}),
 	)
+	stng := testutil.NewSettingStub()
 
 	// Exercise
 	// ----------------------------------
 	// Create new thread.
 	now, _ := time.ParseInLocation("2006-01-02 15:04:05.000",
 		"2019-11-23 22:29:01.123", time.Local)
-	_, err = sv.CreateThread("news4test",
+	_, err = sv.CreateThread(stng, "news4test",
 		"テスタ", "age", now, "ABC", "これはテストスレ", "スレ立てテスト")
 
 	// Verify
@@ -282,12 +283,14 @@ func TestCreateNewThread_More(t *testing.T) {
 		EnvConf(&SysEnv{}),
 	)
 
+	stng := testutil.NewSettingStub()
+
 	// Exercise
 	// ----------------------------------
 	// Create new thread.
 	now, _ := time.ParseInLocation("2006-01-02 15:04:05.000",
 		"2019-11-23 22:29:01.123", time.Local)
-	if _, err := sv.CreateThread("news4test",
+	if _, err := sv.CreateThread(stng, "news4test",
 		"テスタ", "age", now, "ABC", "これはテストスレ", "スレ立てテスト"); err != nil {
 		t.Fatalf("at first err is %v", err)
 	}
@@ -295,7 +298,7 @@ func TestCreateNewThread_More(t *testing.T) {
 	// Create another thread.
 	now2, _ := time.ParseInLocation("2006-01-02 15:04:05.000",
 		"2019-11-24 22:29:01.123", time.Local)
-	if _, err := sv.CreateThread("news4test",
+	if _, err := sv.CreateThread(stng, "news4test",
 		"テスタ2", "age2", now2, "XYZ", "これはテストスレ2", "スレ立てテスト2"); err != nil {
 		t.Fatalf("at second err is %v", err)
 	}
@@ -336,12 +339,15 @@ func TestCreateNewThread_NoSuchBoard(t *testing.T) {
 		EnvConf(&SysEnv{}),
 	)
 
+	//
+	stng := testutil.NewSettingStub()
+
 	// Exercise
 	// ----------------------------------
 	// Create new thread.
 	now, _ := time.ParseInLocation("2006-01-02 15:04:05.000",
 		"2019-11-23 22:29:01.123", time.Local)
-	_, err = sv.CreateThread("news4test",
+	_, err = sv.CreateThread(stng, "news4test",
 		"テスタ", "age", now, "ABC", "これはテストスレ", "スレ立てテスト")
 
 	// Verify
@@ -397,14 +403,14 @@ func TestWriteDat(t *testing.T) {
 		}),
 	)
 
+	//
+	stng := testutil.NewSettingStub()
+
 	// Create new thread.
 	date1, _ := time.ParseInLocation("2006-01-02 15:04:05.000",
 		"2019-11-23 22:29:01.123", time.Local)
-	threadKey, err := sv.CreateThread("news4test",
+	threadKey, err := sv.CreateThread(stng, "news4test",
 		"テスタ", "age", date1, "ABC", "これはテストスレ", "スレ立てテスト")
-
-	//
-	stng := testutil.NewSettingStub()
 
 	// Exercise
 	// ----------------------------------

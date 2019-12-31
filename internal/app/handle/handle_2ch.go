@@ -216,7 +216,7 @@ func handleCreateThread(w http.ResponseWriter, r *http.Request, sv *service.Boar
 		ipAddr = ipAddr[:i]
 	}
 	id := sv.ComputeId(ipAddr, boardName)
-	threadKey, err := sv.CreateThread(boardName, name, mail, sv.StartedAt(), id, message, title)
+	threadKey, err := sv.CreateThread(setting, boardName, name, mail, sv.StartedAt(), id, message, title)
 	if err != nil {
 		// スレ立て失敗
 		executeCreateThreadErrorTmpl(w, r, sv.StartedAt())
