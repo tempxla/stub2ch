@@ -8,6 +8,7 @@ import (
 	"github.com/tempxla/stub2ch/internal/app/util"
 	"html/template"
 	"log"
+	"net"
 	"net/http"
 	"path/filepath"
 )
@@ -179,4 +180,12 @@ func setContentTypeHtmlSjis(w http.ResponseWriter) {
 
 func setContentTypePlainSjis(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "text/plain; charset=Shift_JIS")
+}
+
+func getIP(r *http.Request) string {
+	if ipProxy := r.Header.Get("X-FORWARDED-FOR"); len(ipProxy) > 0 {
+		return ipProxy
+	}
+	ip, _, _ := net.SplitHostPort(r.RemoteAddr)
+	return ip
 }

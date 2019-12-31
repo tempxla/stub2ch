@@ -84,10 +84,7 @@ func handleWriteDat(w http.ResponseWriter, r *http.Request, sv *service.BoardSer
 		return
 	}
 	// 書き込み
-	ipAddr := r.RemoteAddr
-	if i := strings.LastIndexByte(ipAddr, ':'); i != -1 {
-		ipAddr = ipAddr[:i]
-	}
+	ipAddr := getIP(r)
 	id := sv.ComputeId(ipAddr, boardName)
 	resnum, err := sv.WriteDat(setting, boardName, threadKey, name, mail, id, message)
 	if err != nil {
@@ -149,10 +146,7 @@ func executeWriteDatConfirmTmpl(w http.ResponseWriter, r *http.Request,
 
 	// Domain属性を指定しないCookieは、Cookieを発行したホストのみに送信される
 	expires := startedAt.Add(time.Duration(7*24) * time.Hour).UTC().Format(http.TimeFormat)
-	ipAddr := r.RemoteAddr
-	if i := strings.LastIndexByte(ipAddr, ':'); i != -1 {
-		ipAddr = ipAddr[:i]
-	}
+	ipAddr := getIP(r)
 	w.Header().Add("Set-Cookie", fmt.Sprintf("PON=%s; expires=%s; path=/", ipAddr, expires))
 	w.Header().Add("Set-Cookie", fmt.Sprintf("yuki=akari; expires=%s; path=/", expires))
 
@@ -211,10 +205,7 @@ func handleCreateThread(w http.ResponseWriter, r *http.Request, sv *service.Boar
 		return
 	}
 	// スレ立て
-	ipAddr := r.RemoteAddr
-	if i := strings.LastIndexByte(ipAddr, ':'); i != -1 {
-		ipAddr = ipAddr[:i]
-	}
+	ipAddr := getIP(r)
 	id := sv.ComputeId(ipAddr, boardName)
 	threadKey, err := sv.CreateThread(setting, boardName, name, mail, sv.StartedAt(), id, message, title)
 	if err != nil {
