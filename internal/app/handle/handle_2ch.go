@@ -89,7 +89,7 @@ func handleWriteDat(w http.ResponseWriter, r *http.Request, sv *service.BoardSer
 		ipAddr = ipAddr[:i]
 	}
 	id := sv.ComputeId(ipAddr, boardName)
-	resnum, err := sv.WriteDat(boardName, threadKey, name, mail, id, message)
+	resnum, err := sv.WriteDat(setting, boardName, threadKey, name, mail, id, message)
 	if err != nil {
 		// 存在しない or dat落ち or 1001 or 容量オーバー
 		executeWriteDatNotFoundTmpl(w, r, boardName, threadKey, sv.StartedAt())
@@ -321,12 +321,12 @@ func handleSubjectTxt() ServiceHandle {
 func handleSettingTxt() ServiceHandle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params, sv *service.BoardService) {
 		board := ps.ByName("board")
-		conf := setting.GetSetting(board)
-		if conf == nil {
+		stng := setting.GetSetting(board)
+		if stng == nil {
 			http.Error(w, "Not Found", http.StatusNotFound)
 			return
 		}
-		settingTxt := setting.MakeSettingTxt(conf)
+		settingTxt := setting.MakeSettingTxt(stng)
 		setContentTypePlainSjis(w)
 		fmt.Fprintf(w, string(util.UTF8toSJIS(settingTxt)))
 	}

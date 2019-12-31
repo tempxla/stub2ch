@@ -16,7 +16,8 @@ type Key struct {
 // Kind=Board
 // Key=BoardName
 type Entity struct {
-	Subjects []Subject `datastore:",noindex"`
+	Subjects   []Subject `datastore:",noindex"`
+	WriteCount int       `datastore:",noindex"`
 }
 
 type Subject struct {

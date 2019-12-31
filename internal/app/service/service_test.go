@@ -403,9 +403,12 @@ func TestWriteDat(t *testing.T) {
 	threadKey, err := sv.CreateThread("news4test",
 		"テスタ", "age", date1, "ABC", "これはテストスレ", "スレ立てテスト")
 
+	//
+	stng := testutil.NewSettingStub()
+
 	// Exercise
 	// ----------------------------------
-	sv.WriteDat("news4test", threadKey, "名前2", "メール2", "id2", "カキ２")
+	sv.WriteDat(stng, "news4test", threadKey, "名前2", "メール2", "id2", "カキ２")
 
 	// Verify
 	// ----------------------------------
@@ -465,29 +468,33 @@ func TestUpdateSubjectsWhenWriteDat_age(t *testing.T) {
 	t1 := time.Now().Add(time.Duration(-1) * time.Hour)
 	t2 := time.Now().Add(time.Duration(-2) * time.Hour)
 	t3 := time.Now().Add(time.Duration(-3) * time.Hour)
-	board := &board.Entity{[]board.Subject{
-		{
-			ThreadKey:    "123",
-			MessageCount: 100,
-			LastModified: t1,
-		},
-		{
-			ThreadKey:    "999",
-			MessageCount: 200,
-			LastModified: t2,
-		},
-		{
-			ThreadKey:    "456",
-			MessageCount: 300,
-			LastModified: t3,
-		},
-	}}
+	board := &board.Entity{
+		Subjects: []board.Subject{
+			{
+				ThreadKey:    "123",
+				MessageCount: 100,
+				LastModified: t1,
+			},
+			{
+				ThreadKey:    "999",
+				MessageCount: 200,
+				LastModified: t2,
+			},
+			{
+				ThreadKey:    "456",
+				MessageCount: 300,
+				LastModified: t3,
+			},
+		}}
 	threadKey := "999"
 	mail := ""
 	now := time.Now()
 
+	//
+	stng := testutil.NewSettingStub()
+
 	// Exercise
-	resunum, err := updateSubjectsWhenWriteDat(board, threadKey, mail, now)
+	resunum, err := updateSubjectsWhenWriteDat(stng, board, threadKey, mail, now)
 	if err != nil {
 		t.Errorf("%v", err)
 	}
@@ -516,24 +523,28 @@ func TestUpdateSubjectsWhenWriteDat_sage(t *testing.T) {
 	// Setup
 	t1 := time.Now().Add(time.Duration(-1) * time.Hour)
 	t2 := time.Now().Add(time.Duration(-2) * time.Hour)
-	board := &board.Entity{[]board.Subject{
-		{
-			ThreadKey:    "123",
-			MessageCount: 100,
-			LastModified: t1,
-		},
-		{
-			ThreadKey:    "999",
-			MessageCount: 200,
-			LastModified: t2,
-		},
-	}}
+	board := &board.Entity{
+		Subjects: []board.Subject{
+			{
+				ThreadKey:    "123",
+				MessageCount: 100,
+				LastModified: t1,
+			},
+			{
+				ThreadKey:    "999",
+				MessageCount: 200,
+				LastModified: t2,
+			},
+		}}
 	threadKey := "999"
 	mail := "sage"
 	now := time.Now()
 
+	//
+	stng := testutil.NewSettingStub()
+
 	// Exercise
-	resnum, err := updateSubjectsWhenWriteDat(board, threadKey, mail, now)
+	resnum, err := updateSubjectsWhenWriteDat(stng, board, threadKey, mail, now)
 	if err != nil {
 		t.Errorf("%v", err)
 	}
@@ -558,14 +569,17 @@ func TestUpdateSubjectsWhenWriteDat_sage(t *testing.T) {
 func TestUpdateSubjectsWhenWriteDat_fail(t *testing.T) {
 	// Setup
 	board := &board.Entity{
-		[]board.Subject{},
+		Subjects: []board.Subject{},
 	}
 	threadKey := "888"
 	mail := "sage"
 	now := time.Now()
 
+	//
+	stng := testutil.NewSettingStub()
+
 	// Exercise
-	_, err := updateSubjectsWhenWriteDat(board, threadKey, mail, now)
+	_, err := updateSubjectsWhenWriteDat(stng, board, threadKey, mail, now)
 
 	// Verify
 	if err == nil {
@@ -576,19 +590,23 @@ func TestUpdateSubjectsWhenWriteDat_fail(t *testing.T) {
 func TestUpdateSubjectsWhenWriteDat_1001(t *testing.T) {
 	// Setup
 	t1 := time.Now().Add(time.Duration(-1) * time.Hour)
-	board := &board.Entity{[]board.Subject{
-		{
-			ThreadKey:    "123",
-			MessageCount: 999,
-			LastModified: t1,
-		},
-	}}
+	board := &board.Entity{
+		Subjects: []board.Subject{
+			{
+				ThreadKey:    "123",
+				MessageCount: 999,
+				LastModified: t1,
+			},
+		}}
 	threadKey := "123"
 	mail := "sage"
 	now := time.Now()
 
+	//
+	stng := testutil.NewSettingStub()
+
 	// Exercise
-	resnum, err := updateSubjectsWhenWriteDat(board, threadKey, mail, now)
+	resnum, err := updateSubjectsWhenWriteDat(stng, board, threadKey, mail, now)
 	if err != nil {
 		t.Errorf("%v", err)
 	}

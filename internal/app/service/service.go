@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"github.com/tempxla/stub2ch/configs/app/config"
 	"github.com/tempxla/stub2ch/configs/app/secretcfg"
+	"github.com/tempxla/stub2ch/configs/app/setting"
 	"github.com/tempxla/stub2ch/internal/app/types/entity/board"
 	"github.com/tempxla/stub2ch/internal/app/types/entity/dat"
 	"github.com/tempxla/stub2ch/internal/app/util"
@@ -24,9 +25,7 @@ const (
 	dat_time_layout = "15:04:05.000"
 	// 名前<>メール欄<>年/月/日(曜) 時:分:秒.ミリ秒 ID:hogehoge0<> 本文 <>スレタイ
 	dat_format      = "%s<>%s<>%s(%s) %s ID:%s<> %s <>%s\n"
-	dat_format_1001 = "1001<><>Over 1000 Thread<> このスレッドは１０００を超えました。 <br> 新しいスレッドを立ててください。 <>\n"
-
-	bbs_thread_capacity = 500 * 1024 // 500kB
+	dat_format_1001 = "%d<><>Over %d Thread<> このスレッドは%dを超えました。 <br> 新しいスレッドを立ててください。 <>\n"
 )
 
 var (
@@ -181,7 +180,7 @@ func (sv *BoardService) CreateThread(boardName string,
 	return
 }
 
-func (sv *BoardService) WriteDat(boardName, threadKey,
+func (sv *BoardService) WriteDat(stng setting.BBS, boardName, threadKey,
 	name, mail, id, message string) (resnum int, err error) {
 
 	// Creates a Key instance.
@@ -200,7 +199,7 @@ func (sv *BoardService) WriteDat(boardName, threadKey,
 		}
 
 		// 容量オーバー
-		if len(util.UTF8toSJIS(dat.Bytes)) >= bbs_thread_capacity {
+		if len(util.UTF8toSJIS(dat.Bytes)) >= stng.STUB_DAT_CAPACITY() {
 			return fmt.Errorf("容量超過: これ以上書き込めません。。。")
 		}
 
@@ -208,14 +207,14 @@ func (sv *BoardService) WriteDat(boardName, threadKey,
 		appendDat(dat, name, mail, sv.env.StartedAt(), id, message)
 
 		// subject.txtの更新
-		resnum, err = updateSubjectsWhenWriteDat(board, threadKey, mail, sv.env.StartedAt())
+		resnum, err = updateSubjectsWhenWriteDat(stng, board, threadKey, mail, sv.env.StartedAt())
 		if err != nil {
 			return err
 		}
 
 		// 1001カキコ
-		if resnum == 1000 {
-			dat.Bytes = append(dat.Bytes, []byte(dat_format_1001)...)
+		if n := stng.STUB_MESSAGE_COUNT(); resnum == n {
+			dat.Bytes = append(dat.Bytes, []byte(fmt.Sprintf(dat_format_1001, n+1, n, n))...)
 		}
 
 		// Push Entities
@@ -230,7 +229,7 @@ func (sv *BoardService) WriteDat(boardName, threadKey,
 	return
 }
 
-func updateSubjectsWhenWriteDat(board *board.Entity,
+func updateSubjectsWhenWriteDat(stng setting.BBS, board *board.Entity,
 	threadKey string, mail string, now time.Time) (resnum int, err error) {
 
 	sbjLen := len(board.Subjects)
@@ -246,18 +245,29 @@ func updateSubjectsWhenWriteDat(board *board.Entity,
 		return
 	}
 
-	resnum = board.Subjects[pos].MessageCount + 1
-	if resnum > 1000 {
-		err = fmt.Errorf("1001: これ以上書き込めません。。。")
+	// データストア制限チェック
+	if board.WriteCount > stng.STUB_WRITE_ENTITY_LIMIT() {
+		err = fmt.Errorf("%d: 今日はこれ以上書き込めません。。。", board.WriteCount)
 		return
 	}
 
-	if resnum == 1000 {
-		board.Subjects[pos].MessageCount = resnum + 1
+	resnum = board.Subjects[pos].MessageCount + 1
+
+	// 1001チェキ
+	maxMsgCnt := stng.STUB_MESSAGE_COUNT()
+	if resnum > maxMsgCnt {
+		err = fmt.Errorf("%d: これ以上書き込めません。。。", resnum)
+		return
+	}
+
+	// エンティティ更新
+	if resnum == maxMsgCnt {
+		board.Subjects[pos].MessageCount = resnum + 1 // 1000だったら1001にしてしまう
 	} else {
 		board.Subjects[pos].MessageCount = resnum
 	}
 	board.Subjects[pos].LastModified = now
+	board.WriteCount++
 
 	// (´∀`∩)↑age↑
 	if sbjLen > 1 && mail != "sage" {

@@ -24,6 +24,10 @@ type BBS interface {
 	BBS_ARR() string
 	BBS_SOKO() string
 	BBS_DISP_MSEC() int
+	STUB_WRITE_ENTITY_LIMIT() int // 一日の書き込み数制限
+	STUB_THREAD_COUNT() int       // 許容スレッド数
+	STUB_MESSAGE_COUNT() int      // 許容レス数
+	STUB_DAT_CAPACITY() int       // 許容バイト数
 }
 
 func GetSetting(boardName string) BBS {
