@@ -318,8 +318,8 @@ func handleSubjectTxt() ServiceHandle {
 	}
 }
 
-func handleSettingTxt() ServiceHandle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params, sv *service.BoardService) {
+func handleSettingTxt() httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		board := ps.ByName("board")
 		stng := setting.GetSetting(board)
 		if stng == nil {
@@ -332,8 +332,8 @@ func handleSettingTxt() ServiceHandle {
 	}
 }
 
-func handleHeadTxt() ServiceHandle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params, sv *service.BoardService) {
+func handleHeadTxt() httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		board := ps.ByName("board")
 		headTxt := head.MakeHeadTxt(board)
 		if headTxt == nil {
@@ -343,5 +343,27 @@ func handleHeadTxt() ServiceHandle {
 
 		setContentTypePlainSjis(w)
 		fmt.Fprintf(w, string(util.UTF8toSJIS(headTxt)))
+	}
+}
+
+func handleTop() httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		board := ps.ByName("board")
+		stng := setting.GetSetting(board)
+		if stng == nil {
+			http.Error(w, "Not Found", http.StatusNotFound)
+			return
+		}
+		view := &struct {
+			BoardName string
+			URL       string
+		}{
+			stng.BBS_TITLE(),
+			fmt.Sprintf("%v/%s/", r.Host, board),
+		}
+		if err := topTmpl.Execute(w, view); err != nil {
+			log.Printf("Error executing template: %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+		}
 	}
 }

@@ -18,6 +18,7 @@ const (
 
 var (
 	indexTmpl             = template.Must(template.ParseFiles(filepath.Join("web", "template", "index.html")))
+	topTmpl               = template.Must(template.ParseFiles(filepath.Join("web", "template", "top.html")))
 	writeDatConfirmTmpl   = template.Must(template.ParseFiles(filepath.Join("web", "template", "write_dat_confirm.html")))
 	writeDatNotFoundTmpl  = template.Must(template.ParseFiles(filepath.Join("web", "template", "write_dat_not_found.html")))
 	writeDatDoneTmpl      = template.Must(template.ParseFiles(filepath.Join("web", "template", "write_dat_done.html")))
@@ -36,34 +37,39 @@ func NewBoardRouter(sv *service.BoardService) *httprouter.Router {
 
 	// 管理ページ
 	router.POST("/:board/_admin/login",
-		handleTestDir(
-			handleParseForm(
-				injectService(sv)(
-					handleAdminLogin()))))
+		protect(config.KEEP_OUT)(
+			handleTestDir(
+				handleParseForm(
+					injectService(sv)(
+						handleAdminLogin())))))
 	router.POST("/:board/_admin/logout",
-		handleTestDir(
-			handleParseForm(
-				injectService(sv)(
-					authenticate(
-						handleAdminLogout())))))
+		protect(config.KEEP_OUT)(
+			handleTestDir(
+				handleParseForm(
+					injectService(sv)(
+						authenticate(
+							handleAdminLogout()))))))
 	router.POST("/:board/_admin/func/:fp1/:fp2",
-		handleTestDir(
-			handleParseForm(
-				injectService(sv)(
-					authenticate(
-						handleAdmin())))))
+		protect(config.KEEP_OUT)(
+			handleTestDir(
+				handleParseForm(
+					injectService(sv)(
+						authenticate(
+							handleAdmin()))))))
 
 	// 掲示板
+	router.GET("/:board/",
+		protect(config.KEEP_OUT)(
+			handleUserAgent(
+				handleTop())))
 	router.GET("/:board/SETTING.txt",
 		protect(config.KEEP_OUT)(
 			handleUserAgent(
-				injectService(sv)(
-					handleSettingTxt()))))
+				handleSettingTxt())))
 	router.GET("/:board/head.txt",
 		protect(config.KEEP_OUT)(
 			handleUserAgent(
-				injectService(sv)(
-					handleHeadTxt()))))
+				handleHeadTxt())))
 	router.GET("/:board/subject.txt",
 		protect(config.KEEP_OUT)(
 			handleUserAgent(
