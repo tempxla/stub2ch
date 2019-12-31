@@ -49,12 +49,17 @@ func DefaultBoardService() (*BoardService, error) {
 		return nil, fmt.Errorf("Failed to create client: %v", err)
 	}
 
+	jst, err := time.LoadLocation("Asia/Tokyo")
+	if err != nil {
+		return nil, err
+	}
+
 	repo := &BoardStore{
 		Context: ctx,
 		Client:  client,
 	}
 	sysEnv := &SysEnv{
-		StartedTime:   time.Now(),
+		StartedTime:   time.Now().In(jst),
 		ComputeIdSalt: secretcfg.COMPUTE_ID_SALT,
 	}
 	mem := &AlterMemcache{
