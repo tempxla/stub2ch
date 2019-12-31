@@ -64,7 +64,7 @@ func NewBoardRouter(sv *service.BoardService) *httprouter.Router {
 		protect(config.KEEP_OUT)(
 			handleUserAgent(
 				handleTop())))
-	router.GET("/:board/SETTING.txt",
+	router.GET("/:board/SETTING.TXT",
 		protect(config.KEEP_OUT)(
 			handleUserAgent(
 				handleSettingTxt())))
