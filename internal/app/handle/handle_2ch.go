@@ -349,9 +349,12 @@ func handleTop() httprouter.Handle {
 			BoardName string
 			URL       string
 		}{
-			stng.BBS_TITLE(),
+			util.UTF8toSJISString(stng.BBS_TITLE()),
 			fmt.Sprintf("%v/%s/", r.Host, board),
 		}
+
+		setContentTypeHtmlSjis(w)
+
 		if err := topTmpl.Execute(w, view); err != nil {
 			log.Printf("Error executing template: %v", err)
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
