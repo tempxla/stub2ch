@@ -11,6 +11,7 @@ import (
 	"net"
 	"net/http"
 	"path/filepath"
+	"strings"
 )
 
 const (
@@ -184,6 +185,11 @@ func setContentTypePlainSjis(w http.ResponseWriter) {
 
 func getIP(r *http.Request) string {
 	if ipProxy := r.Header.Get("X-FORWARDED-FOR"); len(ipProxy) > 0 {
+		comma := strings.Index(ipProxy, ",")
+		if comma != -1 {
+			// X-Forwarded-For: client1, proxy1, proxy2
+			return ipProxy[:comma]
+		}
 		return ipProxy
 	}
 	ip, _, _ := net.SplitHostPort(r.RemoteAddr)
