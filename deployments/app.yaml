@@ -22,6 +22,11 @@ handlers:
   static_files: web/robots.txt
   upload: web/robots.txt
 
+# favicon.ico
+- url: /favicon.ico
+  static_files: web/favicon.ico
+  upload: web/favicon.ico
+
 # Configure App Engine to serve any static assets.
 - url: /test/_static
   static_dir: web/static
