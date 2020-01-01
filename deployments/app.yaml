@@ -17,6 +17,11 @@ main: github.com/tempxla/stub2ch/cmd/stub2ch/
 runtime: go112
 
 handlers:
+# robots.txt
+- url: /robots.txt
+  static_files: web/robots.txt
+  upload: web/robots.txt
+
 # Configure App Engine to serve any static assets.
 - url: /test/_static
   static_dir: web/static
