@@ -66,6 +66,8 @@ function GetSubject(btn, subjects, message,  last_load_time,  precure, boardName
     }
 
     function transferComplete(evt) {
+
+        message.innerHTML = "100 % load done.";
         last_load_time.innerHTML = "Last Loaded: " + new Date();
         if (xhr.status != 200) {
             message.innerHTML = xhr.status + ": " + xhr.responseText;
