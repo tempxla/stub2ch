@@ -15,7 +15,7 @@
 |memcacheを使う|ﾏﾝﾄﾞｸｾ|
 |HEADに対応する|未|
 |read.cgiを作る|未|
-|板トップを作る|未|
+|板トップを作る|完了|
 |head.txt|無|
 |SETTING.TXT|完了|
 |/\_service/|無|
