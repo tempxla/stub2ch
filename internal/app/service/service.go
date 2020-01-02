@@ -379,13 +379,18 @@ func (sv *BoardService) MakeSubjectJson(boardName string, limit int) (_ []byte, 
 		Precure:  sv.StartedAt().Unix(),
 	}
 
+	jst, err := time.LoadLocation("Asia/Tokyo")
+	if err != nil {
+		return nil, err
+	}
+
 	ln := len(e.Subjects)
 	for i := 0; i < limit && i < ln; i++ {
 		var sbj jboard.Subject
 		sbj.ThreadKey = e.Subjects[i].ThreadKey
 		sbj.ThreadTitle = e.Subjects[i].ThreadTitle
 		sbj.MessageCount = e.Subjects[i].MessageCount
-		sbj.LastModified = e.Subjects[i].LastModified.Format("2006/01/02 15:04:05")
+		sbj.LastModified = e.Subjects[i].LastModified.In(jst).Format("2006/01/02 15:04:05")
 		jsonObj.Subjects = append(jsonObj.Subjects, sbj)
 	}
 
