@@ -14,7 +14,7 @@ function BodyOnload(subjects, precure, boardName) {
 
     var frag = createSubjectFragment(boardName, obj);
     while (subjects.firstChild) {
-        subjects.removeChild(subjects.firstChild)
+        subjects.removeChild(subjects.firstChild);
     }
     subjects.appendChild(frag);
 
@@ -23,7 +23,7 @@ function BodyOnload(subjects, precure, boardName) {
 
 function GetSubject(btn, subjects, message,  last_load_time,  precure, boardName) {
 
-    var top_load_delay     = 10 // seconds
+    var top_load_delay     = 10; // seconds
 
     if (btn.innerHTML != "LOAD") {
         return;
@@ -52,14 +52,14 @@ function GetSubject(btn, subjects, message,  last_load_time,  precure, boardName
     xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
     xhr.send("precure=" + precure.innerHTML);
 
-    // サーバーからクライアントへの転送の進捗 (ダウンロード)
+    // Fowarding progress from server to client. (downloading)
     function updateProgress (oEvent) {
         var percentComplete;
         if (oEvent.lengthComputable) {
             percentComplete = oEvent.loaded / oEvent.total * 100;
             // ...
         } else {
-            // 全体の長さが不明なため、進捗情報を計算できない
+            // It cannot calc progress because of unknown total length.
             percentComplete = -1;
         }
         message.innerHTML = percentComplete + " % load done.";
@@ -77,7 +77,7 @@ function GetSubject(btn, subjects, message,  last_load_time,  precure, boardName
         var obj = JSON.parse(xhr.responseText);
         var frag = createSubjectFragment(boardName, obj);
         while (subjects.firstChild) {
-            subjects.removeChild(subjects.firstChild)
+            subjects.removeChild(subjects.firstChild);
         }
         subjects.appendChild(frag);
         precure.innerHTML = obj.precure;
@@ -91,7 +91,7 @@ function createTdTextNode(text) {
     var td = document.createElement("td");
     var txt = document.createTextNode(text);
     td.appendChild(txt);
-    return td
+    return td;
 }
 
 function createTdANode(link, text) {
@@ -101,7 +101,7 @@ function createTdANode(link, text) {
     a.setAttribute("href", link);
     a.appendChild(txt);
     td.appendChild(a);
-    return td
+    return td;
 }
 
 function createSubjectFragment(boardName, obj) {
