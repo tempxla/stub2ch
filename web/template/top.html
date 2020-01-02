@@ -5,7 +5,7 @@
   <!-- Basic Page Needs
   -------------------------------------------------- -->
   <meta charset="Shift_JIS">
-  <title>{{ .BoardName }}</title>
+  <title>{{ .BoardTitle }}</title>
   <meta name="description" content="stub2ch board top">
   <meta name="author" content="stub2ch">
 
@@ -28,25 +28,54 @@
 
   <!-- Script
   -------------------------------------------------- -->
-  <!-- <script type="text/javascript" src=""></script> -->
+  <script type="text/javascript" src="/test/_static/js/top.js"></script>
 
 </head>
-<body>
+<body onload="BodyOnload(
+              document.getElementById('subjects'),
+              document.getElementById('precure'),
+              '{{ .BoardName }}'
+              )">
 
   <!-- Primary Page Layout
   -------------------------------------------------- -->
   <div class="container">
     <div class="row">
       <div class="" style="margin-top: 5%; margin-bottom: 5%;">
-        <h5>専ブラから頼む</h5>
+        <h5 style="display: inline;">{{ .BoardTitle }}</h5>
+        <div class="u-pull-right"><a href="/">index</a> &gt;&gt; {{ .BoardName }} </div>
       </div>
     </div>
+    <table class="u-full-width">
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Res</th>
+          <th>Last Modified</th>
+        </tr>
+      </thead>
+      <tbody id="subjects">
+      </tbody>
+    </table>
     <div class="row">
-      <a class="six columns" href="http://{{ .URL }}">http://{{ .URL }}</a>
+      <a class="button three columns" href="#"
+         onclick="GetSubject(
+                  this,
+                  document.getElementById('subjects'),
+                  document.getElementById('message'),
+                  document.getElementById('last_load_time'),
+                  document.getElementById('precure'),
+                  '{{ .BoardName }}'
+                  )">LOAD</a>
     </div>
     <div class="row">
-      <a class="six columns" href="https://{{ .URL }}">https://{{ .URL }}</a>
+      <div id="message" class="three columns"></div>
     </div>
+    <hr>
+    <div class="row">
+      <div id="last_load_time" class="six columns"></div>
+    </div>
+    <div id="precure" style="display:none;">{{ .Precure }}</div>
   </div>
 
   <!-- End Document

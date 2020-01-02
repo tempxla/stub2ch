@@ -7,12 +7,14 @@ import (
 	"crypto/md5"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"github.com/tempxla/stub2ch/configs/app/config"
 	"github.com/tempxla/stub2ch/configs/app/secretcfg"
 	"github.com/tempxla/stub2ch/configs/app/setting"
 	"github.com/tempxla/stub2ch/internal/app/types/entity/board"
 	"github.com/tempxla/stub2ch/internal/app/types/entity/dat"
+	jboard "github.com/tempxla/stub2ch/internal/app/types/json/board"
 	"github.com/tempxla/stub2ch/internal/app/util"
 	"html"
 	"strconv"
@@ -358,4 +360,34 @@ func (sv *BoardService) ComputeId(ipAddr, boardName string) string {
 
 func (sv *BoardService) StartedAt() time.Time {
 	return sv.env.StartedAt()
+}
+
+// データストアからエンティティを取得しjsonとして返す
+func (sv *BoardService) MakeSubjectJson(boardName string, limit int) (_ []byte, err error) {
+
+	// Creates a Key instance.
+	key := sv.repo.BoardKey(boardName)
+
+	// Gets a Board
+	e := new(board.Entity)
+	if err = sv.repo.GetBoard(key, e); err != nil {
+		return
+	}
+
+	jsonObj := &jboard.Object{
+		Subjects: []jboard.Subject{},
+		Precure:  sv.StartedAt().Unix(),
+	}
+
+	ln := len(e.Subjects)
+	for i := 0; i < limit && i < ln; i++ {
+		var sbj jboard.Subject
+		sbj.ThreadKey = e.Subjects[i].ThreadKey
+		sbj.ThreadTitle = e.Subjects[i].ThreadTitle
+		sbj.MessageCount = e.Subjects[i].MessageCount
+		sbj.LastModified = e.Subjects[i].LastModified.Format("2006/01/02 15:04:05")
+		jsonObj.Subjects = append(jsonObj.Subjects, sbj)
+	}
+
+	return json.Marshal(jsonObj)
 }

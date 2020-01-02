@@ -63,7 +63,8 @@ func NewBoardRouter(sv *service.BoardService) *httprouter.Router {
 	router.GET("/:board/",
 		protect(config.KEEP_OUT)(
 			handleUserAgent(
-				handleTop())))
+				injectService(sv)(
+					handleTop()))))
 	router.GET("/:board/SETTING.TXT",
 		protect(config.KEEP_OUT)(
 			handleUserAgent(
@@ -89,6 +90,14 @@ func NewBoardRouter(sv *service.BoardService) *httprouter.Router {
 					handleParseForm(
 						injectService(sv)(
 							handleBbsCgi()))))))
+
+	// Jsonデモ
+	router.POST("/:board/subject.json",
+		protect(config.KEEP_OUT)(
+			handleUserAgent(
+				handleParseForm(
+					injectService(sv)(
+						handleSubjectJson())))))
 
 	// 静的ファイル
 	// GAEの設定はapp.yamlなので、これは開発用

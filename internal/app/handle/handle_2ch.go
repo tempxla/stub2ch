@@ -18,6 +18,8 @@ import (
 
 const (
 	param_error_format = "bad parameter '%s' is: %v"
+	top_load_delay     = 10 // seconds
+	top_subject_limit  = 10
 )
 
 func handleBbsCgi() ServiceHandle {
@@ -337,8 +339,8 @@ func handleHeadTxt() httprouter.Handle {
 	}
 }
 
-func handleTop() httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func handleTop() ServiceHandle {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params, sv *service.BoardService) {
 		board := ps.ByName("board")
 		stng := setting.GetSetting(board)
 		if stng == nil {
@@ -346,11 +348,13 @@ func handleTop() httprouter.Handle {
 			return
 		}
 		view := &struct {
-			BoardName string
-			URL       string
+			BoardName  string
+			BoardTitle string
+			Precure    int64
 		}{
+			board,
 			util.UTF8toSJISString(stng.BBS_TITLE()),
-			fmt.Sprintf("%v/%s/", r.Host, board),
+			sv.StartedAt().Unix() - top_load_delay, // 初回ロードで待たせないため時間をずらしておく
 		}
 
 		setContentTypeHtmlSjis(w)
@@ -359,5 +363,46 @@ func handleTop() httprouter.Handle {
 			log.Printf("Error executing template: %v", err)
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 		}
+	}
+}
+
+func handleSubjectJson() ServiceHandle {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params, sv *service.BoardService) {
+
+		precure, err := requireOne(r, "precure")()
+		if err != nil {
+			http.Error(w, "Bad Request", http.StatusBadRequest) // 400
+			return
+		}
+		t, err := strconv.ParseInt(precure, 10, 64)
+		if err != nil {
+			http.Error(w, "Bad Request", http.StatusBadRequest) // 400
+			return
+		}
+
+		if sv.StartedAt().Unix() < t+top_load_delay {
+			http.Error(w, "(；´Д｀)焦らないで...", http.StatusServiceUnavailable) // 503
+			return
+		}
+
+		board := ps.ByName("board")
+		stng := setting.GetSetting(board)
+		if stng == nil {
+			http.Error(w, "Not Found", http.StatusNotFound)
+			return
+		}
+
+		subjectJson, err := sv.MakeSubjectJson(board, top_subject_limit)
+		if err != nil {
+			if err == datastore.ErrNoSuchEntity {
+				http.Error(w, "Not found", http.StatusNotFound)
+			} else {
+				log.Printf("ERROR: handleSubjectJson. %v", err)
+				http.Error(w, "Internal server error", http.StatusInternalServerError)
+			}
+			return
+		}
+
+		fmt.Fprintf(w, string(subjectJson))
 	}
 }
