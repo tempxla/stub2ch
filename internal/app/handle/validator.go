@@ -144,6 +144,10 @@ func dama(s string) (string, error) {
 	return strings.ReplaceAll(s, "!dama", fmt.Sprintf("</b>【%d円】<b>", money*1000)), nil
 }
 
+func trimSpace(s string) (string, error) {
+	return strings.TrimSpace(s), nil
+}
+
 func process(src func() (string, error),
 	funcs ...func(string) (string, error)) (s string, e error) {
 
@@ -226,7 +230,12 @@ func requireMail(w http.ResponseWriter, r *http.Request, setting setting.BBS) (s
 
 func requireMessage(w http.ResponseWriter, r *http.Request, setting setting.BBS) (string, bool) {
 	message, err := process(requireOne(r, "MESSAGE"),
-		maxByte(setting.BBS_MESSAGE_COUNT()), sjisToUtf8String, delBadChar, notBlank)
+		maxByte(setting.BBS_MESSAGE_COUNT()),
+		sjisToUtf8String,
+		delBadChar,
+		notBlank,
+		trimSpace,
+	)
 
 	if err != nil {
 		http.Error(w, fmt.Sprintf(param_error_format, "MESSAGE", err), http.StatusBadRequest)
