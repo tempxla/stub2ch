@@ -13,8 +13,8 @@
 |cookieを使う|完了|
 |gzipに対応する|ﾑﾘﾎﾟ|
 |memcacheを使う|ﾏﾝﾄﾞｸｾ|
-|HEADに対応する|未|
-|read.cgiを作る|未|
+|HEADに対応する|意味無|
+|read.cgiを作る|完了|
 |板トップを作る|完了|
 |head.txt|完了|
 |SETTING.TXT|完了|
