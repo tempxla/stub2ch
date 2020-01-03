@@ -7,17 +7,14 @@ function BodyOnload(title, messages, precure, boardName, threadKey) {
 
     // display thread title
     var jsonText = localStorage.getItem(boardName + "_subject");
-
-    if (!jsonText) {
-        return;
-    }
-    var obj = JSON.parse(jsonText);
-
-    for (var i = 0, len = obj.subjects.length; i < len; i++) {
-        if (obj.subjects[i].thread_key == threadKey) {
-            document.title = obj.subjects[i].thread_title;
-            title.innerHTML = obj.subjects[i].thread_title;
-            break;
+    if (jsonText != null) {
+        var obj = JSON.parse(jsonText);
+        for (var i = 0, len = obj.subjects.length; i < len; i++) {
+            if (obj.subjects[i].thread_key == threadKey) {
+                document.title = obj.subjects[i].thread_title;
+                title.innerHTML = obj.subjects[i].thread_title;
+                break;
+            }
         }
     }
 
