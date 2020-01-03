@@ -1,11 +1,11 @@
 function BodyOnload(subjects, precure, boardName) {
 
-    if (sessionStorage == undefined) {
+    if (localStorage == undefined) {
         precure.innerHTML = "X";
         return;
     }
 
-    var jsonText = sessionStorage.getItem(boardName + "_subject");
+    var jsonText = localStorage.getItem(boardName + "_subject");
 
     if (!jsonText) {
         return;
@@ -82,8 +82,8 @@ function GetSubject(btn, subjects, message,  last_load_time,  precure, boardName
         subjects.appendChild(frag);
         precure.innerHTML = obj.precure;
 
-        // sessionStorage
-        sessionStorage.setItem(boardName + "_subject", xhr.responseText);
+        // localStorage
+        localStorage.setItem(boardName + "_subject", xhr.responseText);
     }
 }
 
