@@ -23,6 +23,9 @@ function BodyOnload(title, messages, precure, boardName, threadKey) {
 
     // display cache
     var jsonDat = localStorage.getItem(boardName + "_" + threadKey);
+    if (!jsonDat) {
+        return;
+    }
     var dat = JSON.parse(jsonDat);
 
     var frag = createMessageFragment(dat);
@@ -35,6 +38,9 @@ function BodyOnload(title, messages, precure, boardName, threadKey) {
     // fix me <<<
 
     messages.appendChild(frag);
+
+    document.title = dat.thread_title;
+    title.innerHTML = dat.thread_title;
 
     // which precure
     var p = localStorage.getItem("precure");
@@ -107,6 +113,9 @@ function GetDat(btn, messages, message, last_load_time, precure, boardName, thre
         // fix me <<<
 
         messages.appendChild(frag);
+
+        document.title = obj.thread_title;
+        title.innerHTML = obj.thread_title;
 
         precure.innerHTML = obj.precure;
 

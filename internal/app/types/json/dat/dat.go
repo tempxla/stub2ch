@@ -1,6 +1,7 @@
 package dat
 
 type Object struct {
+	ThreadTitle  string    `json:"thread_title"`
 	Messages     []Message `json:"messages"`
 	LastModified string    `json:"last_modified"`
 	Precure      int64     `json:"precure"`

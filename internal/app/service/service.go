@@ -442,5 +442,7 @@ func (sv *BoardService) MakeDatJson(boardName, threadKey string,
 		jsonObj.Messages = append(jsonObj.Messages, msg)
 	}
 
+	jsonObj.ThreadTitle = string(bytes.Split(msgs[0], []byte("<>"))[4])
+
 	return json.Marshal(jsonObj)
 }
