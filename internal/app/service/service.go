@@ -437,7 +437,7 @@ func (sv *BoardService) MakeDatJson(boardName, threadKey string,
 			Name:      string(parsed[0]),
 			Mail:      string(parsed[1]),
 			DateAndId: string(parsed[2]),
-			Content:   string(bytes.TrimSpace(parsed[3])),
+			Content:   string(bytes.Trim(parsed[3], " ")),
 		}
 		jsonObj.Messages = append(jsonObj.Messages, msg)
 	}
