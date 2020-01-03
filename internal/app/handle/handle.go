@@ -21,6 +21,7 @@ const (
 var (
 	indexTmpl             = template.Must(template.ParseFiles(filepath.Join("web", "template", "index.html")))
 	topTmpl               = template.Must(template.ParseFiles(filepath.Join("web", "template", "top.html")))
+	datTmpl               = template.Must(template.ParseFiles(filepath.Join("web", "template", "dat.html")))
 	writeDatConfirmTmpl   = template.Must(template.ParseFiles(filepath.Join("web", "template", "write_dat_confirm.html")))
 	writeDatNotFoundTmpl  = template.Must(template.ParseFiles(filepath.Join("web", "template", "write_dat_not_found.html")))
 	writeDatDoneTmpl      = template.Must(template.ParseFiles(filepath.Join("web", "template", "write_dat_done.html")))
@@ -65,6 +66,12 @@ func NewBoardRouter(sv *service.BoardService) *httprouter.Router {
 			handleUserAgent(
 				injectService(sv)(
 					handleTop()))))
+	router.GET("/:board/read.cgi/:boardName/:threadKey/",
+		protect(config.KEEP_OUT)(
+			handleTestDir(
+				handleUserAgent(
+					injectService(sv)(
+						handleReadCgi())))))
 	router.GET("/:board/SETTING.TXT",
 		protect(config.KEEP_OUT)(
 			handleUserAgent(
@@ -97,7 +104,15 @@ func NewBoardRouter(sv *service.BoardService) *httprouter.Router {
 			handleUserAgent(
 				handleParseForm(
 					injectService(sv)(
-						handleSubjectJson())))))
+						handlePrecure(
+							handleSubjectJson()))))))
+	router.POST("/:board/json/:dat",
+		protect(config.KEEP_OUT)(
+			handleUserAgent(
+				handleParseForm(
+					injectService(sv)(
+						handlePrecure(
+							handleDatJson()))))))
 
 	// 静的ファイル
 	// GAEの設定はapp.yamlなので、これは開発用

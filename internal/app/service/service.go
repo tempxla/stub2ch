@@ -14,9 +14,12 @@ import (
 	"github.com/tempxla/stub2ch/configs/app/setting"
 	"github.com/tempxla/stub2ch/internal/app/types/entity/board"
 	"github.com/tempxla/stub2ch/internal/app/types/entity/dat"
+	"github.com/tempxla/stub2ch/internal/app/types/errors"
 	jboard "github.com/tempxla/stub2ch/internal/app/types/json/board"
+	jdat "github.com/tempxla/stub2ch/internal/app/types/json/dat"
 	"github.com/tempxla/stub2ch/internal/app/util"
 	"html"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -392,6 +395,51 @@ func (sv *BoardService) MakeSubjectJson(boardName string, limit int) (_ []byte, 
 		sbj.MessageCount = e.Subjects[i].MessageCount
 		sbj.LastModified = e.Subjects[i].LastModified.In(jst).Format("2006/01/02 15:04:05")
 		jsonObj.Subjects = append(jsonObj.Subjects, sbj)
+	}
+
+	return json.Marshal(jsonObj)
+}
+
+// データストアからエンティティを取得しdatをjsonとして返す
+func (sv *BoardService) MakeDatJson(boardName, threadKey string,
+	ifModifiedSince string, min, max int) (_ []byte, err error) {
+
+	// Creates a Key instance.
+	key := sv.repo.DatKey(threadKey, sv.repo.BoardKey(boardName))
+
+	// Gets a Board
+	dat := new(dat.Entity)
+	if err = sv.repo.GetDat(key, dat); err != nil {
+		return
+	}
+
+	jst, err := time.LoadLocation("Asia/Tokyo")
+	if err != nil {
+		return
+	}
+
+	jsonObj := &jdat.Object{
+		Messages:     []jdat.Message{},
+		LastModified: dat.LastModified.In(jst).Format(http.TimeFormat),
+		Precure:      sv.StartedAt().Unix(),
+	}
+	if jsonObj.LastModified == ifModifiedSince {
+		err = errors.NOT_MODIFIED
+		return
+	}
+
+	msgs := bytes.Split(dat.Bytes, []byte{'\n'})
+	ln := len(msgs) - 1 // 最後の\nのため空文字のため-1する
+	for i := util.MaxInt(0, min-1); i < max && i < ln; i++ {
+		parsed := bytes.Split(msgs[i], []byte("<>"))
+		msg := jdat.Message{
+			Num:       i + 1,
+			Name:      string(parsed[0]),
+			Mail:      string(parsed[1]),
+			DateAndId: string(parsed[2]),
+			Content:   string(bytes.TrimSpace(parsed[3])),
+		}
+		jsonObj.Messages = append(jsonObj.Messages, msg)
 	}
 
 	return json.Marshal(jsonObj)

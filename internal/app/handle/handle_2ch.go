@@ -7,6 +7,7 @@ import (
 	"github.com/tempxla/stub2ch/configs/app/head"
 	"github.com/tempxla/stub2ch/configs/app/setting"
 	"github.com/tempxla/stub2ch/internal/app/service"
+	"github.com/tempxla/stub2ch/internal/app/types/errors"
 	mstring "github.com/tempxla/stub2ch/internal/app/types/maybe/string"
 	"github.com/tempxla/stub2ch/internal/app/util"
 	"log"
@@ -369,22 +370,6 @@ func handleTop() ServiceHandle {
 func handleSubjectJson() ServiceHandle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params, sv *service.BoardService) {
 
-		precure, err := requireOne(r, "precure")()
-		if err != nil {
-			http.Error(w, "Bad Request", http.StatusBadRequest) // 400
-			return
-		}
-		t, err := strconv.ParseInt(precure, 10, 64)
-		if err != nil {
-			http.Error(w, "Bad Request", http.StatusBadRequest) // 400
-			return
-		}
-
-		if sv.StartedAt().Unix() < t+top_load_delay {
-			http.Error(w, "(；´Д｀)焦らないで...", http.StatusServiceUnavailable) // 503
-			return
-		}
-
 		board := ps.ByName("board")
 		stng := setting.GetSetting(board)
 		if stng == nil {
@@ -404,5 +389,103 @@ func handleSubjectJson() ServiceHandle {
 		}
 
 		fmt.Fprintf(w, string(subjectJson))
+	}
+}
+
+func handleReadCgi() ServiceHandle {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params, sv *service.BoardService) {
+		boardName := ps.ByName("boardName")
+		stng := setting.GetSetting(boardName)
+		if stng == nil {
+			http.Error(w, "Not Found", http.StatusNotFound)
+			return
+		}
+
+		threadKey := ps.ByName("threadKey")
+
+		view := &struct {
+			BoardName  string
+			ThreadKey  string
+			BoardTitle string
+			Precure    int64
+		}{
+			boardName,
+			threadKey,
+			util.UTF8toSJISString(stng.BBS_TITLE()),
+			sv.StartedAt().Unix() - top_load_delay, // 初回ロードで待たせないため時間をずらしておく
+		}
+
+		setContentTypeHtmlSjis(w)
+
+		if err := datTmpl.Execute(w, view); err != nil {
+			log.Printf("Error executing template: %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+		}
+	}
+}
+
+func handleDatJson() ServiceHandle {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params, sv *service.BoardService) {
+
+		board := ps.ByName("board")
+		threadKey := strings.Replace(ps.ByName("dat"), ".json", "", 1)
+
+		// 差分取得判定
+		ifModifiedSince := r.Header.Get("If-Modified-Since")
+		min := 1
+		max := 11 // 暫定 10 までとする メッセージのため11個返す
+		if ifModifiedSince != "" {
+			// 差分取得ですよ
+			rangeInt, err := strconv.Atoi(r.Header.Get("Range"))
+			if err != nil {
+				// リクエストがおかしい
+				http.Error(w, "Need Range ?", http.StatusBadRequest) // 400
+				return
+			}
+			min = rangeInt + 1
+		}
+		datJson, err := sv.MakeDatJson(board, threadKey, ifModifiedSince, min, max)
+		if err != nil {
+			if err == errors.NOT_MODIFIED {
+				// 更新されていない
+				w.WriteHeader(http.StatusNotModified) // 304
+			} else if err == datastore.ErrNoSuchEntity {
+				http.Error(w, "Not found", http.StatusNotFound)
+			} else {
+				log.Printf("ERROR: handleDatJson. %v", err)
+				http.Error(w, "Internal server error", http.StatusInternalServerError)
+			}
+			return
+		}
+
+		// 送信
+		if ifModifiedSince != "" {
+			// 差分取得ですよ
+			w.WriteHeader(http.StatusPartialContent) // 206
+		}
+		fmt.Fprintf(w, string(datJson))
+	}
+}
+
+func handlePrecure(sh ServiceHandle) ServiceHandle {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params, sv *service.BoardService) {
+
+		precure, err := requireOne(r, "precure")()
+		if err != nil {
+			http.Error(w, "Bad Request", http.StatusBadRequest) // 400
+			return
+		}
+		t, err := strconv.ParseInt(precure, 10, 64)
+		if err != nil {
+			http.Error(w, "Bad Request", http.StatusBadRequest) // 400
+			return
+		}
+
+		if sv.StartedAt().Unix() < t+top_load_delay {
+			http.Error(w, "(；´Д｀)焦らないで...", http.StatusServiceUnavailable) // 503
+			return
+		}
+
+		sh(w, r, ps, sv)
 	}
 }

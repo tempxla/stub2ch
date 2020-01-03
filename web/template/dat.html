@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+
+  <!-- Basic Page Needs
+  -------------------------------------------------- -->
+  <meta charset="Shift_JIS">
+  <title>{{ .BoardTitle }}</title>
+  <meta name="description" content="stub2ch board top">
+  <meta name="author" content="stub2ch">
+
+  <!-- Mobile Specific Metas
+  -------------------------------------------------- -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- FONT
+  -------------------------------------------------- -->
+  <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+
+  <!-- CSS
+  -------------------------------------------------- -->
+  <link rel="stylesheet" href="/test/_static/css/normalize.css">
+  <link rel="stylesheet" href="/test/_static/css/skeleton.css">
+
+  <!-- Favicon
+  -------------------------------------------------- -->
+  <link rel="icon" href="/test/_static/images/favicon.ico">
+
+  <!-- Script
+  -------------------------------------------------- -->
+  <script type="text/javascript" src="/test/_static/js/dat.js"></script>
+
+</head>
+<body onload="BodyOnload(
+              document.getElementById('title'),
+              document.getElementById('messages'),
+              document.getElementById('precure'),
+              '{{ .BoardName }}',
+              '{{ .ThreadKey }}'
+              )">
+
+  <!-- Primary Page Layout
+  -------------------------------------------------- -->
+  <div class="container">
+    <div class="row">
+      <div class="" style="margin-top: 5%; margin-bottom: 5%;">
+        <h5 id="title" style="display: inline;">{{ .BoardTitle }}</h5>
+        <div class="u-pull-right"><a href="/">index</a> &gt;&gt; <a href="/{{ .BoardName }}/">{{ .BoardName }}</a> &gt;&gt; {{ .ThreadKey }}</div>
+      </div>
+    </div>
+    <div id="messages" class="u-full-width">
+    </div>
+    <div class="row">
+      <a class="button three columns" href="#"
+         onclick="GetDat(
+                  this,
+                  document.getElementById('messages'),
+                  document.getElementById('message'),
+                  document.getElementById('last_load_time'),
+                  document.getElementById('precure'),
+                  '{{ .BoardName }}',
+                  '{{ .ThreadKey }}',
+                  )">LOAD</a>
+    </div>
+    <div class="row">
+      <div id="message" class="three columns"></div>
+    </div>
+    <hr>
+    <div class="row">
+      <div id="last_load_time" class="twelve columns"></div>
+    </div>
+    <div id="precure" style="display:none;">{{ .Precure }}</div>
+  </div>
+
+  <!-- End Document
+  -------------------------------------------------- -->
+</body>
+</html>
