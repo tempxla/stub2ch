@@ -148,14 +148,14 @@ function createMessageFragment(obj) {
         var msg = obj.messages[i];
         // name, date, id
         var row = createDivNode("row");
-        row.appendChild(createDivNameNode("eight columns",
+        row.appendChild(createDivInnerHtml("eight columns",
                                           msg.num + ": " +
                                           "<b>" + msg.name + "</b> " +
                                           "[" + msg.mail + "]"));
         row.appendChild(createDivTextNode("four columns", msg.date_and_id));
         frag.appendChild(row);
         // message
-        row = createDivTextNode("row", msg.content);
+        row = createDivInnerHtml("row", msg.content);
         frag.appendChild(row);
         // br
         frag.appendChild(document.createElement("br"));
@@ -172,7 +172,7 @@ function createMessageFragment(obj) {
     return frag;
 }
 
-function createDivNameNode(clazz, text) {
+function createDivInnerHtml(clazz, text) {
     var div = document.createElement("div");
     div.setAttribute("class", clazz);
     div.innerHTML = text;
