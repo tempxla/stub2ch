@@ -144,8 +144,8 @@ func dama(s string) (string, error) {
 	return strings.ReplaceAll(s, "!dama", fmt.Sprintf("</b>【%d円】<b>", money*1000)), nil
 }
 
-func trimSpace(s string) (string, error) {
-	return strings.TrimSpace(s), nil
+func trimWhitespace(s string) (string, error) {
+	return strings.Trim(s, "\t\n "), nil
 }
 
 func process(src func() (string, error),
@@ -234,7 +234,7 @@ func requireMessage(w http.ResponseWriter, r *http.Request, setting setting.BBS)
 		sjisToUtf8String,
 		delBadChar,
 		notBlank,
-		trimSpace,
+		trimWhitespace,
 	)
 
 	if err != nil {
