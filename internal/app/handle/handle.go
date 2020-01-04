@@ -20,7 +20,7 @@ const (
 
 var (
 	indexTmpl             = template.Must(template.ParseFiles(filepath.Join("web", "template", "index.html")))
-	topTmpl               = template.Must(template.ParseFiles(filepath.Join("web", "template", "top.html")))
+	boardTmpl             = template.Must(template.ParseFiles(filepath.Join("web", "template", "board.html")))
 	datTmpl               = template.Must(template.ParseFiles(filepath.Join("web", "template", "dat.html")))
 	writeDatConfirmTmpl   = template.Must(template.ParseFiles(filepath.Join("web", "template", "write_dat_confirm.html")))
 	writeDatNotFoundTmpl  = template.Must(template.ParseFiles(filepath.Join("web", "template", "write_dat_not_found.html")))
@@ -65,7 +65,7 @@ func NewBoardRouter(sv *service.BoardService) *httprouter.Router {
 		protect(config.KEEP_OUT)(
 			handleUserAgent(
 				injectService(sv)(
-					handleTop()))))
+					handleBoard()))))
 	router.GET("/:board/read.cgi/:boardName/:threadKey/",
 		protect(config.KEEP_OUT)(
 			handleTestDir(

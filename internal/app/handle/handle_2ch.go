@@ -340,7 +340,7 @@ func handleHeadTxt() httprouter.Handle {
 	}
 }
 
-func handleTop() ServiceHandle {
+func handleBoard() ServiceHandle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params, sv *service.BoardService) {
 		board := ps.ByName("board")
 		stng := setting.GetSetting(board)
@@ -360,7 +360,7 @@ func handleTop() ServiceHandle {
 
 		setContentTypeHtmlSjis(w)
 
-		if err := topTmpl.Execute(w, view); err != nil {
+		if err := boardTmpl.Execute(w, view); err != nil {
 			log.Printf("Error executing template: %v", err)
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 		}
