@@ -75,7 +75,14 @@ function GetDat(btn, messages, message, last_load_time, precure, boardName, thre
 
     xhr.open("POST", "/" + boardName + "/json/" + threadKey + ".json");
     xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-    xhr.send("precure=" + precure.innerHTML);
+
+    // ŽI‚É—D‚µ‚­
+    var storePrecure = localStorage.getItem("precure");
+    if (storePrecure != null) {
+        xhr.send("precure=" + storePrecure);
+    } else {
+        xhr.send("precure=" + precure.innerHTML);
+    }
 
     // Fowarding progress from server to client. (downloading)
     function updateProgress (oEvent) {
