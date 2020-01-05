@@ -81,13 +81,14 @@ func handleWriteDat(w http.ResponseWriter, r *http.Request, sv *service.BoardSer
 	if !ok {
 		return
 	}
+	ipAddr := getIP(r)
+
 	// クッキー確認
-	if executeWriteDatConfirmTmpl(w, r,
+	if executeWriteDatConfirmTmpl(w, r, ipAddr,
 		boardName, name, mail, message, sv.StartedAt(), mstring.Nothing(), mstring.Just(threadKey)) {
 		return
 	}
 	// 書き込み
-	ipAddr := getIP(r)
 	id := sv.ComputeId(ipAddr, boardName)
 	resnum, err := sv.WriteDat(setting, boardName, threadKey, name, mail, id, message)
 	if err != nil {
@@ -135,10 +136,10 @@ func executeWriteDatNotFoundTmpl(w http.ResponseWriter, r *http.Request,
 }
 
 // Returns false if Cookie Found.
-func executeWriteDatConfirmTmpl(w http.ResponseWriter, r *http.Request,
+func executeWriteDatConfirmTmpl(w http.ResponseWriter, r *http.Request, ipAddr string,
 	boardName, name, mail, message string, startedAt time.Time, title, threadKey *mstring.Maybe) bool {
 
-	if c, err := r.Cookie("PON"); err == nil && c.Value != "" {
+	if c, err := r.Cookie("PON"); err == nil && c.Value == ipAddr {
 		if c, err := r.Cookie("yuki"); err == nil && c.Value == "akari" {
 			// Cookie Found. Need not to forward Confirm page.
 			return false
@@ -149,7 +150,6 @@ func executeWriteDatConfirmTmpl(w http.ResponseWriter, r *http.Request,
 
 	// Domain属性を指定しないCookieは、Cookieを発行したホストのみに送信される
 	expires := startedAt.Add(time.Duration(7*24) * time.Hour).UTC().Format(http.TimeFormat)
-	ipAddr := getIP(r)
 	w.Header().Add("Set-Cookie", fmt.Sprintf("PON=%s; expires=%s; path=/", ipAddr, expires))
 	w.Header().Add("Set-Cookie", fmt.Sprintf("yuki=akari; expires=%s; path=/", expires))
 
@@ -202,13 +202,14 @@ func handleCreateThread(w http.ResponseWriter, r *http.Request, sv *service.Boar
 	if !ok {
 		return
 	}
+	ipAddr := getIP(r)
+
 	// クッキー確認
-	if executeWriteDatConfirmTmpl(w, r,
+	if executeWriteDatConfirmTmpl(w, r, ipAddr,
 		boardName, name, mail, message, sv.StartedAt(), mstring.Just(title), mstring.Nothing()) {
 		return
 	}
 	// スレ立て
-	ipAddr := getIP(r)
 	id := sv.ComputeId(ipAddr, boardName)
 	threadKey, err := sv.CreateThread(setting, boardName, name, mail, sv.StartedAt(), id, message, title)
 	if err != nil {
