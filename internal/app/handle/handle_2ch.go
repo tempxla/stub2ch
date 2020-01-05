@@ -81,6 +81,10 @@ func handleWriteDat(w http.ResponseWriter, r *http.Request, sv *service.BoardSer
 	if !ok {
 		return
 	}
+	_, ok = requireReferer(w, r, boardName)
+	if !ok {
+		return
+	}
 	ipAddr := getIP(r)
 
 	// クッキー確認
@@ -199,6 +203,10 @@ func handleCreateThread(w http.ResponseWriter, r *http.Request, sv *service.Boar
 		return
 	}
 	message, ok := requireMessage(w, r, setting)
+	if !ok {
+		return
+	}
+	_, ok = requireReferer(w, r, boardName)
 	if !ok {
 		return
 	}

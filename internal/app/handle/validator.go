@@ -254,3 +254,11 @@ func requireTitle(w http.ResponseWriter, r *http.Request, setting setting.BBS) (
 	}
 	return title, true
 }
+
+func requireReferer(w http.ResponseWriter, r *http.Request, boardName string) (string, bool) {
+	ref := r.Referer()
+	if !strings.Contains(ref, r.Host) || !strings.Contains(ref, boardName) {
+		return "", false
+	}
+	return ref, true
+}
