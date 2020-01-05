@@ -101,6 +101,8 @@ func handleWriteDat(w http.ResponseWriter, r *http.Request, sv *service.BoardSer
 		return
 	}
 	// 書き込み完了
+	logPrintWriteDone(boardName, threadKey, resnum, id, ipAddr)
+
 	executeWriteDoneTmpl(w, r, boardName, threadKey, id, resnum, sv.StartedAt())
 }
 
@@ -226,7 +228,13 @@ func handleCreateThread(w http.ResponseWriter, r *http.Request, sv *service.Boar
 		return
 	}
 	// 書き込み完了
+	logPrintWriteDone(boardName, threadKey, 1, id, ipAddr)
+
 	executeWriteDoneTmpl(w, r, boardName, threadKey, id, 1, sv.StartedAt())
+}
+
+func logPrintWriteDone(boardName, threadKey string, resnum int, id, ipAddr string) {
+	log.Printf("[WRITE DONE] /%s/%s/%d id:%s ip:%s ", boardName, threadKey, resnum, id, ipAddr)
 }
 
 func executeCreateThreadErrorTmpl(w http.ResponseWriter, r *http.Request, startedAt time.Time) {
