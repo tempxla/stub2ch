@@ -112,8 +112,9 @@ func TestHandleBbsCgi_writeDatOK(t *testing.T) {
 		"mail":    []string{"sage"},
 		"MESSAGE": []string{util.UTF8toSJISString("書き")},
 	}
-	request.AddCookie(&http.Cookie{Name: "PON", Value: "1.1.1.1"})
+	request.AddCookie(&http.Cookie{Name: "PON", Value: request.RemoteAddr})
 	request.AddCookie(&http.Cookie{Name: "yuki", Value: "akari"})
+	request.Header.Add("Referer", "http://"+request.Host+"/news4vip/")
 
 	// Exercise
 	router := NewBoardRouter(sv)
@@ -160,8 +161,9 @@ func TestHandleBbsCgi_writeDatOKthroughConfirm(t *testing.T) {
 		"mail":    []string{"sage"},
 		"MESSAGE": []string{util.UTF8toSJISString("書き")},
 	}
-	request.AddCookie(&http.Cookie{Name: "PON", Value: "1.1.1.1"})
+	request.AddCookie(&http.Cookie{Name: "PON", Value: request.RemoteAddr})
 	request.AddCookie(&http.Cookie{Name: "yuki", Value: "akari"})
+	request.Header.Add("Referer", "http://"+request.Host+"/news4vip/")
 
 	// Exercise
 	router := NewBoardRouter(sv)
@@ -202,8 +204,9 @@ func TestHandleBbsCgi_createThreadOK(t *testing.T) {
 		"mail":    []string{"sage"},
 		"MESSAGE": []string{util.UTF8toSJISString("書き")},
 	}
-	request.AddCookie(&http.Cookie{Name: "PON", Value: "1.1.1.1"})
+	request.AddCookie(&http.Cookie{Name: "PON", Value: request.RemoteAddr})
 	request.AddCookie(&http.Cookie{Name: "yuki", Value: "akari"})
+	request.Header.Add("Referer", "http://"+request.Host+"/news4vip/")
 
 	// Exercise
 	router := NewBoardRouter(sv)
@@ -244,8 +247,9 @@ func TestHandleBbsCgi_createThreadOKthroughConfirm(t *testing.T) {
 		"mail":    []string{"sage"},
 		"MESSAGE": []string{util.UTF8toSJISString("書き")},
 	}
-	request.AddCookie(&http.Cookie{Name: "PON", Value: "1.1.1.1"})
+	request.AddCookie(&http.Cookie{Name: "PON", Value: request.RemoteAddr})
 	request.AddCookie(&http.Cookie{Name: "yuki", Value: "akari"})
+	request.Header.Add("Referer", "http://"+request.Host+"/news4vip/")
 
 	// Exercise
 	router := NewBoardRouter(sv)
@@ -370,6 +374,8 @@ func TestWriteDat_CookieMissing(t *testing.T) {
 	writer := httptest.NewRecorder()
 	request, _ := http.NewRequest("POST", "/test/bbs.cgi", nil)
 
+	request.Header.Add("Referer", "http://"+request.Host+"/news4vip/")
+
 	// Exercise
 	request.PostForm = make(map[string][]string)
 	for k, v := range param {
@@ -424,8 +430,9 @@ func TestWriteDat_NotFound(t *testing.T) {
 	// request
 	writer := httptest.NewRecorder()
 	request, _ := http.NewRequest("POST", "/test/bbs.cgi", nil)
-	request.AddCookie(&http.Cookie{Name: "PON", Value: "1.1.1.1"})
+	request.AddCookie(&http.Cookie{Name: "PON", Value: request.RemoteAddr})
 	request.AddCookie(&http.Cookie{Name: "yuki", Value: "akari"})
+	request.Header.Add("Referer", "http://"+request.Host+"/news4vip/")
 
 	// Exercise
 	request.PostForm = make(map[string][]string)
@@ -475,8 +482,9 @@ func TestWriteDat_Done(t *testing.T) {
 	// request
 	writer := httptest.NewRecorder()
 	request, _ := http.NewRequest("POST", "/test/bbs.cgi", nil)
-	request.AddCookie(&http.Cookie{Name: "PON", Value: "1.1.1.1"})
+	request.AddCookie(&http.Cookie{Name: "PON", Value: request.RemoteAddr})
 	request.AddCookie(&http.Cookie{Name: "yuki", Value: "akari"})
+	request.Header.Add("Referer", "http://"+request.Host+"/news4vip/")
 
 	// Exercise
 	request.PostForm = make(map[string][]string)
@@ -604,6 +612,8 @@ func TestCreateThread_CookieMissing(t *testing.T) {
 	writer := httptest.NewRecorder()
 	request, _ := http.NewRequest("POST", "/test/bbs.cgi", nil)
 
+	request.Header.Add("Referer", "http://"+request.Host+"/news4vip/")
+
 	// Exercise
 	request.PostForm = make(map[string][]string)
 	for k, v := range param {
@@ -658,8 +668,9 @@ func TestCreateThread_NotFound(t *testing.T) {
 	// request
 	writer := httptest.NewRecorder()
 	request, _ := http.NewRequest("POST", "/test/bbs.cgi", nil)
-	request.AddCookie(&http.Cookie{Name: "PON", Value: "1.1.1.1"})
+	request.AddCookie(&http.Cookie{Name: "PON", Value: request.RemoteAddr})
 	request.AddCookie(&http.Cookie{Name: "yuki", Value: "akari"})
+	request.Header.Add("Referer", "http://"+request.Host+"/news4vip/")
 
 	// Exercise
 	request.PostForm = make(map[string][]string)
@@ -702,8 +713,9 @@ func TestCreateThread_Done(t *testing.T) {
 	// request
 	writer := httptest.NewRecorder()
 	request, _ := http.NewRequest("POST", "/test/bbs.cgi", nil)
-	request.AddCookie(&http.Cookie{Name: "PON", Value: "1.1.1.1"})
+	request.AddCookie(&http.Cookie{Name: "PON", Value: request.RemoteAddr})
 	request.AddCookie(&http.Cookie{Name: "yuki", Value: "akari"})
+	request.Header.Add("Referer", "http://"+request.Host+"/news4vip/")
 
 	// Exercise
 	request.PostForm = make(map[string][]string)
