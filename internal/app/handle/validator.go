@@ -258,6 +258,7 @@ func requireTitle(w http.ResponseWriter, r *http.Request, setting setting.BBS) (
 func requireReferer(w http.ResponseWriter, r *http.Request, boardName string) (string, bool) {
 	ref := r.Referer()
 	if !strings.Contains(ref, r.Host) || !strings.Contains(ref, boardName) {
+		http.Error(w, fmt.Sprintf(param_error_format, "referer", "BAD"), http.StatusBadRequest)
 		return "", false
 	}
 	return ref, true
