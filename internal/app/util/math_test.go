@@ -12,3 +12,20 @@ func TestMinInt(t *testing.T) {
 		t.Error("err2")
 	}
 }
+
+func TestMaxInt(t *testing.T) {
+	tests := []struct {
+		a        int
+		b        int
+		expected int
+	}{
+		{-1, 1, 1},
+		{1, 0, 1},
+	}
+
+	for i, tt := range tests {
+		if a := MaxInt(tt.a, tt.b); a != tt.expected {
+			t.Errorf("case %d: %v", i, a)
+		}
+	}
+}
