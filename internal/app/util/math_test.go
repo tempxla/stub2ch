@@ -5,27 +5,35 @@ import (
 )
 
 func TestMinInt(t *testing.T) {
-	if MinInt(-1, 1) != -1 {
-		t.Error("err1")
+	tests := []struct {
+		a, b, expected int
+	}{
+		{-1, 1, -1},
+		{1, 0, 0},
 	}
-	if MinInt(1, 0) != 0 {
-		t.Error("err2")
+
+	for i, tt := range tests {
+		actual := MinInt(tt.a, tt.b)
+		if actual != tt.expected {
+			t.Errorf("case %d: MinInt(%d, %d) = %d, want: %d",
+				i, tt.a, tt.b, actual, tt.expected)
+		}
 	}
 }
 
 func TestMaxInt(t *testing.T) {
 	tests := []struct {
-		a        int
-		b        int
-		expected int
+		a, b, expected int
 	}{
 		{-1, 1, 1},
 		{1, 0, 1},
 	}
 
 	for i, tt := range tests {
-		if a := MaxInt(tt.a, tt.b); a != tt.expected {
-			t.Errorf("case %d: %v", i, a)
+		actual := MaxInt(tt.a, tt.b)
+		if actual != tt.expected {
+			t.Errorf("case %d: MaxInt(%d, %d) = %d, want: %d",
+				i, tt.a, tt.b, actual, tt.expected)
 		}
 	}
 }
