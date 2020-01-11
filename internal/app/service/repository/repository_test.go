@@ -12,26 +12,15 @@ import (
 	"time"
 )
 
+// Put したものを Getできるか？
 func TestPutAndGetBoard(t *testing.T) {
 
-	ctx := context.Background()
-
-	// Creates a client.
-	client, err := datastore.NewClient(ctx, config.PROJECT_ID)
-	if err != nil {
-		t.Fatalf("Failed to create client: %v", err)
-	}
-
-	// Clean Datastore
+	ctx, client := testutil.NewContextAndClient(t)
 	testutil.CleanDatastoreBy(t, ctx, client)
 
 	repo := NewBoardStore(ctx, client)
 
-	key := repo.BoardKey("news4test")
-
-	now, _ := time.ParseInLocation("2006-01-02 15:04:05.000",
-		"2019-11-23 22:29:01.123", time.Local)
-
+	now := testutil.NewTimeJST(t, "2019-11-23 22:29:01.123")
 	entity1 := &board.Entity{
 		Subjects: []board.Subject{
 			{
@@ -42,21 +31,18 @@ func TestPutAndGetBoard(t *testing.T) {
 			},
 		},
 	}
-	repo.PutBoard(key, entity1)
+	key := repo.BoardKey("news4test")
+	repo.PutBoard(key, entity1) // *** Put ***
 
 	entity2 := &board.Entity{}
-	err = repo.GetBoard(key, entity2)
-
-	if len(entity1.Subjects) != len(entity2.Subjects) {
-		t.Errorf("len is not equal %v vs %v", len(entity1.Subjects), len(entity2.Subjects))
+	err := repo.GetBoard(key, entity2) // *** Get ***
+	if err != nil {
+		t.Error(err)
 	}
 
-	for i, sbj := range entity1.Subjects {
-		if sbj != entity2.Subjects[i] {
-			t.Errorf("%v vs %v", sbj, entity2.Subjects[i])
-		}
+	if !testutil.EqualBoardEntity(t, entity1, entity2) {
+		t.Errorf("entity1 != entity2: \n%v \n%v", entity1, entity2)
 	}
-
 }
 
 func TestPutAndGetDat(t *testing.T) {
