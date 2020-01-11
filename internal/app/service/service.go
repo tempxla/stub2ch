@@ -12,6 +12,7 @@ import (
 	"github.com/tempxla/stub2ch/configs/app/bbscfg"
 	"github.com/tempxla/stub2ch/configs/app/config"
 	"github.com/tempxla/stub2ch/configs/app/secretcfg"
+	"github.com/tempxla/stub2ch/internal/app/service/repository"
 	"github.com/tempxla/stub2ch/internal/app/types/entity/board"
 	"github.com/tempxla/stub2ch/internal/app/types/entity/dat"
 	"github.com/tempxla/stub2ch/internal/app/types/errors"
@@ -39,7 +40,7 @@ var (
 
 // Dependency injection for Board
 type BoardService struct {
-	repo  BoardRepository
+	repo  repository.BoardRepository
 	env   BoardEnvironment
 	Admin *AdminFunction
 }
@@ -59,7 +60,7 @@ func DefaultBoardService() (*BoardService, error) {
 		return nil, err
 	}
 
-	repo := &BoardStore{
+	repo := &repository.BoardStore{
 		Context: ctx,
 		Client:  client,
 	}
@@ -71,9 +72,7 @@ func DefaultBoardService() (*BoardService, error) {
 		Context: ctx,
 		Client:  client,
 	}
-	adminRepo := &AdminBoardStore{
-		repo: repo,
-	}
+	adminRepo := repository.NewAdminBoardStore(repo)
 
 	return NewBoardService(RepoConf(repo), EnvConf(sysEnv), AdminConf(adminRepo, mem)), nil
 }
@@ -88,7 +87,7 @@ func NewBoardService(config ...func(*BoardService) *BoardService) *BoardService 
 	return sv
 }
 
-func RepoConf(repo BoardRepository) func(*BoardService) *BoardService {
+func RepoConf(repo repository.BoardRepository) func(*BoardService) *BoardService {
 	return func(sv *BoardService) *BoardService {
 		sv.repo = repo
 		return sv
@@ -102,7 +101,7 @@ func EnvConf(env BoardEnvironment) func(*BoardService) *BoardService {
 	}
 }
 
-func AdminConf(repo AdminBoardRepository, mem BoardMemcache) func(*BoardService) *BoardService {
+func AdminConf(repo repository.AdminBoardRepository, mem BoardMemcache) func(*BoardService) *BoardService {
 	return func(sv *BoardService) *BoardService {
 		sv.Admin.repo = repo
 		sv.Admin.mem = mem

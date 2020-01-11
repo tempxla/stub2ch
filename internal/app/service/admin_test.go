@@ -5,6 +5,7 @@ import (
 	"context"
 	"github.com/tempxla/stub2ch/configs/app/admincfg"
 	"github.com/tempxla/stub2ch/configs/app/config"
+	"github.com/tempxla/stub2ch/internal/app/service/repository"
 	"github.com/tempxla/stub2ch/internal/app/types/entity/memcache"
 	"github.com/tempxla/stub2ch/tools/app/testutil"
 	"io/ioutil"
@@ -240,12 +241,11 @@ func TestCreateBoard(t *testing.T) {
 	testutil.CleanDatastoreBy(t, ctx, client)
 
 	admin := &AdminFunction{
-		repo: &AdminBoardStore{
-			repo: &BoardStore{
+		repo: repository.NewAdminBoardStore(
+			&repository.BoardStore{
 				Client:  client,
 				Context: ctx,
-			},
-		},
+			}),
 	}
 
 	err = admin.CreateBoard("news4test")

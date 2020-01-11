@@ -3,6 +3,7 @@ package handle
 import (
 	"fmt"
 	"github.com/tempxla/stub2ch/internal/app/service"
+	"github.com/tempxla/stub2ch/internal/app/service/repository"
 	"github.com/tempxla/stub2ch/internal/app/util"
 	"github.com/tempxla/stub2ch/tools/app/testutil"
 	"net/http"
@@ -15,7 +16,7 @@ import (
 // bbs.cgi がない
 func TestHandleBbsCgi_404(t *testing.T) {
 	// Setup
-	var repo service.BoardRepository
+	var repo repository.BoardRepository
 	var sysEnv service.BoardEnvironment
 	sv := service.NewBoardService(service.RepoConf(repo), service.EnvConf(sysEnv))
 
@@ -37,7 +38,7 @@ func TestHandleBbsCgi_404(t *testing.T) {
 // bbs.cgi
 func TestHandleBbsCgi_MissingSubmit(t *testing.T) {
 	// Setup
-	var repo service.BoardRepository
+	var repo repository.BoardRepository
 	var sysEnv service.BoardEnvironment
 	sv := service.NewBoardService(service.RepoConf(repo), service.EnvConf(sysEnv))
 
@@ -57,7 +58,7 @@ func TestHandleBbsCgi_MissingSubmit(t *testing.T) {
 
 func TestHandleBbsCgi_WrongSubmit(t *testing.T) {
 	// Setup
-	var repo service.BoardRepository
+	var repo repository.BoardRepository
 	var sysEnv service.BoardEnvironment
 	sv := service.NewBoardService(service.RepoConf(repo), service.EnvConf(sysEnv))
 
@@ -270,7 +271,7 @@ func TestHandleBbsCgi_createThreadOKthroughConfirm(t *testing.T) {
 // 本当は「ERROR: 送られてきたデータが壊れています」ページが返されると思う
 func TestWriteDat_400(t *testing.T) {
 	// Setup
-	var repo service.BoardRepository
+	var repo repository.BoardRepository
 	var sysEnv service.BoardEnvironment
 	sv := service.NewBoardService(service.RepoConf(repo), service.EnvConf(sysEnv))
 
@@ -355,7 +356,7 @@ func TestWriteDat_400(t *testing.T) {
 func TestWriteDat_CookieMissing(t *testing.T) {
 
 	// Setup
-	var repo service.BoardRepository
+	var repo repository.BoardRepository
 	sysEnv := &service.SysEnv{
 		StartedTime: time.Now(),
 	}
@@ -508,7 +509,7 @@ func TestWriteDat_Done(t *testing.T) {
 // 本当は「ERROR: 送られてきたデータが壊れています」ページが返されると思う
 func TestCreateThread_400(t *testing.T) {
 	// Setup
-	var repo service.BoardRepository
+	var repo repository.BoardRepository
 	var sysEnv service.BoardEnvironment
 	sv := service.NewBoardService(service.RepoConf(repo), service.EnvConf(sysEnv))
 
@@ -593,7 +594,7 @@ func TestCreateThread_400(t *testing.T) {
 func TestCreateThread_CookieMissing(t *testing.T) {
 
 	// Setup
-	var repo service.BoardRepository
+	var repo repository.BoardRepository
 	sysEnv := &service.SysEnv{
 		StartedTime: time.Now(),
 	}

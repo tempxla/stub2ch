@@ -1,4 +1,4 @@
-package service
+package repository
 
 import (
 	"cloud.google.com/go/datastore"
@@ -14,6 +14,10 @@ type AdminBoardRepository interface {
 
 type AdminBoardStore struct {
 	repo BoardRepository
+}
+
+func NewAdminBoardStore(repo BoardRepository) *AdminBoardStore {
+	return &AdminBoardStore{repo: repo}
 }
 
 // 空の板を作成する。

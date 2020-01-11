@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/tempxla/stub2ch/configs/app/admincfg"
+	"github.com/tempxla/stub2ch/internal/app/service/repository"
 	"github.com/tempxla/stub2ch/internal/app/types/entity/memcache"
 	"github.com/tempxla/stub2ch/internal/app/util"
 	"log"
@@ -12,7 +13,7 @@ import (
 )
 
 type AdminFunction struct {
-	repo AdminBoardRepository
+	repo repository.AdminBoardRepository
 	mem  BoardMemcache
 }
 

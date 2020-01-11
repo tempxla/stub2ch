@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/tempxla/stub2ch/configs/app/config"
 	"github.com/tempxla/stub2ch/configs/app/secretcfg"
+	"github.com/tempxla/stub2ch/internal/app/service/repository"
 	"github.com/tempxla/stub2ch/internal/app/types/entity/board"
 	"github.com/tempxla/stub2ch/internal/app/types/entity/dat"
 	"github.com/tempxla/stub2ch/tools/app/testutil"
@@ -26,7 +27,7 @@ func TestDefaultBoardService(t *testing.T) {
 }
 
 func TestNewBoardService(t *testing.T) {
-	var repo *BoardStore
+	var repo *repository.BoardStore
 	var env *SysEnv
 	sv := NewBoardService(RepoConf(repo), EnvConf(env))
 	if sv.repo != repo || sv.env != env {
@@ -184,7 +185,7 @@ func TestCreateNewThread_AtFirst(t *testing.T) {
 
 	// Injection
 	sv := NewBoardService(RepoConf(
-		&BoardStore{
+		&repository.BoardStore{
 			Context: ctx,
 			Client:  client,
 		}),
@@ -276,7 +277,7 @@ func TestCreateNewThread_More(t *testing.T) {
 
 	// Injection
 	sv := NewBoardService(RepoConf(
-		&BoardStore{
+		&repository.BoardStore{
 			Context: ctx,
 			Client:  client,
 		}),
@@ -332,7 +333,7 @@ func TestCreateNewThread_NoSuchBoard(t *testing.T) {
 
 	// Injection
 	sv := NewBoardService(RepoConf(
-		&BoardStore{
+		&repository.BoardStore{
 			Context: ctx,
 			Client:  client,
 		}),
@@ -393,7 +394,7 @@ func TestWriteDat(t *testing.T) {
 	startedAt, _ := time.ParseInLocation("2006-01-02 15:04:05.000",
 		"2019-11-24 23:26:02.789", time.Local)
 	sv := NewBoardService(RepoConf(
-		&BoardStore{
+		&repository.BoardStore{
 			Context: ctx,
 			Client:  client,
 		}),
@@ -667,7 +668,7 @@ func TestComputeId(t *testing.T) {
 	// http://age.s22.xrea.com/talk2ch/id.txt
 	now, _ := time.ParseInLocation("2006/01/02", "2019/12/26", time.Local)
 	sv := NewBoardService(
-		RepoConf(&BoardStore{}),
+		RepoConf(&repository.BoardStore{}),
 		EnvConf(&SysEnv{
 			StartedTime:   now,
 			ComputeIdSalt: "1385643578654298",

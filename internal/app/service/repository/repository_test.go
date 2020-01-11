@@ -1,4 +1,4 @@
-package service
+package repository
 
 import (
 	"bytes"
@@ -25,12 +25,12 @@ func TestPutAndGetBoard(t *testing.T) {
 	// Clean Datastore
 	testutil.CleanDatastoreBy(t, ctx, client)
 
-	sv := NewBoardService(RepoConf(&BoardStore{
+	repo := &BoardStore{
 		Client:  client,
 		Context: ctx,
-	}))
+	}
 
-	key := sv.repo.BoardKey("news4test")
+	key := repo.BoardKey("news4test")
 
 	now, _ := time.ParseInLocation("2006-01-02 15:04:05.000",
 		"2019-11-23 22:29:01.123", time.Local)
@@ -45,10 +45,10 @@ func TestPutAndGetBoard(t *testing.T) {
 			},
 		},
 	}
-	sv.repo.PutBoard(key, entity1)
+	repo.PutBoard(key, entity1)
 
 	entity2 := &board.Entity{}
-	err = sv.repo.GetBoard(key, entity2)
+	err = repo.GetBoard(key, entity2)
 
 	if len(entity1.Subjects) != len(entity2.Subjects) {
 		t.Errorf("len is not equal %v vs %v", len(entity1.Subjects), len(entity2.Subjects))
@@ -74,24 +74,24 @@ func TestPutAndGetDat(t *testing.T) {
 	// Clean Datastore
 	testutil.CleanDatastoreBy(t, ctx, client)
 
-	sv := NewBoardService(RepoConf(&BoardStore{
+	repo := &BoardStore{
 		Client:  client,
 		Context: ctx,
-	}))
+	}
 
-	boardKey := sv.repo.BoardKey("news4test")
+	boardKey := repo.BoardKey("news4test")
 
 	boardEntity := &board.Entity{}
-	sv.repo.PutBoard(boardKey, boardEntity)
+	repo.PutBoard(boardKey, boardEntity)
 
-	datKey := sv.repo.DatKey("012", boardKey)
+	datKey := repo.DatKey("012", boardKey)
 	datEntity1 := &dat.Entity{
 		Bytes: []byte("hogepiyo"),
 	}
-	sv.repo.PutDat(datKey, datEntity1)
+	repo.PutDat(datKey, datEntity1)
 
 	datEntity2 := &dat.Entity{}
-	sv.repo.GetDat(datKey, datEntity2)
+	repo.GetDat(datKey, datEntity2)
 
 	if !bytes.Equal(datEntity1.Bytes, datEntity2.Bytes) {
 		t.Errorf("%s vs %s", datEntity1.Bytes, datEntity2.Bytes)
@@ -111,12 +111,12 @@ func TestTxPutAndGetBoard(t *testing.T) {
 	// Clean Datastore
 	testutil.CleanDatastoreBy(t, ctx, client)
 
-	sv := NewBoardService(RepoConf(&BoardStore{
+	repo := &BoardStore{
 		Client:  client,
 		Context: ctx,
-	}))
+	}
 
-	key := sv.repo.BoardKey("news4test")
+	key := repo.BoardKey("news4test")
 
 	now, _ := time.ParseInLocation("2006-01-02 15:04:05.000",
 		"2019-11-23 22:29:01.123", time.Local)
@@ -132,8 +132,8 @@ func TestTxPutAndGetBoard(t *testing.T) {
 			},
 		},
 	}
-	err = sv.repo.RunInTransaction(func(tx *datastore.Transaction) error {
-		sv.repo.TxPutBoard(tx, key, entity1)
+	err = repo.RunInTransaction(func(tx *datastore.Transaction) error {
+		repo.TxPutBoard(tx, key, entity1)
 		return nil
 	})
 	if err != nil {
@@ -142,9 +142,9 @@ func TestTxPutAndGetBoard(t *testing.T) {
 
 	// Get
 	entity2 := &board.Entity{}
-	err = sv.repo.RunInTransaction(func(tx *datastore.Transaction) error {
-		sv.repo.TxPutBoard(tx, key, entity1)
-		err = sv.repo.TxGetBoard(tx, key, entity2)
+	err = repo.RunInTransaction(func(tx *datastore.Transaction) error {
+		repo.TxPutBoard(tx, key, entity1)
+		err = repo.TxGetBoard(tx, key, entity2)
 		return nil
 	})
 	if err != nil {
@@ -173,19 +173,19 @@ func TestTxPutAndGetDat(t *testing.T) {
 	// Clean Datastore
 	testutil.CleanDatastoreBy(t, ctx, client)
 
-	sv := NewBoardService(RepoConf(&BoardStore{
+	repo := &BoardStore{
 		Client:  client,
 		Context: ctx,
-	}))
+	}
 
 	// Put
 	datEntity1 := &dat.Entity{
 		Bytes: []byte("hogepiyo"),
 	}
-	err = sv.repo.RunInTransaction(func(tx *datastore.Transaction) error {
-		boardKey := sv.repo.BoardKey("news4test")
-		datKey := sv.repo.DatKey("012", boardKey)
-		sv.repo.TxPutDat(tx, datKey, datEntity1)
+	err = repo.RunInTransaction(func(tx *datastore.Transaction) error {
+		boardKey := repo.BoardKey("news4test")
+		datKey := repo.DatKey("012", boardKey)
+		repo.TxPutDat(tx, datKey, datEntity1)
 		return nil
 	})
 
@@ -195,10 +195,10 @@ func TestTxPutAndGetDat(t *testing.T) {
 
 	// Get
 	datEntity2 := &dat.Entity{}
-	err = sv.repo.RunInTransaction(func(tx *datastore.Transaction) error {
-		boardKey := sv.repo.BoardKey("news4test")
-		datKey := sv.repo.DatKey("012", boardKey)
-		sv.repo.TxGetDat(tx, datKey, datEntity2)
+	err = repo.RunInTransaction(func(tx *datastore.Transaction) error {
+		boardKey := repo.BoardKey("news4test")
+		datKey := repo.DatKey("012", boardKey)
+		repo.TxGetDat(tx, datKey, datEntity2)
 		return nil
 	})
 
