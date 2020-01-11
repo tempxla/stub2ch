@@ -1,7 +1,9 @@
 package testutil
 
 import (
+	"bytes"
 	"github.com/tempxla/stub2ch/internal/app/types/entity/board"
+	"github.com/tempxla/stub2ch/internal/app/types/entity/dat"
 	"testing"
 )
 
@@ -37,6 +39,24 @@ func EqualBoardEntity(t *testing.T, a *board.Entity, b *board.Entity) bool {
 
 	// WriteCount
 	if a.WriteCount != b.WriteCount {
+		ret = false
+	}
+
+	return ret
+}
+
+func EqualDatEntity(t *testing.T, a *dat.Entity, b *dat.Entity) bool {
+	t.Helper()
+
+	ret := true
+
+	if !bytes.Equal(a.Bytes, b.Bytes) {
+		t.Errorf("\na.Byte = %v, \nb.Bytes = %v", a.Bytes, b.Bytes)
+		ret = false
+	}
+
+	if !a.LastModified.Equal(b.LastModified) {
+		t.Errorf("a.LastModified = %v, b.LastModified = %v", a.LastModified, b.LastModified)
 		ret = false
 	}
 

@@ -1,15 +1,11 @@
 package repository
 
 import (
-	"bytes"
 	"cloud.google.com/go/datastore"
-	"context"
-	"github.com/tempxla/stub2ch/configs/app/config"
 	"github.com/tempxla/stub2ch/internal/app/types/entity/board"
 	"github.com/tempxla/stub2ch/internal/app/types/entity/dat"
 	"github.com/tempxla/stub2ch/tools/app/testutil"
 	"testing"
-	"time"
 )
 
 // Put したものを Getできるか？
@@ -32,73 +28,65 @@ func TestPutAndGetBoard(t *testing.T) {
 		},
 	}
 	key := repo.BoardKey("news4test")
-	repo.PutBoard(key, entity1) // *** Put ***
-
-	entity2 := &board.Entity{}
-	err := repo.GetBoard(key, entity2) // *** Get ***
-	if err != nil {
+	// *** Put ***
+	if err := repo.PutBoard(key, entity1); err != nil {
 		t.Error(err)
 	}
 
+	entity2 := &board.Entity{}
+	// *** Get ***
+	if err := repo.GetBoard(key, entity2); err != nil {
+		t.Error(err)
+	}
+
+	// Verify
 	if !testutil.EqualBoardEntity(t, entity1, entity2) {
 		t.Errorf("entity1 != entity2: \n%v \n%v", entity1, entity2)
 	}
 }
 
+// Put したものを Getできるか？
 func TestPutAndGetDat(t *testing.T) {
-	ctx := context.Background()
 
-	// Creates a client.
-	client, err := datastore.NewClient(ctx, config.PROJECT_ID)
-	if err != nil {
-		t.Fatalf("Failed to create client: %v", err)
-	}
-
-	// Clean Datastore
+	ctx, client := testutil.NewContextAndClient(t)
 	testutil.CleanDatastoreBy(t, ctx, client)
 
 	repo := NewBoardStore(ctx, client)
 
 	boardKey := repo.BoardKey("news4test")
-
 	boardEntity := &board.Entity{}
 	repo.PutBoard(boardKey, boardEntity)
 
 	datKey := repo.DatKey("012", boardKey)
 	datEntity1 := &dat.Entity{
-		Bytes: []byte("hogepiyo"),
+		Bytes: []byte("ふがふが"),
 	}
-	repo.PutDat(datKey, datEntity1)
+	// *** Put ***
+	if err := repo.PutDat(datKey, datEntity1); err != nil {
+		t.Error(err)
+	}
 
 	datEntity2 := &dat.Entity{}
-	repo.GetDat(datKey, datEntity2)
+	// *** Get ***
+	if err := repo.GetDat(datKey, datEntity2); err != nil {
+		t.Error(err)
+	}
 
-	if !bytes.Equal(datEntity1.Bytes, datEntity2.Bytes) {
-		t.Errorf("%s vs %s", datEntity1.Bytes, datEntity2.Bytes)
+	// Verify
+	if !testutil.EqualDatEntity(t, datEntity1, datEntity2) {
+		t.Errorf("datEntity1 = %v, datEntity2 = %v", datEntity1, datEntity2)
 	}
 }
 
+// Put したものを Getできるか？
 func TestTxPutAndGetBoard(t *testing.T) {
 
-	ctx := context.Background()
-
-	// Creates a client.
-	client, err := datastore.NewClient(ctx, config.PROJECT_ID)
-	if err != nil {
-		t.Fatalf("Failed to create client: %v", err)
-	}
-
-	// Clean Datastore
+	ctx, client := testutil.NewContextAndClient(t)
 	testutil.CleanDatastoreBy(t, ctx, client)
 
 	repo := NewBoardStore(ctx, client)
 
-	key := repo.BoardKey("news4test")
-
-	now, _ := time.ParseInLocation("2006-01-02 15:04:05.000",
-		"2019-11-23 22:29:01.123", time.Local)
-
-	// Put
+	now := testutil.NewTimeJST(t, "2019-11-23 22:29:01.123")
 	entity1 := &board.Entity{
 		Subjects: []board.Subject{
 			{
@@ -109,79 +97,61 @@ func TestTxPutAndGetBoard(t *testing.T) {
 			},
 		},
 	}
-	err = repo.RunInTransaction(func(tx *datastore.Transaction) error {
-		repo.TxPutBoard(tx, key, entity1)
-		return nil
+	key := repo.BoardKey("news4test")
+	err := repo.RunInTransaction(func(tx *datastore.Transaction) error {
+		// *** Put ***
+		return repo.TxPutBoard(tx, key, entity1)
 	})
 	if err != nil {
 		t.Error(err)
 	}
 
-	// Get
 	entity2 := &board.Entity{}
 	err = repo.RunInTransaction(func(tx *datastore.Transaction) error {
-		repo.TxPutBoard(tx, key, entity1)
-		err = repo.TxGetBoard(tx, key, entity2)
-		return nil
+		// *** Get ***
+		return repo.TxGetBoard(tx, key, entity2)
 	})
 	if err != nil {
 		t.Error(err)
 	}
 
-	if len(entity1.Subjects) != len(entity2.Subjects) {
-		t.Errorf("len is not equal %v vs %v", len(entity1.Subjects), len(entity2.Subjects))
-	}
-	for i, sbj := range entity1.Subjects {
-		if sbj != entity2.Subjects[i] {
-			t.Errorf("%v vs %v", sbj, entity2.Subjects[i])
-		}
+	// Verify
+	if !testutil.EqualBoardEntity(t, entity1, entity2) {
+		t.Errorf("entity1 != entity2: \n%v \n%v", entity1, entity2)
 	}
 }
 
+// Put したものを Getできるか？
 func TestTxPutAndGetDat(t *testing.T) {
-	ctx := context.Background()
 
-	// Creates a client.
-	client, err := datastore.NewClient(ctx, config.PROJECT_ID)
-	if err != nil {
-		t.Fatalf("Failed to create client: %v", err)
-	}
-
-	// Clean Datastore
+	ctx, client := testutil.NewContextAndClient(t)
 	testutil.CleanDatastoreBy(t, ctx, client)
 
 	repo := NewBoardStore(ctx, client)
 
-	// Put
 	datEntity1 := &dat.Entity{
-		Bytes: []byte("hogepiyo"),
+		Bytes: []byte("ふがふが"),
 	}
-	err = repo.RunInTransaction(func(tx *datastore.Transaction) error {
-		boardKey := repo.BoardKey("news4test")
-		datKey := repo.DatKey("012", boardKey)
-		repo.TxPutDat(tx, datKey, datEntity1)
-		return nil
+	datKey := repo.DatKey("012", repo.BoardKey("news4test"))
+	err := repo.RunInTransaction(func(tx *datastore.Transaction) error {
+		// *** Put ***
+		return repo.TxPutDat(tx, datKey, datEntity1)
 	})
-
 	if err != nil {
 		t.Error(err)
 	}
 
-	// Get
 	datEntity2 := &dat.Entity{}
 	err = repo.RunInTransaction(func(tx *datastore.Transaction) error {
-		boardKey := repo.BoardKey("news4test")
-		datKey := repo.DatKey("012", boardKey)
-		repo.TxGetDat(tx, datKey, datEntity2)
-		return nil
+		// *** Get ***
+		return repo.TxGetDat(tx, datKey, datEntity2)
 	})
-
 	if err != nil {
 		t.Error(err)
 	}
 
-	if !bytes.Equal(datEntity1.Bytes, datEntity2.Bytes) {
-		t.Errorf("%s vs %s", datEntity1.Bytes, datEntity2.Bytes)
+	// Verify
+	if !testutil.EqualDatEntity(t, datEntity1, datEntity2) {
+		t.Errorf("datEntity1 = %v, datEntity2 = %v", datEntity1, datEntity2)
 	}
-
 }
