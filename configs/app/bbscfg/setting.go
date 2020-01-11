@@ -64,3 +64,15 @@ func MakeSettingTxt(setting Setting) []byte {
 
 	return sb.Bytes()
 }
+
+func GetAllBoardName() []string {
+	keys := make([]string, len(settings))
+
+	i := 0
+	for k := range settings {
+		keys[i] = k
+		i++
+	}
+
+	return keys
+}

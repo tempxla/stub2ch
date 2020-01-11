@@ -56,6 +56,11 @@ func (repo *BoardStub) PutDat(key *dat.Key, entity *dat.Entity) (err error) {
 	return
 }
 
+func (repo *BoardStub) GetAllBoard(entities []*board.Entity) (keys []*board.Key, err error) {
+	panic("not implement")
+	return
+}
+
 func (repo *BoardStub) RunInTransaction(f func(tx *datastore.Transaction) error) (err error) {
 	return f(nil)
 }
@@ -77,6 +82,15 @@ func (repo *BoardStub) TxGetDat(tx *datastore.Transaction, key *dat.Key, entity 
 
 func (repo *BoardStub) TxPutDat(tx *datastore.Transaction, key *dat.Key, entity *dat.Entity) (err error) {
 	err = repo.PutDat(key, entity)
+	return
+}
+func (repo *BoardStub) TxGetAllBoard(tx *datastore.Transaction, entities []*board.Entity) (keys []*board.Key, err error) {
+	panic("not implement")
+	return
+}
+
+func (repo *BoardStub) TxPutMultiBoard(tx *datastore.Transaction, keys []*board.Key, entities []*board.Entity) (err error) {
+	panic("not implement")
 	return
 }
 

@@ -13,7 +13,7 @@ type AdminBoardRepository interface {
 }
 
 type AdminBoardStore struct {
-	repo *BoardStore
+	repo BoardRepository
 }
 
 // 空の板を作成する。
@@ -43,8 +43,8 @@ func (admin *AdminBoardStore) CreateBoard(boardName string) (err error) {
 
 func (admin *AdminBoardStore) GetWriteCount() (_ int, err error) {
 
-	var entities []board.Entity
-	_, err = admin.repo.Client.GetAll(admin.repo.Context, datastore.NewQuery(board.KIND), &entities)
+	var entities []*board.Entity
+	_, err = admin.repo.GetAllBoard(entities)
 
 	if err != nil {
 		return
@@ -60,16 +60,20 @@ func (admin *AdminBoardStore) GetWriteCount() (_ int, err error) {
 
 func (admin *AdminBoardStore) ResetWriteCount() (err error) {
 
-	var entities []board.Entity
-	keys, err := admin.repo.Client.GetAll(admin.repo.Context, datastore.NewQuery(board.KIND), &entities)
-	if err != nil {
-		return err
-	}
+	err = admin.repo.RunInTransaction(func(tx *datastore.Transaction) error {
 
-	for i, _ := range keys {
-		entities[i].WriteCount = 0
-	}
-	_, err = admin.repo.Client.PutMulti(admin.repo.Context, keys, entities)
+		var entities []*board.Entity
+		keys, err := admin.repo.TxGetAllBoard(tx, entities)
+		if err != nil {
+			return err
+		}
+
+		for i, _ := range keys {
+			entities[i].WriteCount = 0
+		}
+
+		return admin.repo.TxPutMultiBoard(tx, keys, entities)
+	})
 
 	return
 }
