@@ -241,11 +241,7 @@ func TestCreateBoard(t *testing.T) {
 	testutil.CleanDatastoreBy(t, ctx, client)
 
 	admin := &AdminFunction{
-		repo: repository.NewAdminBoardStore(
-			&repository.BoardStore{
-				Client:  client,
-				Context: ctx,
-			}),
+		repo: repository.NewAdminBoardStore(repository.NewBoardStore(ctx, client)),
 	}
 
 	err = admin.CreateBoard("news4test")

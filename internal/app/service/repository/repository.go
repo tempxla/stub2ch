@@ -26,8 +26,15 @@ type BoardRepository interface {
 }
 
 type BoardStore struct {
-	Context context.Context
-	Client  *datastore.Client
+	context context.Context
+	client  *datastore.Client
+}
+
+func NewBoardStore(ctx context.Context, client *datastore.Client) *BoardStore {
+	return &BoardStore{
+		context: ctx,
+		client:  client,
+	}
 }
 
 func (repo *BoardStore) BoardKey(name string) (key *board.Key) {
@@ -43,27 +50,27 @@ func (repo *BoardStore) DatKey(name string, parent *board.Key) (key *dat.Key) {
 }
 
 func (repo *BoardStore) GetBoard(key *board.Key, entity *board.Entity) (err error) {
-	err = repo.Client.Get(repo.Context, key.DSKey, entity)
+	err = repo.client.Get(repo.context, key.DSKey, entity)
 	return
 }
 
 func (repo *BoardStore) PutBoard(key *board.Key, entity *board.Entity) (err error) {
-	_, err = repo.Client.Put(repo.Context, key.DSKey, entity)
+	_, err = repo.client.Put(repo.context, key.DSKey, entity)
 	return
 }
 
 func (repo *BoardStore) GetDat(key *dat.Key, entity *dat.Entity) (err error) {
-	err = repo.Client.Get(repo.Context, key.DSKey, entity)
+	err = repo.client.Get(repo.context, key.DSKey, entity)
 	return
 }
 
 func (repo *BoardStore) PutDat(key *dat.Key, entity *dat.Entity) (err error) {
-	_, err = repo.Client.Put(repo.Context, key.DSKey, entity)
+	_, err = repo.client.Put(repo.context, key.DSKey, entity)
 	return
 }
 
 func (repo *BoardStore) GetAllBoard(entities []*board.Entity) (keys []*board.Key, err error) {
-	ks, err := repo.Client.GetAll(repo.Context, datastore.NewQuery(board.KIND), &entities)
+	ks, err := repo.client.GetAll(repo.context, datastore.NewQuery(board.KIND), &entities)
 	for _, k := range ks {
 		keys = append(keys, &board.Key{DSKey: k})
 	}
@@ -71,7 +78,7 @@ func (repo *BoardStore) GetAllBoard(entities []*board.Entity) (keys []*board.Key
 }
 
 func (repo *BoardStore) RunInTransaction(f func(tx *datastore.Transaction) error) (err error) {
-	_, err = repo.Client.RunInTransaction(repo.Context, f)
+	_, err = repo.client.RunInTransaction(repo.context, f)
 	return
 }
 

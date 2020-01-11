@@ -25,10 +25,7 @@ func TestPutAndGetBoard(t *testing.T) {
 	// Clean Datastore
 	testutil.CleanDatastoreBy(t, ctx, client)
 
-	repo := &BoardStore{
-		Client:  client,
-		Context: ctx,
-	}
+	repo := NewBoardStore(ctx, client)
 
 	key := repo.BoardKey("news4test")
 
@@ -74,10 +71,7 @@ func TestPutAndGetDat(t *testing.T) {
 	// Clean Datastore
 	testutil.CleanDatastoreBy(t, ctx, client)
 
-	repo := &BoardStore{
-		Client:  client,
-		Context: ctx,
-	}
+	repo := NewBoardStore(ctx, client)
 
 	boardKey := repo.BoardKey("news4test")
 
@@ -111,10 +105,7 @@ func TestTxPutAndGetBoard(t *testing.T) {
 	// Clean Datastore
 	testutil.CleanDatastoreBy(t, ctx, client)
 
-	repo := &BoardStore{
-		Client:  client,
-		Context: ctx,
-	}
+	repo := NewBoardStore(ctx, client)
 
 	key := repo.BoardKey("news4test")
 
@@ -173,10 +164,7 @@ func TestTxPutAndGetDat(t *testing.T) {
 	// Clean Datastore
 	testutil.CleanDatastoreBy(t, ctx, client)
 
-	repo := &BoardStore{
-		Client:  client,
-		Context: ctx,
-	}
+	repo := NewBoardStore(ctx, client)
 
 	// Put
 	datEntity1 := &dat.Entity{

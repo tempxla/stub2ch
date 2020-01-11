@@ -60,10 +60,8 @@ func DefaultBoardService() (*BoardService, error) {
 		return nil, err
 	}
 
-	repo := &repository.BoardStore{
-		Context: ctx,
-		Client:  client,
-	}
+	repo := repository.NewBoardStore(ctx, client)
+
 	sysEnv := &SysEnv{
 		StartedTime:   time.Now().In(jst),
 		ComputeIdSalt: secretcfg.COMPUTE_ID_SALT,

@@ -184,11 +184,8 @@ func TestCreateNewThread_AtFirst(t *testing.T) {
 	}
 
 	// Injection
-	sv := NewBoardService(RepoConf(
-		&repository.BoardStore{
-			Context: ctx,
-			Client:  client,
-		}),
+	sv := NewBoardService(
+		RepoConf(repository.NewBoardStore(ctx, client)),
 		EnvConf(&SysEnv{}),
 	)
 	stng := testutil.NewSettingStub()
@@ -276,11 +273,8 @@ func TestCreateNewThread_More(t *testing.T) {
 	}
 
 	// Injection
-	sv := NewBoardService(RepoConf(
-		&repository.BoardStore{
-			Context: ctx,
-			Client:  client,
-		}),
+	sv := NewBoardService(
+		RepoConf(repository.NewBoardStore(ctx, client)),
 		EnvConf(&SysEnv{}),
 	)
 
@@ -332,11 +326,8 @@ func TestCreateNewThread_NoSuchBoard(t *testing.T) {
 	testutil.CleanDatastoreBy(t, ctx, client)
 
 	// Injection
-	sv := NewBoardService(RepoConf(
-		&repository.BoardStore{
-			Context: ctx,
-			Client:  client,
-		}),
+	sv := NewBoardService(
+		RepoConf(repository.NewBoardStore(ctx, client)),
 		EnvConf(&SysEnv{}),
 	)
 
@@ -393,11 +384,8 @@ func TestWriteDat(t *testing.T) {
 	// Injection
 	startedAt, _ := time.ParseInLocation("2006-01-02 15:04:05.000",
 		"2019-11-24 23:26:02.789", time.Local)
-	sv := NewBoardService(RepoConf(
-		&repository.BoardStore{
-			Context: ctx,
-			Client:  client,
-		}),
+	sv := NewBoardService(
+		RepoConf(repository.NewBoardStore(ctx, client)),
 		EnvConf(&SysEnv{
 			StartedTime:   startedAt,
 			ComputeIdSalt: "1x",
