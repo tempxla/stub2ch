@@ -56,7 +56,7 @@ func (repo *BoardStub) PutDat(key *dat.Key, entity *dat.Entity) (err error) {
 	return
 }
 
-func (repo *BoardStub) GetAllBoard(entities []*board.Entity) (keys []*board.Key, err error) {
+func (repo *BoardStub) GetAllBoard(entities *[]*board.Entity) (keys []*board.Key, err error) {
 	panic("not implement")
 	return
 }

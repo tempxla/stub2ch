@@ -39,10 +39,50 @@ func EqualBoardEntity(t *testing.T, a *board.Entity, b *board.Entity) bool {
 
 	// WriteCount
 	if a.WriteCount != b.WriteCount {
+		t.Errorf("a.WriteCount = %d, b.WriteCount = %d", a.WriteCount, b.WriteCount)
 		ret = false
 	}
 
 	return ret
+}
+
+func EqualBoardEntitiesAsSet(t *testing.T,
+	keyFunc func(a *board.Entity, b *board.Entity) bool,
+	as []*board.Entity, bs []*board.Entity) bool {
+
+	t.Helper()
+
+	if la, lb := len(as), len(bs); la != lb {
+		t.Errorf("len(as) = %d, len(bs) = %d", la, lb)
+		return false
+	}
+
+	mark := make([]bool, len(as))
+
+	for i, v := range as {
+		for j, w := range bs {
+			if keyFunc(v, w) {
+				if mark[j] {
+					t.Errorf("duplicate")
+					return false
+				} else if !EqualBoardEntity(t, v, w) {
+					t.Errorf("%d: v = %v, %d: w = %v", i, v, j, w)
+					return false
+				} else {
+					mark[j] = true
+				}
+			}
+		}
+	}
+
+	for _, m := range mark {
+		if !m {
+			t.Errorf("keyが一致しない?: %v", mark)
+			return false
+		}
+	}
+
+	return true
 }
 
 func EqualDatEntity(t *testing.T, a *dat.Entity, b *dat.Entity) bool {

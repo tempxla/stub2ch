@@ -48,7 +48,7 @@ func (admin *AdminBoardStore) CreateBoard(boardName string) (err error) {
 func (admin *AdminBoardStore) GetWriteCount() (_ int, err error) {
 
 	var entities []*board.Entity
-	_, err = admin.repo.GetAllBoard(entities)
+	_, err = admin.repo.GetAllBoard(&entities)
 
 	if err != nil {
 		return

@@ -15,7 +15,7 @@ type BoardRepository interface {
 	PutBoard(key *board.Key, entity *board.Entity) (err error)
 	GetDat(key *dat.Key, entity *dat.Entity) (err error)
 	PutDat(key *dat.Key, entity *dat.Entity) (err error)
-	GetAllBoard(entities []*board.Entity) (keys []*board.Key, err error)
+	GetAllBoard(entities *[]*board.Entity) (keys []*board.Key, err error)
 	RunInTransaction(func(tx *datastore.Transaction) error) (err error)
 	TxGetBoard(tx *datastore.Transaction, key *board.Key, entity *board.Entity) (err error)
 	TxPutBoard(tx *datastore.Transaction, key *board.Key, entity *board.Entity) (err error)
@@ -69,8 +69,11 @@ func (repo *BoardStore) PutDat(key *dat.Key, entity *dat.Entity) (err error) {
 	return
 }
 
-func (repo *BoardStore) GetAllBoard(entities []*board.Entity) (keys []*board.Key, err error) {
-	ks, err := repo.client.GetAll(repo.context, datastore.NewQuery(board.KIND), &entities)
+func (repo *BoardStore) GetAllBoard(entities *[]*board.Entity) (keys []*board.Key, err error) {
+	ks, err := repo.client.GetAll(repo.context, datastore.NewQuery(board.KIND), entities)
+	if err != nil {
+		return nil, err
+	}
 	for _, k := range ks {
 		keys = append(keys, &board.Key{DSKey: k})
 	}

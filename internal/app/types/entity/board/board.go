@@ -2,6 +2,7 @@ package board
 
 import (
 	"cloud.google.com/go/datastore"
+	"fmt"
 	"time"
 )
 
@@ -25,4 +26,8 @@ type Subject struct {
 	ThreadTitle  string    `datastore:",noindex"`
 	MessageCount int       `datastore:",noindex"`
 	LastModified time.Time `datastore:",noindex"` // dat落ちとかで使う予定
+}
+
+func (e *Entity) String() string {
+	return fmt.Sprintf("Subjects:%v, WriteCount:%v", e.Subjects, e.WriteCount)
 }

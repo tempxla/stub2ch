@@ -2,6 +2,7 @@ package repository
 
 import (
 	"cloud.google.com/go/datastore"
+	"fmt"
 	"github.com/tempxla/stub2ch/internal/app/types/entity/board"
 	"github.com/tempxla/stub2ch/internal/app/types/entity/dat"
 	"github.com/tempxla/stub2ch/tools/app/testutil"
@@ -75,6 +76,59 @@ func TestPutAndGetDat(t *testing.T) {
 	// Verify
 	if !testutil.EqualDatEntity(t, datEntity1, datEntity2) {
 		t.Errorf("datEntity1 = %v, datEntity2 = %v", datEntity1, datEntity2)
+	}
+}
+
+func TestGetAllBoard(t *testing.T) {
+
+	ctx, client := testutil.NewContextAndClient(t)
+	testutil.CleanDatastoreBy(t, ctx, client)
+
+	repo := NewBoardStore(ctx, client)
+
+	entities1 := []*board.Entity{
+		{
+			Subjects: []board.Subject{
+				{
+					ThreadKey:    "0123",
+					ThreadTitle:  "xxx",
+					MessageCount: 1,
+					LastModified: testutil.NewTimeJST(t, "2019-11-23 22:29:01.123"),
+				},
+			},
+		},
+		{
+			Subjects: []board.Subject{
+				{
+					ThreadKey:    "4567",
+					ThreadTitle:  "yyy",
+					MessageCount: 999,
+					LastModified: testutil.NewTimeJST(t, "2020-01-02 12:34:56.999"),
+				},
+			},
+		},
+	}
+	for i, entity := range entities1 {
+		key := repo.BoardKey(fmt.Sprintf("news4test%d", i))
+		if err := repo.PutBoard(key, entity); err != nil {
+			t.Error(err)
+		}
+	}
+
+	entities2 := []*board.Entity{}
+	// *** GetAll ***
+	if _, err := repo.GetAllBoard(&entities2); err != nil {
+		t.Error(err)
+	}
+
+	// Verify
+	if !testutil.EqualBoardEntitiesAsSet(t,
+		func(a *board.Entity, b *board.Entity) bool {
+			return a.Subjects[0].ThreadKey == b.Subjects[0].ThreadKey
+		},
+		entities1, entities2) {
+
+		t.Errorf("entities1 != entities2: \n%v \n%v", entities1, entities2)
 	}
 }
 
