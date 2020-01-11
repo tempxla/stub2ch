@@ -42,12 +42,12 @@ func (repo *BoardStub) PutBoard(key *board.Key, entity *board.Entity) (err error
 func (repo *BoardStub) GetDat(key *dat.Key, entity *dat.Entity) (err error) {
 	if board, ok := repo.DatMap[key.DSKey.Parent.Name]; !ok {
 		return datastore.ErrNoSuchEntity
-	} else if e, ok := board[key.DSKey.Name]; ok {
+	} else if e, ok := board[key.DSKey.Name]; !ok {
+		return datastore.ErrNoSuchEntity
+	} else {
 		entity.Bytes = e.Bytes
 		entity.LastModified = e.LastModified
 		return
-	} else {
-		return datastore.ErrNoSuchEntity
 	}
 }
 
