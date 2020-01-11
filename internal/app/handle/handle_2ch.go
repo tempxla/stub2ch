@@ -4,8 +4,7 @@ import (
 	"cloud.google.com/go/datastore"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
-	"github.com/tempxla/stub2ch/configs/app/head"
-	"github.com/tempxla/stub2ch/configs/app/setting"
+	"github.com/tempxla/stub2ch/configs/app/bbscfg"
 	"github.com/tempxla/stub2ch/internal/app/service"
 	"github.com/tempxla/stub2ch/internal/app/types/errors"
 	mstring "github.com/tempxla/stub2ch/internal/app/types/maybe/string"
@@ -64,7 +63,7 @@ func handleWriteDat(w http.ResponseWriter, r *http.Request, sv *service.BoardSer
 	if !ok {
 		return
 	}
-	setting := setting.GetSetting(boardName)
+	setting := bbscfg.GetSetting(boardName)
 	if setting == nil {
 		http.Error(w, "Not Found", http.StatusNotFound)
 		return
@@ -183,7 +182,7 @@ func handleCreateThread(w http.ResponseWriter, r *http.Request, sv *service.Boar
 	if !ok {
 		return
 	}
-	setting := setting.GetSetting(boardName)
+	setting := bbscfg.GetSetting(boardName)
 	if setting == nil {
 		http.Error(w, "Not Found", http.StatusNotFound)
 		return
@@ -332,12 +331,12 @@ func handleSubjectTxt() ServiceHandle {
 func handleSettingTxt() httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		board := ps.ByName("board")
-		stng := setting.GetSetting(board)
+		stng := bbscfg.GetSetting(board)
 		if stng == nil {
 			http.Error(w, "Not Found", http.StatusNotFound)
 			return
 		}
-		settingTxt := setting.MakeSettingTxt(stng)
+		settingTxt := bbscfg.MakeSettingTxt(stng)
 		setContentTypePlainSjis(w)
 		fmt.Fprintf(w, string(util.UTF8toSJIS(settingTxt)))
 	}
@@ -346,7 +345,7 @@ func handleSettingTxt() httprouter.Handle {
 func handleHeadTxt() httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		board := ps.ByName("board")
-		headTxt := head.MakeHeadTxt(board)
+		headTxt := bbscfg.MakeHeadTxt(board)
 		if headTxt == nil {
 			http.Error(w, "Not Found", http.StatusNotFound)
 			return
@@ -360,7 +359,7 @@ func handleHeadTxt() httprouter.Handle {
 func handleBoard() ServiceHandle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params, sv *service.BoardService) {
 		board := ps.ByName("board")
-		stng := setting.GetSetting(board)
+		stng := bbscfg.GetSetting(board)
 		if stng == nil {
 			http.Error(w, "Not Found", http.StatusNotFound)
 			return
@@ -388,7 +387,7 @@ func handleSubjectJson() ServiceHandle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params, sv *service.BoardService) {
 
 		board := ps.ByName("board")
-		stng := setting.GetSetting(board)
+		stng := bbscfg.GetSetting(board)
 		if stng == nil {
 			http.Error(w, "Not Found", http.StatusNotFound)
 			return
@@ -412,7 +411,7 @@ func handleSubjectJson() ServiceHandle {
 func handleReadCgi() ServiceHandle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params, sv *service.BoardService) {
 		boardName := ps.ByName("boardName")
-		stng := setting.GetSetting(boardName)
+		stng := bbscfg.GetSetting(boardName)
 		if stng == nil {
 			http.Error(w, "Not Found", http.StatusNotFound)
 			return

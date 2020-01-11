@@ -2,7 +2,7 @@ package handle
 
 import (
 	"fmt"
-	"github.com/tempxla/stub2ch/configs/app/setting"
+	"github.com/tempxla/stub2ch/configs/app/bbscfg"
 	"github.com/tempxla/stub2ch/internal/app/util"
 	"html"
 	"math/rand"
@@ -197,7 +197,7 @@ func requireTime(w http.ResponseWriter, r *http.Request) (string, bool) {
 	return t, true
 }
 
-func requireName(w http.ResponseWriter, r *http.Request, setting setting.BBS) (string, bool) {
+func requireName(w http.ResponseWriter, r *http.Request, setting bbscfg.Setting) (string, bool) {
 	name, err := process(requireOne(r, "FROM"),
 		maxByte(setting.BBS_NAME_COUNT()),
 		sjisToUtf8String,
@@ -217,7 +217,7 @@ func requireName(w http.ResponseWriter, r *http.Request, setting setting.BBS) (s
 	return name, true
 }
 
-func requireMail(w http.ResponseWriter, r *http.Request, setting setting.BBS) (string, bool) {
+func requireMail(w http.ResponseWriter, r *http.Request, setting bbscfg.Setting) (string, bool) {
 	mail, err := process(requireOne(r, "mail"),
 		maxByte(setting.BBS_MAIL_COUNT()), sjisToUtf8String, delBadChar)
 
@@ -228,7 +228,7 @@ func requireMail(w http.ResponseWriter, r *http.Request, setting setting.BBS) (s
 	return mail, true
 }
 
-func requireMessage(w http.ResponseWriter, r *http.Request, setting setting.BBS) (string, bool) {
+func requireMessage(w http.ResponseWriter, r *http.Request, setting bbscfg.Setting) (string, bool) {
 	message, err := process(requireOne(r, "MESSAGE"),
 		maxByte(setting.BBS_MESSAGE_COUNT()),
 		sjisToUtf8String,
@@ -244,7 +244,7 @@ func requireMessage(w http.ResponseWriter, r *http.Request, setting setting.BBS)
 	return message, true
 }
 
-func requireTitle(w http.ResponseWriter, r *http.Request, setting setting.BBS) (string, bool) {
+func requireTitle(w http.ResponseWriter, r *http.Request, setting bbscfg.Setting) (string, bool) {
 	title, err := process(requireOne(r, "subject"),
 		maxByte(setting.BBS_SUBJECT_COUNT()), sjisToUtf8String, delBadChar, notBlank)
 

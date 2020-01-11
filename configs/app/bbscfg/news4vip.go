@@ -1,4 +1,4 @@
-package setting
+package bbscfg
 
 type News4vip struct{}
 

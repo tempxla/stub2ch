@@ -1,7 +1,7 @@
 package testutil
 
 import (
-	"github.com/tempxla/stub2ch/configs/app/setting"
+	"github.com/tempxla/stub2ch/configs/app/bbscfg"
 )
 
 type SettingStub struct{}
@@ -29,6 +29,6 @@ func (_ *SettingStub) STUB_THREAD_COUNT() int       { return 500 }
 func (_ *SettingStub) STUB_MESSAGE_COUNT() int      { return 1000 }
 func (_ *SettingStub) STUB_DAT_CAPACITY() int       { return 500 * 1024 }
 
-func NewSettingStub() setting.BBS {
+func NewSettingStub() bbscfg.Setting {
 	return &SettingStub{}
 }

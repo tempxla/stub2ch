@@ -1,11 +1,18 @@
-package setting
+package bbscfg
 
 import (
 	"bytes"
 	"fmt"
 )
 
-type BBS interface {
+var (
+	settings = map[string]Setting{
+		"news4vip": &News4vip{},
+		"poverty":  &Poverty{},
+	}
+)
+
+type Setting interface {
 	BBS_TITLE() string
 	BBS_NONAME_NAME() string
 	BBS_UNICODE() string
@@ -30,18 +37,11 @@ type BBS interface {
 	STUB_DAT_CAPACITY() int       // 許容バイト数
 }
 
-func GetSetting(boardName string) BBS {
-	switch boardName {
-	case "news4vip":
-		return &News4vip{}
-	case "poverty":
-		return &Poverty{}
-	default:
-		return nil
-	}
+func GetSetting(boardName string) Setting {
+	return settings[boardName]
 }
 
-func MakeSettingTxt(setting BBS) []byte {
+func MakeSettingTxt(setting Setting) []byte {
 	sb := &bytes.Buffer{}
 	fmt.Fprintf(sb, "BBS_TITLE=%s\n", setting.BBS_TITLE())
 	fmt.Fprintf(sb, "BBS_NONAME_NAME=%s\n", setting.BBS_NONAME_NAME())

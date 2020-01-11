@@ -1,7 +1,8 @@
-package head
+package bbscfg
 
 var (
-	head_new4vip = []byte(`<pre>
+	heads = map[string][]byte{
+		"new4vip": []byte(`<pre>
 　　／⌒ヽ
 　 ∩ ^ω^) な ん だ
 　 |　 ⊂ﾉ
@@ -19,9 +20,9 @@ var (
 　 ／　　_つ　おっ
 　(_(_⌒)′
 　 ∪(ノ
-</pre>`)
+</pre>`),
 
-	head_poverty = []byte(`<pre>
+		"poverty": []byte(`<pre>
 　　　　　　　　＼　　ヽ　　　　　! |　　　　 /
 　　　　　＼　　　　ヽ　　　ヽ　　　　　　　/　　　　/　　 　 　 ／
 　　　　　　んああぁぁああぁああああぁぁぁああああ！！！！！
@@ -35,18 +36,10 @@ var (
 　　　　　　　　　　　　　　 ).　 c/　　 ,つ 　 ,l~
 　　　　　　　　　　　　　 ´y　　｛ ,、 ｛　 　 <
 　　　　　　　　　　　　　　 ゝ 　 lﾉ ヽ,)　　 ,
-</pre>`)
+</pre>`),
+	}
 )
 
 func MakeHeadTxt(boardName string) []byte {
-	switch boardName {
-	case "news4vip":
-		return head_new4vip
-	case "poverty":
-		return head_poverty
-	default:
-		return nil
-	}
-
-	return nil
+	return heads[boardName]
 }

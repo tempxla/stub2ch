@@ -9,9 +9,9 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/tempxla/stub2ch/configs/app/bbscfg"
 	"github.com/tempxla/stub2ch/configs/app/config"
 	"github.com/tempxla/stub2ch/configs/app/secretcfg"
-	"github.com/tempxla/stub2ch/configs/app/setting"
 	"github.com/tempxla/stub2ch/internal/app/types/entity/board"
 	"github.com/tempxla/stub2ch/internal/app/types/entity/dat"
 	"github.com/tempxla/stub2ch/internal/app/types/errors"
@@ -144,7 +144,7 @@ func (sv *BoardService) MakeSubjectTxt(boardName string) (_ []byte, err error) {
 }
 
 // Creates a Thread
-func (sv *BoardService) CreateThread(stng setting.BBS, boardName string,
+func (sv *BoardService) CreateThread(stng bbscfg.Setting, boardName string,
 	name string, mail string, now time.Time, id string, message string,
 	title string) (threadKey string, err error) {
 
@@ -201,7 +201,7 @@ func (sv *BoardService) CreateThread(stng setting.BBS, boardName string,
 	return
 }
 
-func (sv *BoardService) WriteDat(stng setting.BBS, boardName, threadKey,
+func (sv *BoardService) WriteDat(stng bbscfg.Setting, boardName, threadKey,
 	name, mail, id, message string) (resnum int, err error) {
 
 	// Creates a Key instance.
@@ -250,7 +250,7 @@ func (sv *BoardService) WriteDat(stng setting.BBS, boardName, threadKey,
 	return
 }
 
-func updateSubjectsWhenWriteDat(stng setting.BBS, board *board.Entity,
+func updateSubjectsWhenWriteDat(stng bbscfg.Setting, board *board.Entity,
 	threadKey string, mail string, now time.Time) (resnum int, err error) {
 
 	sbjLen := len(board.Subjects)
