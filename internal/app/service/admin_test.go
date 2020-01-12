@@ -23,10 +23,8 @@ func TestVerifySession_notfound(t *testing.T) {
 		t.Fatalf("Failed to create client: %v", err)
 	}
 
-	mem := &AlterMemcache{
-		Client:  client,
-		Context: ctx,
-	}
+	mem := NewAlterMemcache(ctx, client)
+
 	admin := &AdminFunction{
 		mem: mem,
 	}
@@ -53,10 +51,7 @@ func TestVerifySession_unmatch(t *testing.T) {
 		t.Fatalf("Failed to create client: %v", err)
 	}
 
-	mem := &AlterMemcache{
-		Client:  client,
-		Context: ctx,
-	}
+	mem := NewAlterMemcache(ctx, client)
 	admin := &AdminFunction{
 		mem: mem,
 	}
@@ -88,10 +83,7 @@ func TestVerifySession(t *testing.T) {
 		t.Fatalf("Failed to create client: %v", err)
 	}
 
-	mem := &AlterMemcache{
-		Client:  client,
-		Context: ctx,
-	}
+	mem := NewAlterMemcache(ctx, client)
 	admin := &AdminFunction{
 		mem: mem,
 	}
@@ -123,10 +115,7 @@ func TestLogin(t *testing.T) {
 		t.Fatalf("Failed to create client: %v", err)
 	}
 
-	mem := &AlterMemcache{
-		Client:  client,
-		Context: ctx,
-	}
+	mem := NewAlterMemcache(ctx, client)
 	admin := &AdminFunction{
 		mem: mem,
 	}
@@ -163,10 +152,7 @@ func TestLogin_fail(t *testing.T) {
 		t.Fatalf("Failed to create client: %v", err)
 	}
 
-	mem := &AlterMemcache{
-		Client:  client,
-		Context: ctx,
-	}
+	mem := NewAlterMemcache(ctx, client)
 	admin := &AdminFunction{
 		mem: mem,
 	}
@@ -206,10 +192,7 @@ func TestLogout(t *testing.T) {
 		t.Fatalf("Failed to create client: %v", err)
 	}
 
-	mem := &AlterMemcache{
-		Client:  client,
-		Context: ctx,
-	}
+	mem := NewAlterMemcache(ctx, client)
 	admin := &AdminFunction{
 		mem: mem,
 	}

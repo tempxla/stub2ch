@@ -13,8 +13,15 @@ type BoardMemcache interface {
 }
 
 type AlterMemcache struct {
-	Context context.Context
-	Client  *datastore.Client
+	context context.Context
+	client  *datastore.Client
+}
+
+func NewAlterMemcache(ctx context.Context, client *datastore.Client) *AlterMemcache {
+	return &AlterMemcache{
+		context: ctx,
+		client:  client,
+	}
 }
 
 func (mem *AlterMemcache) Set(item *memcache.Item) error {
@@ -23,14 +30,14 @@ func (mem *AlterMemcache) Set(item *memcache.Item) error {
 		Expiration: item.Expiration,
 	}
 	key := datastore.NameKey(memcache.KIND, item.Key, nil)
-	_, err := mem.Client.Put(mem.Context, key, memItem)
+	_, err := mem.client.Put(mem.context, key, memItem)
 	return err
 }
 
 func (mem *AlterMemcache) Get(key string) (*memcache.Item, error) {
 	dskey := datastore.NameKey(memcache.KIND, key, nil)
 	memItem := &memcache.MemcacheItem{}
-	err := mem.Client.Get(mem.Context, dskey, memItem)
+	err := mem.client.Get(mem.context, dskey, memItem)
 	if err != nil {
 		if err == datastore.ErrNoSuchEntity {
 			return nil, memcache.ErrCacheMiss
@@ -48,13 +55,10 @@ func (mem *AlterMemcache) Get(key string) (*memcache.Item, error) {
 
 func (mem *AlterMemcache) Delete(key string) error {
 	dskey := datastore.NameKey(memcache.KIND, key, nil)
-	err := mem.Client.Delete(mem.Context, dskey)
+	err := mem.client.Delete(mem.context, dskey)
 	if err != nil {
-		if err == datastore.ErrNoSuchEntity {
-			return memcache.ErrCacheMiss
-		} else {
-			return err
-		}
+		// if no such entities, err is nil.
+		return err
 	}
 	return nil
 }

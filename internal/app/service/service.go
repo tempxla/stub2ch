@@ -66,10 +66,7 @@ func DefaultBoardService() (*BoardService, error) {
 		StartedTime:   time.Now().In(jst),
 		ComputeIdSalt: secretcfg.COMPUTE_ID_SALT,
 	}
-	mem := &AlterMemcache{
-		Context: ctx,
-		Client:  client,
-	}
+	mem := NewAlterMemcache(ctx, client)
 
 	return NewBoardService(RepoConf(repo), EnvConf(sysEnv), AdminConf(repo, mem)), nil
 }
