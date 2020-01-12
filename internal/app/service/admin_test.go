@@ -1,10 +1,7 @@
 package service
 
 import (
-	"cloud.google.com/go/datastore"
-	"context"
 	"github.com/tempxla/stub2ch/configs/app/admincfg"
-	"github.com/tempxla/stub2ch/configs/app/config"
 	"github.com/tempxla/stub2ch/internal/app/service/repository"
 	"github.com/tempxla/stub2ch/internal/app/types/entity/memcache"
 	"github.com/tempxla/stub2ch/tools/app/testutil"
@@ -13,15 +10,9 @@ import (
 )
 
 func TestVerifySession_notfound(t *testing.T) {
-	// Setup
-	// ----------------------------------
-	ctx := context.Background()
 
-	// Creates a client.
-	client, err := datastore.NewClient(ctx, config.PROJECT_ID)
-	if err != nil {
-		t.Fatalf("Failed to create client: %v", err)
-	}
+	ctx, client := testutil.NewContextAndClient(t)
+	testutil.CleanDatastoreBy(t, ctx, client)
 
 	mem := NewAlterMemcache(ctx, client)
 
@@ -32,24 +23,18 @@ func TestVerifySession_notfound(t *testing.T) {
 	mem.Delete(admincfg.LOGIN_COOKIE_NAME)
 
 	// Exercise
-	err = admin.VerifySession("x")
+	err := admin.VerifySession("x")
 
 	// Verify
 	if err == nil {
-		t.Errorf("err is nil")
+		t.Errorf(`admin.VerifySession("x") = nil`)
 	}
 }
 
 func TestVerifySession_unmatch(t *testing.T) {
-	// Setup
-	// ----------------------------------
-	ctx := context.Background()
 
-	// Creates a client.
-	client, err := datastore.NewClient(ctx, config.PROJECT_ID)
-	if err != nil {
-		t.Fatalf("Failed to create client: %v", err)
-	}
+	ctx, client := testutil.NewContextAndClient(t)
+	testutil.CleanDatastoreBy(t, ctx, client)
 
 	mem := NewAlterMemcache(ctx, client)
 	admin := &AdminFunction{
@@ -64,24 +49,18 @@ func TestVerifySession_unmatch(t *testing.T) {
 	mem.Set(item)
 
 	// Exercise
-	err = admin.VerifySession("x")
+	err := admin.VerifySession("x")
 
 	// Verify
 	if err == nil {
-		t.Errorf("err is nil")
+		t.Errorf(`admin.VerifySession("x") = nil`)
 	}
 }
 
 func TestVerifySession(t *testing.T) {
-	// Setup
-	// ----------------------------------
-	ctx := context.Background()
 
-	// Creates a client.
-	client, err := datastore.NewClient(ctx, config.PROJECT_ID)
-	if err != nil {
-		t.Fatalf("Failed to create client: %v", err)
-	}
+	ctx, client := testutil.NewContextAndClient(t)
+	testutil.CleanDatastoreBy(t, ctx, client)
 
 	mem := NewAlterMemcache(ctx, client)
 	admin := &AdminFunction{
@@ -96,7 +75,7 @@ func TestVerifySession(t *testing.T) {
 	mem.Set(item)
 
 	// Exercise
-	err = admin.VerifySession("XXXX")
+	err := admin.VerifySession("XXXX")
 
 	// Verify
 	if err != nil {
@@ -105,15 +84,9 @@ func TestVerifySession(t *testing.T) {
 }
 
 func TestLogin(t *testing.T) {
-	// Setup
-	// ----------------------------------
-	ctx := context.Background()
 
-	// Creates a client.
-	client, err := datastore.NewClient(ctx, config.PROJECT_ID)
-	if err != nil {
-		t.Fatalf("Failed to create client: %v", err)
-	}
+	ctx, client := testutil.NewContextAndClient(t)
+	testutil.CleanDatastoreBy(t, ctx, client)
 
 	mem := NewAlterMemcache(ctx, client)
 	admin := &AdminFunction{
@@ -131,26 +104,19 @@ func TestLogin(t *testing.T) {
 	}
 
 	sid, err := admin.Login(string(passphrase), string(base64Sig))
-
 	if err != nil {
-		t.Errorf("%v", err)
+		t.Error(err)
 	}
 
 	if len(sid) < 32 { // 16 byte
-		t.Errorf("weakness %v", sid)
+		t.Errorf("len(sid) < 32: weakness!! %v", sid)
 	}
 }
 
 func TestLogin_fail(t *testing.T) {
-	// Setup
-	// ----------------------------------
-	ctx := context.Background()
 
-	// Creates a client.
-	client, err := datastore.NewClient(ctx, config.PROJECT_ID)
-	if err != nil {
-		t.Fatalf("Failed to create client: %v", err)
-	}
+	ctx, client := testutil.NewContextAndClient(t)
+	testutil.CleanDatastoreBy(t, ctx, client)
 
 	mem := NewAlterMemcache(ctx, client)
 	admin := &AdminFunction{
@@ -174,23 +140,17 @@ func TestLogin_fail(t *testing.T) {
 		{pass: passphrase, sig: []byte("wrong sig")},
 		{pass: []byte("wrong pass"), sig: base64Sig},
 	}
-	for _, ts := range tests {
-		if _, err := admin.Login(string(ts.pass), string(ts.sig)); err == nil {
-			t.Error("err is nil")
+	for i, tt := range tests {
+		if _, err := admin.Login(string(tt.pass), string(tt.sig)); err == nil {
+			t.Errorf("%d: admin.Login(%s, %s) = nil", i, tt.pass, tt.sig)
 		}
 	}
 }
 
 func TestLogout(t *testing.T) {
-	// Setup
-	// ----------------------------------
-	ctx := context.Background()
 
-	// Creates a client.
-	client, err := datastore.NewClient(ctx, config.PROJECT_ID)
-	if err != nil {
-		t.Fatalf("Failed to create client: %v", err)
-	}
+	ctx, client := testutil.NewContextAndClient(t)
+	testutil.CleanDatastoreBy(t, ctx, client)
 
 	mem := NewAlterMemcache(ctx, client)
 	admin := &AdminFunction{
@@ -203,37 +163,28 @@ func TestLogout(t *testing.T) {
 	}
 	mem.Set(item)
 
-	err = admin.Logout()
-
+	err := admin.Logout()
 	if err != nil {
 		t.Error(err)
 	}
 }
 
 func TestCreateBoard(t *testing.T) {
-	// Setup
-	// ----------------------------------
-	ctx := context.Background()
 
-	// Creates a client.
-	client, err := datastore.NewClient(ctx, config.PROJECT_ID)
-	if err != nil {
-		t.Fatalf("Failed to create client: %v", err)
-	}
-
+	ctx, client := testutil.NewContextAndClient(t)
 	testutil.CleanDatastoreBy(t, ctx, client)
 
 	admin := &AdminFunction{
 		repo: repository.NewBoardStore(ctx, client),
 	}
 
-	err = admin.CreateBoard("news4test")
+	err := admin.CreateBoard("news4test")
 	if err != nil {
-		t.Errorf("first: %v", err)
+		t.Errorf(`first: admin.CreateBoard("news4test") = %v`, err)
 	}
 
 	err = admin.CreateBoard("news4test")
 	if err == nil {
-		t.Error("second: err is nil.")
+		t.Error(`second: admin.CreateBoard("news4test") = nil`)
 	}
 }
