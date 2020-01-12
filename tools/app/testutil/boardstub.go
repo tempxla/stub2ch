@@ -27,11 +27,11 @@ func (repo *BoardStub) DatKey(name string, parent *board.Key) (key *dat.Key) {
 }
 
 func (repo *BoardStub) GetBoard(key *board.Key, entity *board.Entity) (err error) {
-	if e, ok := repo.BoardMap[key.DSKey.Name]; ok {
-		entity.Subjects = e.Subjects
-		return
-	} else {
+	if e, ok := repo.BoardMap[key.DSKey.Name]; !ok {
 		return datastore.ErrNoSuchEntity
+	} else {
+		*entity = *e
+		return
 	}
 }
 
@@ -46,8 +46,7 @@ func (repo *BoardStub) GetDat(key *dat.Key, entity *dat.Entity) (err error) {
 	} else if e, ok := board[key.DSKey.Name]; !ok {
 		return datastore.ErrNoSuchEntity
 	} else {
-		entity.Bytes = e.Bytes
-		entity.LastModified = e.LastModified
+		*entity = *e
 		return
 	}
 }
@@ -88,12 +87,9 @@ func (repo *BoardStub) TxPutDat(tx *datastore.Transaction, key *dat.Key, entity 
 	err = repo.PutDat(key, entity)
 	return
 }
+
 func (repo *BoardStub) TxGetAllBoard(tx *datastore.Transaction, entities *[]*board.Entity) (keys []*board.Key, err error) {
-	for k, v := range repo.BoardMap {
-		*entities = append(*entities, v)
-		keys = append(keys, repo.BoardKey(k))
-	}
-	return
+	return repo.GetAllBoard(entities)
 }
 
 func (repo *BoardStub) TxPutMultiBoard(tx *datastore.Transaction, keys []*board.Key, entities []*board.Entity) (err error) {

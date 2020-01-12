@@ -249,11 +249,7 @@ func TestGetWriteCount(t *testing.T) {
 
 	// Verify
 	count, err := admin.GetWriteCount()
-	if err != nil {
-		t.Errorf("admin.GetWriteCount() = %v", err)
+	if count != 20 || err != nil {
+		t.Errorf("admin.GetWriteCount() = %v, %v. want: 20, nil", count, err)
 	}
-	if count != 20 {
-		t.Errorf("count: %d", count)
-	}
-
 }
