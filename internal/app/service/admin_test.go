@@ -214,3 +214,18 @@ func TestCreateBoard(t *testing.T) {
 		t.Error(`second: admin.CreateBoard("news4test") = nil`)
 	}
 }
+
+func TestCreateBoard_DatastoreError(t *testing.T) {
+
+	ctx, client := testutil.NewContextAndClient(t)
+	testutil.CleanDatastoreBy(t, ctx, client)
+
+	admin := &AdminFunction{
+		repo: testutil.NewBrokenBoardStub(),
+	}
+
+	err := admin.CreateBoard("news4test")
+	if err == nil {
+		t.Error(`admin.CreateBoard("news4test") = nil`)
+	}
+}

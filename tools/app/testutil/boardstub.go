@@ -2,6 +2,7 @@ package testutil
 
 import (
 	"cloud.google.com/go/datastore"
+	"fmt"
 	"github.com/tempxla/stub2ch/internal/app/types/entity/board"
 	"github.com/tempxla/stub2ch/internal/app/types/entity/dat"
 	"time"
@@ -134,4 +135,16 @@ func NewBoardStub(boardName string, threads []ThreadStub) *BoardStub {
 		}
 	}
 	return stub
+}
+
+type BrokenBoardStub struct {
+	*BoardStub
+}
+
+func NewBrokenBoardStub() *BrokenBoardStub {
+	return &BrokenBoardStub{}
+}
+
+func (repo *BrokenBoardStub) TxGetBoard(tx *datastore.Transaction, key *board.Key, entity *board.Entity) (err error) {
+	return fmt.Errorf("[boardstub dummy error] TxGetBoard(tx, %v, %v)", key, entity)
 }
