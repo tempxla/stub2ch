@@ -3,6 +3,7 @@ package service
 import (
 	"github.com/tempxla/stub2ch/configs/app/admincfg"
 	"github.com/tempxla/stub2ch/internal/app/service/repository"
+	"github.com/tempxla/stub2ch/internal/app/types/entity/board"
 	"github.com/tempxla/stub2ch/internal/app/types/entity/memcache"
 	"github.com/tempxla/stub2ch/tools/app/testutil"
 	"io/ioutil"
@@ -228,4 +229,31 @@ func TestCreateBoard_DatastoreError(t *testing.T) {
 	if err == nil {
 		t.Error(`admin.CreateBoard("news4test") = nil`)
 	}
+}
+
+func TestGetWriteCount(t *testing.T) {
+	ctx, client := testutil.NewContextAndClient(t)
+	testutil.CleanDatastoreBy(t, ctx, client)
+
+	repo := testutil.EmptyBoardStub()
+	admin := &AdminFunction{
+		repo: repo,
+	}
+
+	repo.PutBoard(repo.BoardKey("news4test1"), &board.Entity{
+		WriteCount: 7,
+	})
+	repo.PutBoard(repo.BoardKey("news4test2"), &board.Entity{
+		WriteCount: 13,
+	})
+
+	// Verify
+	count, err := admin.GetWriteCount()
+	if err != nil {
+		t.Errorf("admin.GetWriteCount() = %v", err)
+	}
+	if count != 20 {
+		t.Errorf("count: %d", count)
+	}
+
 }
