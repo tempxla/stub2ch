@@ -27,7 +27,7 @@ func TestVerifySession_notfound(t *testing.T) {
 
 	// Verify
 	if err == nil {
-		t.Errorf(`admin.VerifySession("x") = nil`)
+		t.Errorf(`err is nil. want: cache miss error.`)
 	}
 }
 
@@ -53,7 +53,7 @@ func TestVerifySession_unmatch(t *testing.T) {
 
 	// Verify
 	if err == nil {
-		t.Errorf(`admin.VerifySession("x") = nil`)
+		t.Errorf(`err is nil. want: unmatch value.`)
 	}
 }
 
@@ -142,8 +142,34 @@ func TestLogin_fail(t *testing.T) {
 	}
 	for i, tt := range tests {
 		if _, err := admin.Login(string(tt.pass), string(tt.sig)); err == nil {
-			t.Errorf("%d: admin.Login(%s, %s) = nil", i, tt.pass, tt.sig)
+			t.Errorf("%d: admin.Login(%s, %s) = nil. want: a error. ", i, tt.pass, tt.sig)
 		}
+	}
+}
+
+func TestLogin_MemcacheError(t *testing.T) {
+
+	ctx, client := testutil.NewContextAndClient(t)
+	testutil.CleanDatastoreBy(t, ctx, client)
+
+	mem := testutil.NewBrokenMemcache()
+	admin := &AdminFunction{
+		mem: mem,
+	}
+
+	passphrase, err := ioutil.ReadFile("/tmp/pass_stub2ch.txt")
+	if err != nil {
+		t.Error(err)
+	}
+
+	base64Sig, err := ioutil.ReadFile("/tmp/sig_stub2ch.txt")
+	if err != nil {
+		t.Error(err)
+	}
+
+	_, err = admin.Login(string(passphrase), string(base64Sig))
+	if err == nil {
+		t.Error("err is nil. want: [memcache error] Set()")
 	}
 }
 
