@@ -93,7 +93,9 @@ func (repo *BoardStub) TxGetAllBoard(tx *datastore.Transaction, entities *[]*boa
 }
 
 func (repo *BoardStub) TxPutMultiBoard(tx *datastore.Transaction, keys []*board.Key, entities []*board.Entity) (err error) {
-	panic("not implement")
+	for i, k := range keys {
+		repo.PutBoard(k, entities[i])
+	}
 	return
 }
 

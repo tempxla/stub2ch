@@ -253,3 +253,33 @@ func TestGetWriteCount(t *testing.T) {
 		t.Errorf("admin.GetWriteCount() = %v, %v. want: 20, nil", count, err)
 	}
 }
+
+func TestResetWriteCount(t *testing.T) {
+	ctx, client := testutil.NewContextAndClient(t)
+	testutil.CleanDatastoreBy(t, ctx, client)
+
+	repo := testutil.EmptyBoardStub()
+	admin := &AdminFunction{
+		repo: repo,
+	}
+
+	repo.PutBoard(repo.BoardKey("news4test1"), &board.Entity{
+		WriteCount: 7,
+	})
+	repo.PutBoard(repo.BoardKey("news4test2"), &board.Entity{
+		WriteCount: 13,
+	})
+
+	err := admin.ResetWriteCount()
+	if err != nil {
+		t.Errorf("admin.ResetWriteCount() = %v", err)
+	}
+
+	// Verify
+	count, err := admin.GetWriteCount()
+	if count != 0 || err != nil {
+		t.Errorf("admin.ResetWriteCount() failure ? \n "+
+			"admin.GetWriteCount() = %v, %v. want: 20, nil", count, err)
+	}
+
+}
