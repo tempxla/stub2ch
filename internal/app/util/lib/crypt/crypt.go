@@ -105,7 +105,7 @@ var gPC2_D = []byte{
 /*
  * Set up the key schedule from the key.
  */
-func setkey(key [66]byte, st *state) {
+func setkey(key *[66]byte, st *state) {
 	var i, j, k byte
 	var t byte
 
@@ -368,7 +368,7 @@ func crypt(pw, salt []byte, st *state) []byte {
 		i++
 	}
 
-	setkey(block, st)
+	setkey(&block, st)
 
 	for i = 0; i < 66; i++ {
 		block[i] = 0
