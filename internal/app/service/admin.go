@@ -1,11 +1,13 @@
 package service
 
 import (
+	"cloud.google.com/go/datastore"
 	"crypto/sha256"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/tempxla/stub2ch/configs/app/admincfg"
 	"github.com/tempxla/stub2ch/internal/app/service/repository"
+	"github.com/tempxla/stub2ch/internal/app/types/entity/board"
 	"github.com/tempxla/stub2ch/internal/app/types/entity/memcache"
 	"github.com/tempxla/stub2ch/internal/app/util"
 	"log"
@@ -13,7 +15,7 @@ import (
 )
 
 type AdminFunction struct {
-	repo repository.AdminBoardRepository
+	repo repository.BoardRepository
 	mem  BoardMemcache
 }
 
@@ -58,15 +60,60 @@ func (admin *AdminFunction) Logout() error {
 	return admin.mem.Delete(admincfg.LOGIN_COOKIE_NAME)
 }
 
+// 空の板を作成する。
+// すでに存在する場合エラーを返す。
 func (admin *AdminFunction) CreateBoard(boardName string) error {
 	log.Printf("CreateBoard: %v", boardName)
-	return admin.repo.CreateBoard(boardName)
+
+	key := admin.repo.BoardKey(boardName)
+	newEntity := &board.Entity{
+		Subjects: []board.Subject{},
+	}
+	entity := &board.Entity{}
+
+	return admin.repo.RunInTransaction(func(tx *datastore.Transaction) error {
+		err := admin.repo.GetBoard(key, entity)
+		if err != nil && err != datastore.ErrNoSuchEntity {
+			// datastoreのエラー
+			return err
+		}
+		if err == nil {
+			// already exists.
+			return fmt.Errorf("entity duplicated: %v", boardName)
+		}
+		// err == datastore.ErrNoSuchEntity
+		return admin.repo.PutBoard(key, newEntity)
+	})
 }
 
-func (admin *AdminFunction) GetWriteCount() (int, error) {
-	return admin.repo.GetWriteCount()
+func (admin *AdminFunction) GetWriteCount() (_ int, err error) {
+
+	var entities []*board.Entity
+	_, err = admin.repo.GetAllBoard(&entities)
+	if err != nil {
+		return
+	}
+
+	count := 0
+	for _, entity := range entities {
+		count += entity.WriteCount
+	}
+
+	return count, nil
 }
 
 func (admin *AdminFunction) ResetWriteCount() error {
-	return admin.repo.ResetWriteCount()
+	return admin.repo.RunInTransaction(func(tx *datastore.Transaction) error {
+		var entities []*board.Entity
+		keys, err := admin.repo.TxGetAllBoard(tx, &entities)
+		if err != nil {
+			return err
+		}
+
+		for i, _ := range keys {
+			entities[i].WriteCount = 0
+		}
+
+		return admin.repo.TxPutMultiBoard(tx, keys, entities)
+	})
 }
