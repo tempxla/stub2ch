@@ -84,7 +84,7 @@ func (repo *BoardStub) TxPutDat(tx *datastore.Transaction, key *dat.Key, entity 
 	err = repo.PutDat(key, entity)
 	return
 }
-func (repo *BoardStub) TxGetAllBoard(tx *datastore.Transaction, entities []*board.Entity) (keys []*board.Key, err error) {
+func (repo *BoardStub) TxGetAllBoard(tx *datastore.Transaction, entities *[]*board.Entity) (keys []*board.Key, err error) {
 	panic("not implement")
 	return
 }

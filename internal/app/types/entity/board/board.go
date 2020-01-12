@@ -29,5 +29,5 @@ type Subject struct {
 }
 
 func (e *Entity) String() string {
-	return fmt.Sprintf("Subjects:%v, WriteCount:%v", e.Subjects, e.WriteCount)
+	return fmt.Sprintf("::%p:: Subjects:%v, WriteCount:%v", e, e.Subjects, e.WriteCount)
 }

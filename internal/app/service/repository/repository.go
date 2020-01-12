@@ -3,7 +3,6 @@ package repository
 import (
 	"cloud.google.com/go/datastore"
 	"context"
-	"github.com/tempxla/stub2ch/configs/app/bbscfg"
 	"github.com/tempxla/stub2ch/internal/app/types/entity/board"
 	"github.com/tempxla/stub2ch/internal/app/types/entity/dat"
 )
@@ -21,7 +20,7 @@ type BoardRepository interface {
 	TxPutBoard(tx *datastore.Transaction, key *board.Key, entity *board.Entity) (err error)
 	TxGetDat(tx *datastore.Transaction, key *dat.Key, entity *dat.Entity) (err error)
 	TxPutDat(tx *datastore.Transaction, key *dat.Key, entity *dat.Entity) (err error)
-	TxGetAllBoard(tx *datastore.Transaction, entities []*board.Entity) (keys []*board.Key, err error)
+	TxGetAllBoard(tx *datastore.Transaction, entities *[]*board.Entity) (keys []*board.Key, err error)
 	TxPutMultiBoard(tx *datastore.Transaction, keys []*board.Key, entities []*board.Entity) (err error)
 }
 
@@ -105,19 +104,23 @@ func (repo *BoardStore) TxPutDat(tx *datastore.Transaction, key *dat.Key, entity
 	return
 }
 
-func (repo *BoardStore) TxGetAllBoard(tx *datastore.Transaction, entities []*board.Entity) (keys []*board.Key, err error) {
-	// make keys
-	boardNames := bbscfg.GetAllBoardName()
-	multiKey := make([]*datastore.Key, len(boardNames))
-	for i, name := range boardNames {
-		multiKey[i] = datastore.NameKey(board.KIND, name, nil)
-	}
+func (repo *BoardStore) TxGetAllBoard(tx *datastore.Transaction, entities *[]*board.Entity) (keys []*board.Key, err error) {
 
-	err = tx.GetMulti(multiKey, &entities)
+	// あやしい
+	multiKey, err := repo.client.GetAll(repo.context, datastore.NewQuery(board.KIND).KeysOnly(), nil)
 	if err != nil {
 		return
 	}
 
+	dst := make([]*board.Entity, len(multiKey))
+	err = tx.GetMulti(multiKey, dst) // dst must be a []S, []*S, []I or []P,...
+	if err != nil {
+		return
+	}
+
+	for _, v := range dst {
+		*entities = append(*entities, v)
+	}
 	for _, k := range multiKey {
 		keys = append(keys, &board.Key{DSKey: k})
 	}

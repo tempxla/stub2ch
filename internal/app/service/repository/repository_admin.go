@@ -67,7 +67,7 @@ func (admin *AdminBoardStore) ResetWriteCount() (err error) {
 	err = admin.repo.RunInTransaction(func(tx *datastore.Transaction) error {
 
 		var entities []*board.Entity
-		keys, err := admin.repo.TxGetAllBoard(tx, entities)
+		keys, err := admin.repo.TxGetAllBoard(tx, &entities)
 		if err != nil {
 			return err
 		}
