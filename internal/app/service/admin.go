@@ -72,7 +72,7 @@ func (admin *AdminFunction) CreateBoard(boardName string) error {
 	entity := &board.Entity{}
 
 	return admin.repo.RunInTransaction(func(tx *datastore.Transaction) error {
-		err := admin.repo.GetBoard(key, entity)
+		err := admin.repo.TxGetBoard(tx, key, entity)
 		if err != nil && err != datastore.ErrNoSuchEntity {
 			// datastoreのエラー
 			return err
@@ -82,7 +82,7 @@ func (admin *AdminFunction) CreateBoard(boardName string) error {
 			return fmt.Errorf("entity duplicated: %v", boardName)
 		}
 		// err == datastore.ErrNoSuchEntity
-		return admin.repo.PutBoard(key, newEntity)
+		return admin.repo.TxPutBoard(tx, key, newEntity)
 	})
 }
 
