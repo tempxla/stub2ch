@@ -2,7 +2,6 @@ package service
 
 import (
 	"github.com/tempxla/stub2ch/configs/app/admincfg"
-	"github.com/tempxla/stub2ch/internal/app/service/repository"
 	"github.com/tempxla/stub2ch/internal/app/types/entity/board"
 	"github.com/tempxla/stub2ch/internal/app/types/entity/memcache"
 	"github.com/tempxla/stub2ch/tools/app/testutil"
@@ -198,11 +197,8 @@ func TestLogout(t *testing.T) {
 
 func TestCreateBoard(t *testing.T) {
 
-	ctx, client := testutil.NewContextAndClient(t)
-	testutil.CleanDatastoreBy(t, ctx, client)
-
 	admin := &AdminFunction{
-		repo: repository.NewBoardStore(ctx, client),
+		repo: testutil.EmptyBoardStub(),
 	}
 
 	err := admin.CreateBoard("news4test")
@@ -217,9 +213,6 @@ func TestCreateBoard(t *testing.T) {
 }
 
 func TestGetWriteCount(t *testing.T) {
-
-	ctx, client := testutil.NewContextAndClient(t)
-	testutil.CleanDatastoreBy(t, ctx, client)
 
 	repo := testutil.EmptyBoardStub()
 	admin := &AdminFunction{
@@ -241,9 +234,6 @@ func TestGetWriteCount(t *testing.T) {
 }
 
 func TestResetWriteCount(t *testing.T) {
-
-	ctx, client := testutil.NewContextAndClient(t)
-	testutil.CleanDatastoreBy(t, ctx, client)
 
 	repo := testutil.EmptyBoardStub()
 	admin := &AdminFunction{
@@ -272,9 +262,6 @@ func TestResetWriteCount(t *testing.T) {
 
 func Test_DatastoreError(t *testing.T) {
 
-	ctx, client := testutil.NewContextAndClient(t)
-	testutil.CleanDatastoreBy(t, ctx, client)
-
 	admin := &AdminFunction{
 		repo: testutil.NewBrokenBoardStub(),
 	}
@@ -289,6 +276,7 @@ func Test_DatastoreError(t *testing.T) {
 		t.Error("admin.GetWriteCount(); err = nil")
 	}
 
+	// *** ResetWriteCount ***
 	if err := admin.ResetWriteCount(); err == nil {
 		t.Error("ResetWriteCount(); err == nil")
 	}
