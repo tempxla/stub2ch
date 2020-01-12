@@ -152,3 +152,15 @@ func NewBrokenBoardStub() *BrokenBoardStub {
 func (repo *BrokenBoardStub) TxGetBoard(tx *datastore.Transaction, key *board.Key, entity *board.Entity) (err error) {
 	return fmt.Errorf("[boardstub dummy error] TxGetBoard(tx, %v, %v)", key, entity)
 }
+
+func (repo *BrokenBoardStub) GetAllBoard(entities *[]*board.Entity) (keys []*board.Key, err error) {
+	return nil, fmt.Errorf("[boardstub dummy error] GetAllBoard(%v)", entities)
+}
+
+func (repo *BrokenBoardStub) TxGetAllBoard(tx *datastore.Transaction, entities *[]*board.Entity) (keys []*board.Key, err error) {
+	return nil, fmt.Errorf("[boardstub dummy error] TxGetAllBoard(tx, %v)", entities)
+}
+
+func (repo *BrokenBoardStub) TxPutMultiBoard(tx *datastore.Transaction, keys []*board.Key, entities []*board.Entity) (err error) {
+	return fmt.Errorf("[boardstub dummy error] TxPutMultiBoard(tx, %v)", keys)
+}

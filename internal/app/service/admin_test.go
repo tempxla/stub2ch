@@ -216,22 +216,8 @@ func TestCreateBoard(t *testing.T) {
 	}
 }
 
-func TestCreateBoard_DatastoreError(t *testing.T) {
-
-	ctx, client := testutil.NewContextAndClient(t)
-	testutil.CleanDatastoreBy(t, ctx, client)
-
-	admin := &AdminFunction{
-		repo: testutil.NewBrokenBoardStub(),
-	}
-
-	err := admin.CreateBoard("news4test")
-	if err == nil {
-		t.Error(`admin.CreateBoard("news4test") = nil`)
-	}
-}
-
 func TestGetWriteCount(t *testing.T) {
+
 	ctx, client := testutil.NewContextAndClient(t)
 	testutil.CleanDatastoreBy(t, ctx, client)
 
@@ -255,6 +241,7 @@ func TestGetWriteCount(t *testing.T) {
 }
 
 func TestResetWriteCount(t *testing.T) {
+
 	ctx, client := testutil.NewContextAndClient(t)
 	testutil.CleanDatastoreBy(t, ctx, client)
 
@@ -281,5 +268,28 @@ func TestResetWriteCount(t *testing.T) {
 		t.Errorf("admin.ResetWriteCount() failure ? \n "+
 			"admin.GetWriteCount() = %v, %v. want: 20, nil", count, err)
 	}
+}
 
+func Test_DatastoreError(t *testing.T) {
+
+	ctx, client := testutil.NewContextAndClient(t)
+	testutil.CleanDatastoreBy(t, ctx, client)
+
+	admin := &AdminFunction{
+		repo: testutil.NewBrokenBoardStub(),
+	}
+
+	// *** CreateBoard ***
+	if err := admin.CreateBoard("news4test"); err == nil {
+		t.Error(`admin.CreateBoard("news4test") = nil`)
+	}
+
+	// *** GetWriteCount() ***
+	if _, err := admin.GetWriteCount(); err == nil {
+		t.Error("admin.GetWriteCount(); err = nil")
+	}
+
+	if err := admin.ResetWriteCount(); err == nil {
+		t.Error("ResetWriteCount(); err == nil")
+	}
 }
