@@ -71,7 +71,7 @@ func (repo *BoardStore) PutDat(key *dat.Key, entity *dat.Entity) (err error) {
 func (repo *BoardStore) GetAllBoard(entities *[]*board.Entity) (keys []*board.Key, err error) {
 	ks, err := repo.client.GetAll(repo.context, datastore.NewQuery(board.KIND), entities)
 	if err != nil {
-		return nil, err
+		return
 	}
 	for _, k := range ks {
 		keys = append(keys, &board.Key{DSKey: k})

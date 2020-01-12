@@ -132,6 +132,20 @@ func TestGetAllBoard(t *testing.T) {
 	}
 }
 
+func TestGetAllBoard_Error(t *testing.T) {
+
+	ctx, client := testutil.NewContextAndClient(t)
+	testutil.CleanDatastoreBy(t, ctx, client)
+
+	repo := NewBoardStore(ctx, client)
+
+	// *** GetAll ***
+	// an arugument is nil
+	if _, err := repo.GetAllBoard(nil); err == nil {
+		t.Error("err is nil")
+	}
+}
+
 // Put したものを Getできるか？
 func TestTxPutAndGetBoard(t *testing.T) {
 
