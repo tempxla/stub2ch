@@ -3,9 +3,11 @@ package handle
 import (
 	"fmt"
 	"github.com/tempxla/stub2ch/internal/app/util"
+	"github.com/tempxla/stub2ch/tools/app/testutil"
 	"html"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -249,7 +251,7 @@ func TestRequireBoardName(t *testing.T) {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		s, ok := requireBoardName(w, r)
+		s, ok := requireBoardName(w, r) // *** Execute ***
 		if !ok {
 			return
 		}
@@ -263,12 +265,122 @@ func TestRequireBoardName(t *testing.T) {
 	}{
 		{"news4test", 200, "news4test"},
 		{"01234567890", 400, ""},
+		{"あ", 400, ""},
 	}
 
 	for i, tt := range tests {
 		writer := httptest.NewRecorder()
 		request, _ := http.NewRequest("POST", "/", nil)
 		request.PostForm = map[string][]string{"bbs": {tt.param}}
+		mux.ServeHTTP(writer, request)
+
+		if writer.Code != tt.code {
+			t.Errorf("%d: wirte.Code = %d, want: %d", i, writer.Code, tt.code)
+		}
+		if tt.code == 200 && writer.Body.String() != tt.body {
+			t.Errorf("%d: writer.Body.String() = %s, want: %s", i, writer.Body.String(), tt.body)
+		}
+	}
+}
+
+func TestRequireThreadKey(t *testing.T) {
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		s, ok := requireThreadKey(w, r) // *** Execute ***
+		if !ok {
+			return
+		}
+		fmt.Fprint(w, s)
+	})
+
+	tests := []struct {
+		param string
+		code  int
+		body  string
+	}{
+		{"1", 200, "1"},
+		{"01234567890", 400, ""},
+		{"あ", 400, ""},
+	}
+
+	for i, tt := range tests {
+		writer := httptest.NewRecorder()
+		request, _ := http.NewRequest("POST", "/", nil)
+		request.PostForm = map[string][]string{"key": {tt.param}}
+		mux.ServeHTTP(writer, request)
+
+		if writer.Code != tt.code {
+			t.Errorf("%d: wirte.Code = %d, want: %d", i, writer.Code, tt.code)
+		}
+		if tt.code == 200 && writer.Body.String() != tt.body {
+			t.Errorf("%d: writer.Body.String() = %s, want: %s", i, writer.Body.String(), tt.body)
+		}
+	}
+}
+
+func TestRequireTime(t *testing.T) {
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		s, ok := requireTime(w, r) // *** Execute ***
+		if !ok {
+			return
+		}
+		fmt.Fprint(w, s)
+	})
+
+	tests := []struct {
+		param string
+		code  int
+		body  string
+	}{
+		{"1", 200, "1"},
+		{"", 400, ""},
+	}
+
+	for i, tt := range tests {
+		writer := httptest.NewRecorder()
+		request, _ := http.NewRequest("POST", "/", nil)
+		request.PostForm = map[string][]string{"time": {tt.param}}
+		mux.ServeHTTP(writer, request)
+
+		if writer.Code != tt.code {
+			t.Errorf("%d: wirte.Code = %d, want: %d", i, writer.Code, tt.code)
+		}
+		if tt.code == 200 && writer.Body.String() != tt.body {
+			t.Errorf("%d: writer.Body.String() = %s, want: %s", i, writer.Body.String(), tt.body)
+		}
+	}
+}
+
+func TestRequireName(t *testing.T) {
+
+	stng := testutil.NewSettingStub()
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		s, ok := requireName(w, r, stng) // *** Execute ***
+		if !ok {
+			return
+		}
+		fmt.Fprint(w, s)
+	})
+
+	tests := []struct {
+		param string
+		code  int
+		body  string
+	}{
+		{"testname\n", 200, "testname"},
+		{" \t\n", 200, stng.BBS_NONAME_NAME()},
+		{strings.Repeat("s", stng.BBS_NAME_COUNT()+1), 400, ""},
+	}
+
+	for i, tt := range tests {
+		writer := httptest.NewRecorder()
+		request, _ := http.NewRequest("POST", "/", nil)
+		request.PostForm = map[string][]string{"FROM": {tt.param}}
 		mux.ServeHTTP(writer, request)
 
 		if writer.Code != tt.code {

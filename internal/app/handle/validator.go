@@ -76,6 +76,8 @@ func maxByte(max int) func(string) (string, error) {
 	}
 }
 
+// \t, \n 以外の制御文字を削除する
+// \t, \nは後の工程でなんとかする。
 func delBadChar(s string) (string, error) {
 	f := func(r rune) rune {
 		if '\u0000' <= r && r < '\u0009' { // NUL <= r < HT
@@ -104,11 +106,14 @@ func sjisToUtf8String(s string) (string, error) {
 func trip(s string) (string, error) {
 	idx := strings.IndexRune(s, '#')
 	if idx != -1 {
+		// トリップじゃい
 		trip := util.ComputeTrip(util.UTF8toSJISString(s[idx+1:]))
-		return fmt.Sprintf("%s </b>◆%s <b>",
-			strings.ReplaceAll(html.EscapeString(s[:idx]), "◆", "◇"), trip), nil
+		name := strings.ReplaceAll(html.EscapeString(s[:idx]), "◆", "◇")
+		return fmt.Sprintf("%s </b>◆%s <b>", name, trip), nil
 	} else {
-		return strings.ReplaceAll(html.EscapeString(s), "◆", "◇"), nil
+		// トリップ無し
+		name := strings.ReplaceAll(html.EscapeString(s), "◆", "◇")
+		return name, nil
 	}
 }
 
@@ -136,6 +141,7 @@ func process(src func() (string, error),
 func requireBoardName(w http.ResponseWriter, r *http.Request) (string, bool) {
 	boardName, err := process(requireOne(r, "bbs"),
 		maxLen(10),
+		between("0", "zzzzzzzzzz"),
 	)
 
 	if err != nil {
@@ -147,7 +153,9 @@ func requireBoardName(w http.ResponseWriter, r *http.Request) (string, bool) {
 
 func requireThreadKey(w http.ResponseWriter, r *http.Request) (string, bool) {
 	threadKey, err := process(requireOne(r, "key"),
-		maxLen(10), between("0000000000", "9999999999"))
+		maxLen(10),
+		between("0000000000", "9999999999"),
+	)
 
 	if err != nil {
 		http.Error(w, fmt.Sprintf(param_error_format, "key", err), http.StatusBadRequest)
@@ -157,7 +165,9 @@ func requireThreadKey(w http.ResponseWriter, r *http.Request) (string, bool) {
 }
 
 func requireTime(w http.ResponseWriter, r *http.Request) (string, bool) {
-	t, err := process(requireOne(r, "time"), notEmpty)
+	t, err := process(requireOne(r, "time"),
+		notEmpty,
+	)
 
 	if err != nil {
 		http.Error(w, fmt.Sprintf(param_error_format, "time", err), http.StatusBadRequest)
@@ -167,12 +177,12 @@ func requireTime(w http.ResponseWriter, r *http.Request) (string, bool) {
 }
 
 func requireName(w http.ResponseWriter, r *http.Request, setting bbscfg.Setting) (string, bool) {
-
 	name, err := process(requireOne(r, "FROM"),
 		maxByte(setting.BBS_NAME_COUNT()),
 		sjisToUtf8String,
 		trip, // 制御文字とかどうなるんやろ＞トリップ
 		delBadChar,
+		trimWhitespace,
 	)
 
 	if err != nil {

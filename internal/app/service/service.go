@@ -335,8 +335,11 @@ func escapeDatMessage(str string) string {
 	return strings.ReplaceAll(str, "\n", "<br>")
 }
 
+// メッセージ以外は\tも意味を持たないので削除する。
+// メッセージはAAがあるので削除しない。
 func escapeDat(str string) string {
 	s := strings.ReplaceAll(str, "\n", "")
+	s = strings.ReplaceAll(str, "\t", "")
 	return s
 }
 
