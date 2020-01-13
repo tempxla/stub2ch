@@ -3,6 +3,7 @@ package handle
 import (
 	"fmt"
 	"github.com/tempxla/stub2ch/internal/app/util"
+	"html"
 	"net/http"
 	"testing"
 )
@@ -149,18 +150,45 @@ func TestMaxByte(t *testing.T) {
 func TestDelBadChar(t *testing.T) {
 	rs := []rune{'a', '\n', 'b', '\t', 'c', '[', '\u0000', '\u000B', '\u001F', '\u007F', ']'}
 
-	act, _ := delBadChar(string(rs))
+	act, err := delBadChar(string(rs))
 	exp := "a\nb\tc[    ]"
 
-	if act != exp {
-		t.Errorf("\nact: %#v\nexp: %#v", act, exp)
+	if act != exp || err != nil {
+		t.Errorf("\nact: %#v\nexp: %#v, err = %v", act, exp, err)
+	}
+}
+
+func TestHtmlUnescapeString(t *testing.T) {
+	tests := []struct {
+		arg, want string
+	}{
+		{`<>"'&`, html.UnescapeString(`<>"'&`)},
+	}
+	for _, tt := range tests {
+		value, err := htmlUnescapeString(tt.arg)
+		if value != tt.want || err != nil {
+			t.Errorf("htmlUnescapeString(%v) = (%v, %v), want: %v", tt.arg, value, err, tt.want)
+		}
+	}
+}
+
+func TestSjisToUtf8String(t *testing.T) {
+	tests := []struct {
+		arg, want string
+	}{
+		{util.UTF8toSJISString("あいうえお"), "あいうえお"},
+	}
+	for _, tt := range tests {
+		value, err := sjisToUtf8String(tt.arg)
+		if value != tt.want || err != nil {
+			t.Errorf("sjisToUtf8String(%v) = (%v, %v), want: %v", tt.arg, value, err, tt.want)
+		}
 	}
 }
 
 func TestTrip(t *testing.T) {
 	tests := []struct {
-		name     string
-		expected string
+		name, expected string
 	}{
 		{"名無し", "名無し"},
 		{"名無し◆ABC◆XYZ", "名無し◇ABC◇XYZ"},
@@ -170,7 +198,7 @@ func TestTrip(t *testing.T) {
 	for _, tt := range tests {
 		actual, _ := trip(tt.name)
 		if actual != tt.expected {
-			t.Errorf("%v : %v", tt.name, actual)
+			t.Errorf("trip(%v) = %v, want: %v", tt.name, actual, tt.expected)
 		}
 	}
 }
