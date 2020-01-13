@@ -217,39 +217,21 @@ func TestTrimWhitespace(t *testing.T) {
 	}
 }
 
-func TestProcessParam(t *testing.T) {
-	// case 1
-	f := func() (string, error) { return "s", fmt.Errorf("errrrrr") }
+func TestProcess(t *testing.T) {
+	// sample func
+	errorFunc1 := func(s string) (string, error) { return "", fmt.Errorf("errrrrr") }
+	successFuncS := func(s string) (string, error) { return "s", nil }
+	successFuncT := func(s string) (string, error) { return s + "t", nil }
+	errorFunc2 := func(s string) (string, error) { return "", fmt.Errorf("errhhhh") }
 
-	if _, err := process(f); err == nil {
-		t.Error("case 1: err is nil")
-	}
-
-	// case 2
-	g := func() (string, error) { return "s", nil }
-
-	s, err := process(g)
-	if err != nil {
-		t.Errorf("case 2 err: %v", err)
-	}
-	if s != "s" {
-		t.Errorf("case 2 value: %v", s)
-	}
-
-	// case 3
-	h1 := func(s string) (string, error) { return s + "t", nil }
-	h2 := func(s string) (string, error) { return s + "u", fmt.Errorf("errhhhh") }
-	if _, err := process(g, h1, h2); err == nil {
-		t.Error("case 3: err is nil")
-	}
-
-	// case 4
-	h3 := func(s string) (string, error) { return s + "u", nil }
-	s, err = process(g, h1, h3)
-	if err != nil {
-		t.Errorf("case 4 err: %v", err)
-	}
-	if s != "stu" {
-		t.Errorf("case 4 value: %v", s)
+	tests := []struct {
+		funcs []func(string) (string, error)
+		want  string
+		err   error
+	}{
+		{[]func(string) (string, error){successFuncS}, "s", nil},
+		{[]func(string) (string, error){successFuncS, successFuncT}, "st", nil},
+		{[]func(string) (string, error){errorFunc1}, "", fmt.Errorf("errrrrr")},
+		{[]func(string) (string, error){successFuncS, errorFunc2}, "", fmt.Errorf("errhhhh")},
 	}
 }
