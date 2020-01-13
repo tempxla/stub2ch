@@ -46,7 +46,7 @@ func TestNewBoardService(t *testing.T) {
 	}
 }
 
-func TestMakeDat_ok(t *testing.T) {
+func TestMakeDat(t *testing.T) {
 	// Setup
 	now := testutil.NewTimeJST(t, "2020-01-13 20:54:12.123")
 	repo := testutil.NewBoardStub("news4test", []testutil.ThreadStub{
@@ -84,29 +84,6 @@ func TestMakeDat_ok(t *testing.T) {
 				t.Errorf(format, i, "lastModified", tt.boardName, tt.threadKey, lastModified, tt.lastModified)
 			}
 		}
-	}
-}
-
-func TestMakeDat_err(t *testing.T) {
-	// Setup
-	repo := testutil.NewBoardStub("news4test", []testutil.ThreadStub{
-		{
-			ThreadKey: "123",
-			Dat:       "1行目\n2行目",
-		},
-	})
-	env := &SysEnv{}
-	sv := NewBoardService(RepoConf(repo), EnvConf(env))
-
-	// Exercise
-	_, _, err := sv.MakeDat("news4test", "999")
-
-	// Verify
-	if err == nil {
-		t.Errorf("err is nil")
-	}
-	if err != datastore.ErrNoSuchEntity {
-		t.Errorf("err is %v", err)
 	}
 }
 
