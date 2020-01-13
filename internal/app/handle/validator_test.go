@@ -71,38 +71,48 @@ func TestNotBlank(t *testing.T) {
 }
 
 func TestBetween(t *testing.T) {
-	// error case
-	if _, err := between("bbb", "ddd")("eee"); err == nil {
-		t.Error("err is nil")
+
+	tests := []struct {
+		min, max  string
+		arg, want string
+		err       error
+	}{
+		{"bbb", "ddd", "bbb", "bbb", nil},
+		{"bbb", "ddd", "ccc", "ccc", nil},
+		{"bbb", "ddd", "ddd", "ddd", nil},
+		{"bbb", "ddd", "bbbb", "bbbb", nil},
+		{"bbb", "ddd", "eee", "", fmt.Errorf("between")},
+		{"bbb", "ddd", "aaa", "", fmt.Errorf("between")},
 	}
-	if _, err := between("bbb", "ddd")("aaa"); err == nil {
-		t.Error("err is nil")
-	}
-	// not error
-	xs := [...]string{"bbb", "ccc", "ddd", "bbbb"}
-	for _, x := range xs {
-		s, err := between("bbb", "ddd")(x)
-		if err != nil {
-			t.Errorf("err: %v", err)
-		}
-		if s != x {
-			t.Errorf("value: %v", s)
+
+	for i, tt := range tests {
+		value, err := between(tt.min, tt.max)(tt.arg)
+		if value != tt.want || (err == nil && tt.err != nil || err != nil && tt.err == nil) {
+			t.Errorf("%d: between(%v, %v)(%v) = (%v, %v), want: (%v, %v)",
+				i, tt.min, tt.max, tt.arg, value, err, tt.want, tt.err)
 		}
 	}
 }
 
 func TestMaxLen(t *testing.T) {
-	// error case
-	if _, err := maxLen(4)("12345"); err == nil {
-		t.Error("err is nil")
+
+	tests := []struct {
+		max       int
+		arg, want string
+		err       error
+	}{
+		{4, "1234", "1234", nil},
+		{4, "１２３４", "１２３４", nil},
+		{4, "12345", "", fmt.Errorf("maxLen")},
+		{4, "１２３４５", "", fmt.Errorf("maxLen")},
 	}
-	// not error
-	s, err := maxLen(4)("1234")
-	if err != nil {
-		t.Errorf("err: %v", err)
-	}
-	if s != "1234" {
-		t.Errorf("value: %v", s)
+
+	for i, tt := range tests {
+		value, err := maxLen(tt.max)(tt.arg)
+		if value != tt.want || (err == nil && tt.err != nil || err != nil && tt.err == nil) {
+			t.Errorf("%d: maxLen(%v)(%v) = (%v, %v), want: (%v, %v)",
+				i, tt.max, tt.arg, value, err, tt.want, tt.err)
+		}
 	}
 }
 

@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	"unicode/utf8"
 )
 
 func requireOne(r *http.Request, name string) func() (string, error) {
@@ -57,7 +58,7 @@ func between(a, b string) func(string) (string, error) {
 
 func maxLen(max int) func(string) (string, error) {
 	return func(s string) (str string, err error) {
-		if len(s) > max {
+		if utf8.RuneCountInString(s) > max {
 			err = fmt.Errorf(" len %s > %d", s, max)
 		} else {
 			str = s
