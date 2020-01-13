@@ -5,10 +5,8 @@ import (
 	"github.com/tempxla/stub2ch/configs/app/bbscfg"
 	"github.com/tempxla/stub2ch/internal/app/util"
 	"html"
-	"math/rand"
 	"net/http"
 	"strings"
-	"time"
 	"unicode/utf8"
 )
 
@@ -114,37 +112,6 @@ func trip(s string) (string, error) {
 	}
 }
 
-var omikuji_list = [...]string{"豚", "おっさん", "犬", "にゃあ", "男の娘", "神", "女神"}
-
-func omikuji(s string) (string, error) {
-	var idx int
-	rand.Seed(time.Now().UnixNano())
-	x := rand.Intn(1000)
-	if x < 10 {
-		idx = rand.Intn(len(omikuji_list))
-	} else if x < 100 {
-		idx = rand.Intn(len(omikuji_list) - 2)
-	} else {
-		idx = 0
-	}
-
-	return strings.ReplaceAll(s, "!omikuji", fmt.Sprintf("</b>【%s】<b>", omikuji_list[idx])), nil
-}
-
-func dama(s string) (string, error) {
-	var money int
-	rand.Seed(time.Now().UnixNano())
-	x := rand.Intn(1000)
-	if x < 10 {
-		money = rand.Intn(100 * 1000)
-	} else if x < 100 {
-		money = rand.Intn(10 * 1000)
-	} else {
-		money = rand.Intn(1 * 1000)
-	}
-	return strings.ReplaceAll(s, "!dama", fmt.Sprintf("</b>【%d円】<b>", money*1000)), nil
-}
-
 func trimWhitespace(s string) (string, error) {
 	return strings.Trim(s, "\t\n "), nil
 }
@@ -199,12 +166,11 @@ func requireTime(w http.ResponseWriter, r *http.Request) (string, bool) {
 }
 
 func requireName(w http.ResponseWriter, r *http.Request, setting bbscfg.Setting) (string, bool) {
+
 	name, err := process(requireOne(r, "FROM"),
 		maxByte(setting.BBS_NAME_COUNT()),
 		sjisToUtf8String,
 		trip, // 制御文字とかどうなるんやろ＞トリップ
-		dama,
-		omikuji,
 		delBadChar,
 	)
 
