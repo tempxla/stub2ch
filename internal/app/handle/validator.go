@@ -197,7 +197,11 @@ func requireName(w http.ResponseWriter, r *http.Request, setting bbscfg.Setting)
 
 func requireMail(w http.ResponseWriter, r *http.Request, setting bbscfg.Setting) (string, bool) {
 	mail, err := process(requireOne(r, "mail"),
-		maxByte(setting.BBS_MAIL_COUNT()), sjisToUtf8String, delBadChar)
+		maxByte(setting.BBS_MAIL_COUNT()),
+		sjisToUtf8String,
+		delBadChar,
+		trimWhitespace,
+	)
 
 	if err != nil {
 		http.Error(w, fmt.Sprintf(param_error_format, "mail", err), http.StatusBadRequest)
@@ -224,7 +228,12 @@ func requireMessage(w http.ResponseWriter, r *http.Request, setting bbscfg.Setti
 
 func requireTitle(w http.ResponseWriter, r *http.Request, setting bbscfg.Setting) (string, bool) {
 	title, err := process(requireOne(r, "subject"),
-		maxByte(setting.BBS_SUBJECT_COUNT()), sjisToUtf8String, delBadChar, notBlank)
+		maxByte(setting.BBS_SUBJECT_COUNT()),
+		sjisToUtf8String,
+		delBadChar,
+		trimWhitespace,
+		notBlank,
+	)
 
 	if err != nil {
 		http.Error(w, fmt.Sprintf(param_error_format, "subject", err), http.StatusBadRequest)

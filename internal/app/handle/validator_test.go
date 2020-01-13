@@ -372,7 +372,7 @@ func TestRequireName(t *testing.T) {
 		code  int
 		body  string
 	}{
-		{"testname\n", 200, "testname"},
+		{"\ntestname\n", 200, "testname"},
 		{" \t\n", 200, stng.BBS_NONAME_NAME()},
 		{strings.Repeat("s", stng.BBS_NAME_COUNT()+1), 400, ""},
 	}
@@ -381,6 +381,115 @@ func TestRequireName(t *testing.T) {
 		writer := httptest.NewRecorder()
 		request, _ := http.NewRequest("POST", "/", nil)
 		request.PostForm = map[string][]string{"FROM": {tt.param}}
+		mux.ServeHTTP(writer, request)
+
+		if writer.Code != tt.code {
+			t.Errorf("%d: wirte.Code = %d, want: %d", i, writer.Code, tt.code)
+		}
+		if tt.code == 200 && writer.Body.String() != tt.body {
+			t.Errorf("%d: writer.Body.String() = %s, want: %s", i, writer.Body.String(), tt.body)
+		}
+	}
+}
+
+func TestRequireMail(t *testing.T) {
+
+	stng := testutil.NewSettingStub()
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		s, ok := requireMail(w, r, stng) // *** Execute ***
+		if !ok {
+			return
+		}
+		fmt.Fprint(w, s)
+	})
+
+	tests := []struct {
+		param string
+		code  int
+		body  string
+	}{
+		{"\nsage\n", 200, "sage"},
+		{strings.Repeat("s", stng.BBS_MAIL_COUNT()+1), 400, ""},
+	}
+
+	for i, tt := range tests {
+		writer := httptest.NewRecorder()
+		request, _ := http.NewRequest("POST", "/", nil)
+		request.PostForm = map[string][]string{"mail": {tt.param}}
+		mux.ServeHTTP(writer, request)
+
+		if writer.Code != tt.code {
+			t.Errorf("%d: wirte.Code = %d, want: %d", i, writer.Code, tt.code)
+		}
+		if tt.code == 200 && writer.Body.String() != tt.body {
+			t.Errorf("%d: writer.Body.String() = %s, want: %s", i, writer.Body.String(), tt.body)
+		}
+	}
+}
+
+func TestRequireMessage(t *testing.T) {
+
+	stng := testutil.NewSettingStub()
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		s, ok := requireMessage(w, r, stng) // *** Execute ***
+		if !ok {
+			return
+		}
+		fmt.Fprint(w, s)
+	})
+
+	tests := []struct {
+		param string
+		code  int
+		body  string
+	}{
+		{util.UTF8toSJISString("\n本文\n本文\n"), 200, "本文\n本文"},
+		{strings.Repeat("s", stng.BBS_MESSAGE_COUNT()+1), 400, ""},
+	}
+
+	for i, tt := range tests {
+		writer := httptest.NewRecorder()
+		request, _ := http.NewRequest("POST", "/", nil)
+		request.PostForm = map[string][]string{"MESSAGE": {tt.param}}
+		mux.ServeHTTP(writer, request)
+
+		if writer.Code != tt.code {
+			t.Errorf("%d: wirte.Code = %d, want: %d", i, writer.Code, tt.code)
+		}
+		if tt.code == 200 && writer.Body.String() != tt.body {
+			t.Errorf("%d: writer.Body.String() = %s, want: %s", i, writer.Body.String(), tt.body)
+		}
+	}
+}
+
+func TestRequireReferer(t *testing.T) {
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		s, ok := requireReferer(w, r, "news4test") // *** Execute ***
+		if !ok {
+			return
+		}
+		fmt.Fprint(w, s)
+	})
+
+	tests := []struct {
+		param string
+		code  int
+		body  string
+	}{
+		{"/localhost/news4test/", 200, "/localhost/news4test/"},
+		{"", 400, ""},
+	}
+
+	for i, tt := range tests {
+		writer := httptest.NewRecorder()
+		request, _ := http.NewRequest("POST", "http://localhost/", nil)
+		request.Header.Set("Referer", tt.param)
 		mux.ServeHTTP(writer, request)
 
 		if writer.Code != tt.code {
