@@ -71,23 +71,16 @@ func TestMakeDat(t *testing.T) {
 
 	// Exercise
 	for i, tt := range tests {
-		format := "%d(%s): sv.MakeDat(%s, %s) = %v, want: %v"
 		dat, lastModified, err := sv.MakeDat(tt.boardName, tt.threadKey)
-		if err != nil && tt.err == nil || err == nil && tt.err != nil {
-			t.Errorf(format, i, "error", tt.boardName, tt.threadKey, err, tt.err)
-		}
-		if tt.err == nil {
-			if !bytes.Equal(dat, tt.dat) {
-				t.Errorf(format, i, "dat", tt.boardName, tt.threadKey, dat, tt.dat)
-			}
-			if !lastModified.Equal(tt.lastModified) {
-				t.Errorf(format, i, "lastModified", tt.boardName, tt.threadKey, lastModified, tt.lastModified)
-			}
+		if !bytes.Equal(dat, tt.dat) || !lastModified.Equal(tt.lastModified) || err != tt.err {
+			t.Errorf("%d: sv.MakeDat(%s, %s) = (%v, %v, %v), want: (%v, %v, %v)",
+				i, tt.boardName, tt.threadKey, dat, lastModified, err,
+				tt.dat, tt.lastModified, tt.err)
 		}
 	}
 }
 
-func TestMakeSubjectTxt_ok(t *testing.T) {
+func TestMakeSubjectTxt(t *testing.T) {
 	// Setup
 	repo := testutil.NewBoardStub("news4test", []testutil.ThreadStub{
 		{
@@ -106,50 +99,25 @@ func TestMakeSubjectTxt_ok(t *testing.T) {
 			MessageCount: 300,
 		},
 	})
-	env := &SysEnv{}
-	sv := NewBoardService(RepoConf(repo), EnvConf(env))
+
+	sv := NewBoardService(RepoConf(repo))
+
+	tests := []struct {
+		threadKey string
+		txt       []byte
+		err       error
+	}{
+		{"news4test", []byte("222.dat<>YYY \t (200)\n111.dat<>XXX \t (100)\n333.dat<>ZZZ \t (300)\n"), nil},
+		{"xxxxxxxxx", nil, datastore.ErrNoSuchEntity},
+	}
 
 	// Exercise
-	txt, err := sv.MakeSubjectTxt("news4test")
-
-	// Verify
-	if err != nil {
-		t.Errorf("subject.txt err: %v", err)
-	}
-	if !bytes.Equal(txt,
-		[]byte("222.dat<>YYY \t (200)\n111.dat<>XXX \t (100)\n333.dat<>ZZZ \t (300)\n")) {
-		t.Errorf("subject.txt actual: %v", txt)
-	}
-}
-
-func TestMakeSubjectTxt_err(t *testing.T) {
-	// Setup
-	repo := testutil.NewBoardStub("news4test", []testutil.ThreadStub{
-		{
-			ThreadKey:    "222",
-			ThreadTitle:  "YYY",
-			MessageCount: 200,
-		},
-		{
-			ThreadKey:    "111",
-			ThreadTitle:  "XXX",
-			MessageCount: 100,
-		},
-		{
-			ThreadKey:    "333",
-			ThreadTitle:  "ZZZ",
-			MessageCount: 300,
-		},
-	})
-	env := &SysEnv{}
-	sv := NewBoardService(RepoConf(repo), EnvConf(env))
-
-	// Exercise
-	_, err := sv.MakeSubjectTxt("news4test1")
-
-	// Verify
-	if err != datastore.ErrNoSuchEntity {
-		t.Errorf("err is %v", err)
+	for i, tt := range tests {
+		txt, err := sv.MakeSubjectTxt(tt.threadKey)
+		if !bytes.Equal(txt, tt.txt) || err != tt.err {
+			t.Errorf("%d: sv.MakeSubjectTxt(%v) = (%v, %v), want: (%v, %v)",
+				i, tt.threadKey, txt, err, tt.txt, tt.err)
+		}
 	}
 }
 
