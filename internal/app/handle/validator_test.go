@@ -5,6 +5,7 @@ import (
 	"github.com/tempxla/stub2ch/internal/app/util"
 	"html"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 )
 
@@ -218,6 +219,7 @@ func TestTrimWhitespace(t *testing.T) {
 }
 
 func TestProcess(t *testing.T) {
+	src := func() (string, error) { return "", nil }
 	// sample func
 	errorFunc1 := func(s string) (string, error) { return "", fmt.Errorf("errrrrr") }
 	successFuncS := func(s string) (string, error) { return "s", nil }
@@ -233,5 +235,47 @@ func TestProcess(t *testing.T) {
 		{[]func(string) (string, error){successFuncS, successFuncT}, "st", nil},
 		{[]func(string) (string, error){errorFunc1}, "", fmt.Errorf("errrrrr")},
 		{[]func(string) (string, error){successFuncS, errorFunc2}, "", fmt.Errorf("errhhhh")},
+	}
+
+	for i, tt := range tests {
+		value, err := process(src, tt.funcs...)
+		if value != tt.want || (err == nil && tt.err != nil || err != nil && tt.err == nil) {
+			t.Errorf("%d: process(src, funcs) = (%v, %v), want: %v", i, value, err, tt.want)
+		}
+	}
+}
+
+func TestRequireBoardName(t *testing.T) {
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		s, ok := requireBoardName(w, r)
+		if !ok {
+			return
+		}
+		fmt.Fprint(w, s)
+	})
+
+	tests := []struct {
+		param string
+		code  int
+		body  string
+	}{
+		{"news4test", 200, "news4test"},
+		{"01234567890", 400, ""},
+	}
+
+	for i, tt := range tests {
+		writer := httptest.NewRecorder()
+		request, _ := http.NewRequest("POST", "/", nil)
+		request.PostForm = map[string][]string{"bbs": {tt.param}}
+		mux.ServeHTTP(writer, request)
+
+		if writer.Code != tt.code {
+			t.Errorf("%d: wirte.Code = %d, want: %d", i, writer.Code, tt.code)
+		}
+		if tt.code == 200 && writer.Body.String() != tt.body {
+			t.Errorf("%d: writer.Body.String() = %s, want: %s", i, writer.Body.String(), tt.body)
+		}
 	}
 }

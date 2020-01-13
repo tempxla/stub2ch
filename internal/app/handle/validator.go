@@ -135,7 +135,8 @@ func process(src func() (string, error),
 
 func requireBoardName(w http.ResponseWriter, r *http.Request) (string, bool) {
 	boardName, err := process(requireOne(r, "bbs"),
-		maxLen(10), between("0", "zzzzzzzzzz"))
+		maxLen(10),
+	)
 
 	if err != nil {
 		http.Error(w, fmt.Sprintf(param_error_format, "bbs", err), http.StatusBadRequest)
