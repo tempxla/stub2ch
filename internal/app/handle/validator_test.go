@@ -6,74 +6,33 @@ import (
 	"testing"
 )
 
-func TestRequireOne_ok(t *testing.T) {
-	// Setup
-	r := &http.Request{
-		PostForm: map[string][]string{
-			"p1": []string{"v1"},
-		},
+func TestRequireOne(t *testing.T) {
+
+	tests := []struct {
+		param     map[string][]string
+		arg, want string
+		err       error
+	}{
+		{map[string][]string{"p1": {"v1"}}, "p1", "v1", nil},
+		{map[string][]string{"p1": {"v1"}}, "p2", "", fmt.Errorf("missing")},
+		{map[string][]string{"p1": {}}, "p1", "", fmt.Errorf("empty")},
+		{map[string][]string{"p1": {"v1", "v2"}}, "p1", "", fmt.Errorf("too many")},
 	}
 
-	// Exercise
-	s, err := requireOne(r, "p1")()
-
-	// Verify
-	if err != nil {
-		t.Errorf("err %v", err)
-	}
-	if s != "v1" {
-		t.Errorf("value: %v", s)
-	}
-}
-
-func TestRequireOne_missing(t *testing.T) {
-	// Setup
-	r := &http.Request{
-		PostForm: map[string][]string{
-			"p1": []string{"v1"},
-		},
-	}
-
-	// Exercise
-	_, err := requireOne(r, "p2")()
-
-	// Verify
-	if err == nil {
-		t.Errorf("err is nil")
-	}
-}
-
-func TestRequireOne_empty(t *testing.T) {
-	// Setup
-	r := &http.Request{
-		PostForm: map[string][]string{
-			"p1": []string{},
-		},
-	}
-
-	// Exercise
-	_, err := requireOne(r, "p1")()
-
-	// Verify
-	if err == nil {
-		t.Errorf("err is nil")
-	}
-}
-
-func TestRequireOne_many(t *testing.T) {
-	// Setup
-	r := &http.Request{
-		PostForm: map[string][]string{
-			"p1": []string{"v1", "v2"},
-		},
-	}
-
-	// Exercise
-	_, err := requireOne(r, "p1")()
-
-	// Verify
-	if err == nil {
-		t.Errorf("err is nil")
+	for i, tt := range tests {
+		r := &http.Request{
+			PostForm: tt.param,
+		}
+		value, err := requireOne(r, tt.arg)()
+		if value != tt.want {
+			t.Errorf("%d: requireOne(r, %v) = %v, want: %v", i, tt.arg, value, tt.want)
+		}
+		if tt.err == nil && err != nil || tt.err != nil && err == nil {
+			t.Errorf("%d: requireOne(r, %v) = %v \n"+
+				"tt.err = %v, err = %v",
+				i, tt.arg, value,
+				tt.err, err)
+		}
 	}
 }
 
