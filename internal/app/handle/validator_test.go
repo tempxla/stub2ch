@@ -24,30 +24,30 @@ func TestRequireOne(t *testing.T) {
 			PostForm: tt.param,
 		}
 		value, err := requireOne(r, tt.arg)()
-		if value != tt.want {
-			t.Errorf("%d: requireOne(r, %v) = %v, want: %v", i, tt.arg, value, tt.want)
-		}
-		if tt.err == nil && err != nil || tt.err != nil && err == nil {
-			t.Errorf("%d: requireOne(r, %v) = %v \n"+
-				"tt.err = %v, err = %v",
-				i, tt.arg, value,
-				tt.err, err)
+		if value != tt.want ||
+			(err == nil && tt.err != nil || err != nil && tt.err == nil) {
+			t.Errorf("%d: requireOne(r, %v) = (%v, %v), want: (%v, %v)",
+				i, tt.arg, value, err, tt.want, tt.err)
 		}
 	}
 }
 
 func TestNotEmpty(t *testing.T) {
-	// error case
-	if _, err := notEmpty(""); err == nil {
-		t.Error("err is nil")
+
+	tests := []struct {
+		arg, want string
+		err       error
+	}{
+		{"s1", "s1", nil},
+		{"", "", fmt.Errorf("0 byte")},
 	}
-	// not error
-	s, err := notEmpty("s1")
-	if err != nil {
-		t.Errorf("err: %v", err)
-	}
-	if s != "s1" {
-		t.Errorf("value: %v", s)
+
+	for i, tt := range tests {
+		s, err := notEmpty(tt.arg)
+		if s != tt.want || (err == nil && tt.err != nil || err != nil && tt.err == nil) {
+			t.Errorf("%d: notEmpty(%v) = (%v, %v), want: (%v, %v)",
+				i, tt.arg, s, err, tt.want, tt.err)
+		}
 	}
 }
 
