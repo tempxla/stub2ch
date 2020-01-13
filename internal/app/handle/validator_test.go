@@ -43,26 +43,30 @@ func TestNotEmpty(t *testing.T) {
 	}
 
 	for i, tt := range tests {
-		s, err := notEmpty(tt.arg)
-		if s != tt.want || (err == nil && tt.err != nil || err != nil && tt.err == nil) {
+		value, err := notEmpty(tt.arg)
+		if value != tt.want || (err == nil && tt.err != nil || err != nil && tt.err == nil) {
 			t.Errorf("%d: notEmpty(%v) = (%v, %v), want: (%v, %v)",
-				i, tt.arg, s, err, tt.want, tt.err)
+				i, tt.arg, value, err, tt.want, tt.err)
 		}
 	}
 }
 
 func TestNotBlank(t *testing.T) {
-	// error case
-	if _, err := notBlank(" 　\n\r\t\v"); err == nil {
-		t.Error("err is nil")
+
+	tests := []struct {
+		arg, want string
+		err       error
+	}{
+		{" s1 ", " s1 ", nil},
+		{" 　\n\r\t\v", "", fmt.Errorf("blank")},
 	}
-	// not error
-	s, err := notBlank(" s1 ")
-	if err != nil {
-		t.Errorf("err: %v", err)
-	}
-	if s != " s1 " {
-		t.Errorf("value: %v", s)
+
+	for i, tt := range tests {
+		value, err := notBlank(tt.arg)
+		if value != tt.want || (err == nil && tt.err != nil || err != nil && tt.err == nil) {
+			t.Errorf("%d: notBlank(%v) = (%v, %v), want: (%v, %v)",
+				i, tt.arg, value, err, tt.want, tt.err)
+		}
 	}
 }
 
