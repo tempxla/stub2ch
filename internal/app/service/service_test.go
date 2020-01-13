@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/tempxla/stub2ch/configs/app/config"
-	"github.com/tempxla/stub2ch/configs/app/secretcfg"
 	"github.com/tempxla/stub2ch/internal/app/service/repository"
 	"github.com/tempxla/stub2ch/internal/app/types/entity/board"
 	"github.com/tempxla/stub2ch/internal/app/types/entity/dat"
@@ -18,20 +17,32 @@ import (
 
 func TestDefaultBoardService(t *testing.T) {
 	sv, err := DefaultBoardService()
-	if err != nil {
-		t.Error(err)
-	}
-	if sv.env.SaltComputeId() != secretcfg.COMPUTE_ID_SALT {
-		t.Error("unexpected COMPUTE_ID_SALT")
+	if sv == nil || err != nil {
+		t.Errorf("DefaultBoardService() = %v, %v", sv, err)
 	}
 }
 
 func TestNewBoardService(t *testing.T) {
-	var repo *repository.BoardStore
-	var env *SysEnv
-	sv := NewBoardService(RepoConf(repo), EnvConf(env))
-	if sv.repo != repo || sv.env != env {
-		t.Errorf("%v", sv)
+
+	ctx, client := testutil.NewContextAndClient(t)
+
+	repo := repository.NewBoardStore(ctx, client)
+	env := &SysEnv{}
+	mem := NewAlterMemcache(ctx, client)
+
+	sv := NewBoardService(RepoConf(repo), EnvConf(env), AdminConf(repo, mem))
+
+	if sv.repo != repo {
+		t.Errorf("sv.repo = %v", sv.repo)
+	}
+	if sv.env != env {
+		t.Errorf("sv.env = %v", sv.env)
+	}
+	if sv.Admin.repo != repo {
+		t.Errorf("sv.Admin.repo = %v", sv.Admin.repo)
+	}
+	if sv.Admin.mem != mem {
+		t.Errorf("sv.Admin.mem = %v", sv.Admin.mem)
 	}
 }
 
