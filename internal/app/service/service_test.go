@@ -48,29 +48,42 @@ func TestNewBoardService(t *testing.T) {
 
 func TestMakeDat_ok(t *testing.T) {
 	// Setup
-	now := time.Now()
+	now := testutil.NewTimeJST(t, "2020-01-13 20:54:12.123")
 	repo := testutil.NewBoardStub("news4test", []testutil.ThreadStub{
 		{
 			ThreadKey:    "123",
-			Dat:          "1行目\n2行目",
+			Dat:          "1行目\n2行目\n",
 			LastModified: now,
 		},
 	})
-	env := &SysEnv{}
-	sv := NewBoardService(RepoConf(repo), EnvConf(env))
+
+	sv := NewBoardService(RepoConf(repo))
+
+	tests := []struct {
+		boardName, threadKey string
+		dat                  []byte
+		lastModified         time.Time
+		err                  error
+	}{
+		{"news4test", "123", []byte("1行目\n2行目\n"), now, nil},
+		{"news4test", "999", nil, time.Time{}, datastore.ErrNoSuchEntity},
+	}
 
 	// Exercise
-	dat, lastModified, err := sv.MakeDat("news4test", "123")
-
-	// Verify
-	if err != nil {
-		t.Errorf("dat err: %v", err)
-	}
-	if !bytes.Equal(dat, []byte("1行目\n2行目")) {
-		t.Errorf("dat content err. actual: %v", dat)
-	}
-	if !lastModified.Equal(now) {
-		t.Errorf("lastModified: %v", lastModified)
+	for i, tt := range tests {
+		format := "%d(%s): sv.MakeDat(%s, %s) = %v, want: %v"
+		dat, lastModified, err := sv.MakeDat(tt.boardName, tt.threadKey)
+		if err != nil && tt.err == nil || err == nil && tt.err != nil {
+			t.Errorf(format, i, "error", tt.boardName, tt.threadKey, err, tt.err)
+		}
+		if tt.err == nil {
+			if !bytes.Equal(dat, tt.dat) {
+				t.Errorf(format, i, "dat", tt.boardName, tt.threadKey, dat, tt.dat)
+			}
+			if !lastModified.Equal(tt.lastModified) {
+				t.Errorf(format, i, "lastModified", tt.boardName, tt.threadKey, lastModified, tt.lastModified)
+			}
+		}
 	}
 }
 
