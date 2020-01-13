@@ -203,6 +203,20 @@ func TestTrip(t *testing.T) {
 	}
 }
 
+func TestTrimWhitespace(t *testing.T) {
+	tests := []struct {
+		arg, want string
+	}{
+		{"\t\n abc \t\n ", "abc"},
+	}
+	for _, tt := range tests {
+		value, err := trimWhitespace(tt.arg)
+		if value != tt.want || err != nil {
+			t.Errorf("trimWhitespace(%v) = (%v, %v), want: %v", tt.arg, value, err, tt.want)
+		}
+	}
+}
+
 func TestProcessParam(t *testing.T) {
 	// case 1
 	f := func() (string, error) { return "s", fmt.Errorf("errrrrr") }
