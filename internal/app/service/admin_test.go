@@ -208,7 +208,7 @@ func TestCreateBoard(t *testing.T) {
 
 	err = admin.CreateBoard("news4test")
 	if err == nil {
-		t.Error(`second: admin.CreateBoard("news4test") = nil`)
+		t.Error(`second: admin.CreateBoard("news4test") = nil, want a error`)
 	}
 }
 
@@ -256,7 +256,7 @@ func TestResetWriteCount(t *testing.T) {
 	count, err := admin.GetWriteCount()
 	if count != 0 || err != nil {
 		t.Errorf("admin.ResetWriteCount() failure ? \n "+
-			"admin.GetWriteCount() = %v, %v. want: 20, nil", count, err)
+			"admin.GetWriteCount() = %v, %v. want: 0, nil", count, err)
 	}
 }
 
@@ -268,16 +268,16 @@ func Test_DatastoreError(t *testing.T) {
 
 	// *** CreateBoard ***
 	if err := admin.CreateBoard("news4test"); err == nil {
-		t.Error(`admin.CreateBoard("news4test") = nil`)
+		t.Error(`admin.CreateBoard("news4test") = nil, want a error`)
 	}
 
 	// *** GetWriteCount() ***
 	if _, err := admin.GetWriteCount(); err == nil {
-		t.Error("admin.GetWriteCount(); err = nil")
+		t.Error("admin.GetWriteCount(); err == nil, want a error")
 	}
 
 	// *** ResetWriteCount ***
 	if err := admin.ResetWriteCount(); err == nil {
-		t.Error("ResetWriteCount(); err == nil")
+		t.Error("ResetWriteCount(); err == nil, want a error")
 	}
 }
