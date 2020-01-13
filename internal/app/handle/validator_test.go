@@ -2,6 +2,7 @@ package handle
 
 import (
 	"fmt"
+	"github.com/tempxla/stub2ch/internal/app/util"
 	"net/http"
 	"testing"
 )
@@ -111,6 +112,35 @@ func TestMaxLen(t *testing.T) {
 		value, err := maxLen(tt.max)(tt.arg)
 		if value != tt.want || (err == nil && tt.err != nil || err != nil && tt.err == nil) {
 			t.Errorf("%d: maxLen(%v)(%v) = (%v, %v), want: (%v, %v)",
+				i, tt.max, tt.arg, value, err, tt.want, tt.err)
+		}
+	}
+}
+
+func TestMaxByte(t *testing.T) {
+
+	tests := []struct {
+		max       int
+		arg, want string
+		err       error
+	}{
+		{4, "1234", "1234", nil},
+		{6, "１２", "１２", nil},
+		{4, "12345", "", fmt.Errorf("maxByte")},
+		{6, "１２3", "", fmt.Errorf("maxByte")},
+		// SJIS
+		{5, util.UTF8toSJISString("ABCDE"), util.UTF8toSJISString("ABCDE"), nil},
+		{5, util.UTF8toSJISString("ｱｲｳｴｵ"), util.UTF8toSJISString("ｱｲｳｴｵ"), nil},
+		{6, util.UTF8toSJISString("亜細亜"), util.UTF8toSJISString("亜細亜"), nil},
+		{5, util.UTF8toSJISString("ABCDEA"), "", fmt.Errorf("maxByte")},
+		{5, util.UTF8toSJISString("ｱｲｳｴｵA"), "", fmt.Errorf("maxByte")},
+		{6, util.UTF8toSJISString("亜細亜A"), "", fmt.Errorf("maxByte")},
+	}
+
+	for i, tt := range tests {
+		value, err := maxByte(tt.max)(tt.arg)
+		if value != tt.want || (err == nil && tt.err != nil || err != nil && tt.err == nil) {
+			t.Errorf("%d: maxByte(%v)(%v) = (%v, %v), want: (%v, %v)",
 				i, tt.max, tt.arg, value, err, tt.want, tt.err)
 		}
 	}

@@ -69,7 +69,7 @@ func maxLen(max int) func(string) (string, error) {
 
 func maxByte(max int) func(string) (string, error) {
 	return func(s string) (str string, err error) {
-		if len([]byte(s)) > max {
+		if len(s) > max {
 			err = fmt.Errorf(" byte len %s > %d", s, max)
 		} else {
 			str = s
