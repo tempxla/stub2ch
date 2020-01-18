@@ -298,6 +298,28 @@ func TestCreateSubject(t *testing.T) {
 	}
 }
 
+func TestAppendSubject(t *testing.T) {
+	sbj1 := createSubject(testutil.NewTimeJST(t, "2020-01-18 23:05:01.234"), "title1")
+	sbj2 := createSubject(testutil.NewTimeJST(t, "2020-01-18 23:05:02.234"), "title2")
+	sbj3 := createSubject(testutil.NewTimeJST(t, "2020-01-18 23:05:03.234"), "title3")
+	boardEntity := &board.Entity{}
+	appendSubject(boardEntity, sbj1)
+	appendSubject(boardEntity, sbj2)
+	appendSubject(boardEntity, sbj3)
+
+	if ln := len(boardEntity.Subjects); ln != 3 {
+		t.Errorf("len = %v, want = %v, boardEntity.Subjects = %v", ln, 3, boardEntity.Subjects)
+	}
+	if boardEntity.Subjects[0] != *sbj3 ||
+		boardEntity.Subjects[1] != *sbj2 ||
+		boardEntity.Subjects[2] != *sbj1 {
+		t.Errorf("boardEntity.Subjects = %v", boardEntity.Subjects)
+	}
+	if boardEntity.WriteCount != 3 {
+		t.Errorf("boardEntity.WriteCount = %v, want: %v", boardEntity.WriteCount, 3)
+	}
+}
+
 func TestWriteDat(t *testing.T) {
 	// Setup
 	// ----------------------------------
