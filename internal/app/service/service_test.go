@@ -189,6 +189,7 @@ func TestCreateThread(t *testing.T) {
 			threadKey, err := sv.CreateThread(stng, tt.boardName,
 				tt.name, tt.mail, tt.time, tt.id, tt.message, tt.title)
 
+			// verify error case.
 			if tt.err != nil {
 				if err == nil {
 					t.Errorf("(%d,%d) err is nil, want: %v", i, j, tt.err)
@@ -256,6 +257,44 @@ func TestCreateThread_EntityLimit(t *testing.T) {
 	_, err = sv.CreateThread(stng, "news4test", "nameN", "mailN", testutil.NewTimeJST(t, "2020-01-18 12:45:58.123"), "ABCDEFGH0N", "messageN", "titleN")
 	if err == nil {
 		t.Errorf("err is nil, want: %v", fmt.Errorf("%d: 今日はこれ以上スレ立てできません。。。", stng.STUB_WRITE_ENTITY_LIMIT()))
+	}
+}
+
+func TestCreateSubject(t *testing.T) {
+	tests := []struct {
+		now   time.Time
+		title string
+		want  *board.Subject
+	}{
+		{
+			testutil.NewTimeJST(t, "2020-01-18 22:38:12.345"), "タイトル1",
+			&board.Subject{
+				ThreadKey:    "1579354692",
+				ThreadTitle:  "タイトル1",
+				MessageCount: 1,
+				LastModified: testutil.NewTimeJST(t, "2020-01-18 22:38:12.345"),
+			},
+		},
+		{
+			testutil.NewTimeJST(t, "2020-01-18 22:38:13.345"), "タイトル2<>",
+			&board.Subject{
+				ThreadKey:    "1579354693",
+				ThreadTitle:  "タイトル2&lt;&gt;",
+				MessageCount: 1,
+				LastModified: testutil.NewTimeJST(t, "2020-01-18 22:38:13.345"),
+			},
+		},
+	}
+
+	for i, tt := range tests {
+		x := createSubject(tt.now, tt.title)
+		if x.ThreadKey != tt.want.ThreadKey ||
+			x.ThreadTitle != tt.want.ThreadTitle ||
+			x.MessageCount != tt.want.MessageCount ||
+			!x.LastModified.Equal(tt.want.LastModified) {
+
+			t.Errorf("%d: createSubject(%v, %v) = \nhave: %v, \nwant: %v", i, tt.now, tt.title, x, tt.want)
+		}
 	}
 }
 
