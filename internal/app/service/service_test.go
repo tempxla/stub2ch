@@ -248,11 +248,11 @@ func TestCreateThread_EntityLimit(t *testing.T) {
 		t.Error(err)
 	}
 
-	for i := 0; i < stng.STUB_WRITE_ENTITY_LIMIT(); i++ {
+	for i := 0; i < stng.STUB_WRITE_ENTITY_LIMIT()-1; i++ {
 		sv.WriteDat(stng, "news4test", threadKey, "name2", "", "ABCDEFGH02", "message2")
 	}
 
-	_, err = sv.CreateThread(stng, "news4test", "nameN", "mailN", testutil.NewTimeJST(t, "2020-01-18 12:45:57.123"), "ABCDEFGH0N", "messageN", "titleN")
+	_, err = sv.CreateThread(stng, "news4test", "nameN", "mailN", testutil.NewTimeJST(t, "2020-01-18 12:45:58.123"), "ABCDEFGH0N", "messageN", "titleN")
 	if err == nil {
 		t.Errorf("err is nil, want: %v", fmt.Errorf("%d: 今日はこれ以上スレ立てできません。。。", stng.STUB_WRITE_ENTITY_LIMIT()))
 	}
