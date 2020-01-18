@@ -114,6 +114,15 @@ func EmptyBoardStub() *BoardStub {
 	}
 }
 
+func InitialBoardStub(boardNameList ...string) *BoardStub {
+	boardStub := EmptyBoardStub()
+	for _, boardName := range boardNameList {
+		boardStub.BoardMap[boardName] = &board.Entity{}
+		boardStub.DatMap[boardName] = map[string]*dat.Entity{}
+	}
+	return boardStub
+}
+
 func NewBoardStub(boardName string, threads []ThreadStub) *BoardStub {
 	stub := &BoardStub{
 		BoardMap: map[string]*board.Entity{

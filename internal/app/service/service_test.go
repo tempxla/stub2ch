@@ -121,6 +121,143 @@ func TestMakeSubjectTxt(t *testing.T) {
 	}
 }
 
+func TestCreateThread(t *testing.T) {
+
+	repo := testutil.InitialBoardStub("news4test")
+	sv := NewBoardService(RepoConf(repo))
+
+	stng := testutil.NewSettingStub()
+
+	type test struct {
+		boardName, name, mail, id, message, title string
+		time                                      time.Time
+		err                                       error
+	}
+
+	makeTestSequence := func(boardName string, count int, basei int, baset time.Time) []test {
+		ret := make([]test, count)
+		for i := 0; i < count; i++ {
+			ret[i] = test{
+				boardName: boardName,
+				name:      "名前" + strconv.Itoa(basei),
+				mail:      "メール" + strconv.Itoa(basei),
+				id:        "ABCDEFGH" + strconv.Itoa(basei),
+				message:   "メッセージ" + strconv.Itoa(basei),
+				title:     "タイトル1" + strconv.Itoa(basei),
+				time:      baset.Add(time.Duration(i) * time.Second),
+				err:       nil,
+			}
+		}
+		return ret
+	}
+
+	tests := [][]test{
+		// OK: 2つスレ立てる
+		{
+			{"news4test", "名前1", "メール1", "ABCDEFGH01", "メッセージ1", "タイトル1",
+				testutil.NewTimeJST(t, "2020-01-18 11:45:56.123"),
+				nil,
+			},
+			{"news4test", "名前2", "メール2", "ABCDEFGH02", "メッセージ2", "タイトル2",
+				testutil.NewTimeJST(t, "2020-01-18 11:45:57.123"),
+				nil,
+			},
+		},
+		// Error: 同時刻でのスレ立て
+		{
+			{"news4test", "名前2", "メール2", "ABCDEFGH02", "メッセージ2", "タイトル2",
+				testutil.NewTimeJST(t, "2020-01-18 11:45:57.123"),
+				fmt.Errorf("thread key is duplicate"),
+			},
+		},
+		// OK: 板単位のスレッド数制限まで立て続ける
+		makeTestSequence("news4test", stng.STUB_THREAD_COUNT()-2,
+			3, testutil.NewTimeJST(t, "2020-01-18 11:45:58.123")),
+		// Error: 板単位のスレッド数制限
+		{
+			{"news4test", "名前2", "メール2", "ABCDEFGH02", "メッセージ2", "タイトル2",
+				testutil.NewTimeJST(t, "2020-01-18 12:45:57.123"),
+				fmt.Errorf("%d: これ以上スレ立てできません。。。", stng.STUB_THREAD_COUNT()),
+			},
+		},
+	}
+
+	expected := testutil.InitialBoardStub("news4test")
+	for i, tts := range tests {
+		for j, tt := range tts {
+
+			threadKey, err := sv.CreateThread(stng, tt.boardName,
+				tt.name, tt.mail, tt.time, tt.id, tt.message, tt.title)
+
+			if tt.err != nil {
+				if err == nil {
+					t.Errorf("(%d,%d) err is nil, want: %v", i, j, tt.err)
+				}
+				continue
+			}
+
+			sbj := createSubject(tt.time, tt.title)
+			expectedBoardEntity := expected.BoardMap[tt.boardName]
+			appendSubject(expectedBoardEntity, sbj)
+
+			// verify return value.
+			if err != nil {
+				t.Errorf("(%d,%d) Error: %v\n"+
+					"boardName=%v, name=%v, mail=%v, time=%v, id=%v, message=%v, title=%v",
+					i, j, err,
+					tt.boardName, tt.name, tt.mail, tt.time, tt.id, tt.message, tt.title)
+			}
+			if threadKey != sbj.ThreadKey {
+				t.Errorf("(%d,%d) ThreadKey = %v, want: %v \n"+
+					"boardName=%v, name=%v, mail=%v, time=%v, id=%v, message=%v, title=%v",
+					i, j, threadKey, sbj.ThreadKey,
+					tt.boardName, tt.name, tt.mail, tt.time, tt.id, tt.message, tt.title)
+			}
+
+			// verify datastore.
+			boardEntity := &board.Entity{}
+			boardKey := repo.BoardKey(tt.boardName)
+			if err := repo.GetBoard(boardKey, boardEntity); err != nil {
+				t.Errorf("(%d,%d) GetBoard: %v", i, j, err)
+			}
+			datEntity := &dat.Entity{}
+			if err := repo.GetDat(repo.DatKey(threadKey, boardKey), datEntity); err != nil {
+				t.Errorf("(%d,%d) GetDat: %v", i, j, err)
+			}
+			if !testutil.EqualBoardEntity(t, boardEntity, expectedBoardEntity) {
+				t.Errorf("(%d,%d): unexpected BoardEntity: \nact:%v \nexp:%v", i, j, boardEntity, expectedBoardEntity)
+			}
+			expectedDatEntity := createDat(tt.name, tt.mail, tt.time, tt.id, tt.message, tt.title)
+			if !testutil.EqualDatEntity(t, datEntity, expectedDatEntity) {
+				t.Errorf("(%d,%d): unexpected DatEntity: \nact:%v \nexp:%v", i, j, datEntity, expectedDatEntity)
+			}
+		}
+	}
+}
+
+func TestCreateThread_EntityLimit(t *testing.T) {
+
+	repo := testutil.InitialBoardStub("news4test")
+	env := &SysEnv{StartedTime: testutil.NewTimeJST(t, "2020-01-18 18:16:51.345")}
+	sv := NewBoardService(RepoConf(repo), EnvConf(env))
+
+	stng := testutil.NewSettingStub()
+
+	threadKey, err := sv.CreateThread(stng, "news4test", "name1", "mail1", testutil.NewTimeJST(t, "2020-01-18 12:45:57.123"), "ABCDEFGH01", "message1", "title1")
+	if err != nil {
+		t.Error(err)
+	}
+
+	for i := 0; i < stng.STUB_WRITE_ENTITY_LIMIT(); i++ {
+		sv.WriteDat(stng, "news4test", threadKey, "name2", "", "ABCDEFGH02", "message2")
+	}
+
+	_, err = sv.CreateThread(stng, "news4test", "nameN", "mailN", testutil.NewTimeJST(t, "2020-01-18 12:45:57.123"), "ABCDEFGH0N", "messageN", "titleN")
+	if err == nil {
+		t.Errorf("err is nil, want: %v", fmt.Errorf("%d: 今日はこれ以上スレ立てできません。。。", stng.STUB_WRITE_ENTITY_LIMIT()))
+	}
+}
+
 func TestCreateNewThread_AtFirst(t *testing.T) {
 	// Setup
 	// ----------------------------------

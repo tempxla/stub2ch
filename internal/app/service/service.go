@@ -141,17 +141,10 @@ func (sv *BoardService) CreateThread(stng bbscfg.Setting, boardName string,
 	name string, mail string, now time.Time, id string, message string,
 	title string) (threadKey string, err error) {
 
-	// New subject
-	threadKey = strconv.FormatInt(now.Unix(), 10)
-	subject := board.Subject{
-		ThreadKey:    threadKey,
-		ThreadTitle:  escapeDat(html.EscapeString(title)),
-		MessageCount: 1,
-		LastModified: now,
-	}
-
-	// Create dat
+	// New Thread
+	subject := createSubject(now, title)
 	dat := createDat(name, mail, now, id, message, title)
+	threadKey = subject.ThreadKey
 
 	// Key
 	boardKey := sv.repo.BoardKey(boardName)
@@ -179,8 +172,7 @@ func (sv *BoardService) CreateThread(stng bbscfg.Setting, boardName string,
 		}
 
 		// 先頭に追加
-		boardEntity.Subjects = append([]board.Subject{subject}, boardEntity.Subjects...)
-		boardEntity.WriteCount++
+		appendSubject(boardEntity, subject)
 
 		// Save
 		if err := sv.repo.TxPutBoard(tx, boardKey, boardEntity); err != nil {
@@ -191,6 +183,21 @@ func (sv *BoardService) CreateThread(stng bbscfg.Setting, boardName string,
 		}
 		return nil
 	})
+	return
+}
+
+func createSubject(now time.Time, title string) *board.Subject {
+	return &board.Subject{
+		ThreadKey:    strconv.FormatInt(now.Unix(), 10),
+		ThreadTitle:  escapeDat(html.EscapeString(title)),
+		MessageCount: 1,
+		LastModified: now,
+	}
+}
+
+func appendSubject(boardEntity *board.Entity, subject *board.Subject) {
+	boardEntity.Subjects = append([]board.Subject{*subject}, boardEntity.Subjects...)
+	boardEntity.WriteCount++
 	return
 }
 

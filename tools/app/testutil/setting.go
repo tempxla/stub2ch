@@ -24,8 +24,8 @@ func (_ *SettingStub) BBS_YMD_WEEKS() string        { return "" }
 func (_ *SettingStub) BBS_ARR() string              { return "" }
 func (_ *SettingStub) BBS_SOKO() string             { return "ononon" }
 func (_ *SettingStub) BBS_DISP_MSEC() int           { return 3 }
-func (_ *SettingStub) STUB_WRITE_ENTITY_LIMIT() int { return 5000 }
-func (_ *SettingStub) STUB_THREAD_COUNT() int       { return 500 }
+func (_ *SettingStub) STUB_WRITE_ENTITY_LIMIT() int { return 7 }
+func (_ *SettingStub) STUB_THREAD_COUNT() int       { return 5 }
 func (_ *SettingStub) STUB_MESSAGE_COUNT() int      { return 1000 }
 func (_ *SettingStub) STUB_DAT_CAPACITY() int       { return 500 * 1024 }
 

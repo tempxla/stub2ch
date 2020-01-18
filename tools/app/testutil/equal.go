@@ -91,7 +91,7 @@ func EqualDatEntity(t *testing.T, a *dat.Entity, b *dat.Entity) bool {
 	ret := true
 
 	if !bytes.Equal(a.Bytes, b.Bytes) {
-		t.Errorf("\na.Byte = %v, \nb.Bytes = %v", a.Bytes, b.Bytes)
+		t.Errorf("\na.Bytes = %v, \nb.Bytes = %v", a.Bytes, b.Bytes)
 		ret = false
 	}
 
