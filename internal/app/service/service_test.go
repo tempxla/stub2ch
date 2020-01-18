@@ -196,9 +196,11 @@ func TestCreateThread(t *testing.T) {
 				continue
 			}
 
-			sbj := createSubject(tt.time, tt.title)
+			// [expected data]
+			expectedSubject := createSubject(tt.time, tt.title)
 			expectedBoardEntity := expected.BoardMap[tt.boardName]
-			appendSubject(expectedBoardEntity, sbj)
+			appendSubject(expectedBoardEntity, expectedSubject)
+			expectedDatEntity := createDat(tt.name, tt.mail, tt.time, tt.id, tt.message, tt.title)
 
 			// verify return value.
 			if err != nil {
@@ -207,10 +209,10 @@ func TestCreateThread(t *testing.T) {
 					i, j, err,
 					tt.boardName, tt.name, tt.mail, tt.time, tt.id, tt.message, tt.title)
 			}
-			if threadKey != sbj.ThreadKey {
+			if threadKey != expectedSubject.ThreadKey {
 				t.Errorf("(%d,%d) ThreadKey = %v, want: %v \n"+
 					"boardName=%v, name=%v, mail=%v, time=%v, id=%v, message=%v, title=%v",
-					i, j, threadKey, sbj.ThreadKey,
+					i, j, threadKey, expectedSubject.ThreadKey,
 					tt.boardName, tt.name, tt.mail, tt.time, tt.id, tt.message, tt.title)
 			}
 
@@ -227,7 +229,6 @@ func TestCreateThread(t *testing.T) {
 			if !testutil.EqualBoardEntity(t, boardEntity, expectedBoardEntity) {
 				t.Errorf("(%d,%d): unexpected BoardEntity: \nact:%v \nexp:%v", i, j, boardEntity, expectedBoardEntity)
 			}
-			expectedDatEntity := createDat(tt.name, tt.mail, tt.time, tt.id, tt.message, tt.title)
 			if !testutil.EqualDatEntity(t, datEntity, expectedDatEntity) {
 				t.Errorf("(%d,%d): unexpected DatEntity: \nact:%v \nexp:%v", i, j, datEntity, expectedDatEntity)
 			}
