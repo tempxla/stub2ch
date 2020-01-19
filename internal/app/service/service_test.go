@@ -3,9 +3,7 @@ package service
 import (
 	"bytes"
 	"cloud.google.com/go/datastore"
-	"context"
 	"fmt"
-	"github.com/tempxla/stub2ch/configs/app/config"
 	"github.com/tempxla/stub2ch/internal/app/service/repository"
 	"github.com/tempxla/stub2ch/internal/app/types/entity/board"
 	"github.com/tempxla/stub2ch/internal/app/types/entity/dat"
@@ -124,8 +122,6 @@ func TestMakeSubjectTxt(t *testing.T) {
 func TestCreateThread(t *testing.T) {
 
 	repo := testutil.InitialBoardStub("news4test")
-	sv := NewBoardService(RepoConf(repo))
-
 	stng := testutil.NewSettingStub()
 
 	type test struct {
@@ -186,8 +182,12 @@ func TestCreateThread(t *testing.T) {
 	for i, tts := range tests {
 		for j, tt := range tts {
 
+			sv := NewBoardService(
+				RepoConf(repo),
+				EnvConf(&SysEnv{StartedTime: tt.time}),
+			)
 			threadKey, err := sv.CreateThread(stng, tt.boardName,
-				tt.name, tt.mail, tt.time, tt.id, tt.message, tt.title)
+				tt.name, tt.mail, tt.id, tt.message, tt.title)
 
 			// verify error case.
 			if tt.err != nil {
@@ -240,21 +240,29 @@ func TestCreateThread(t *testing.T) {
 func TestCreateThread_EntityLimit(t *testing.T) {
 
 	repo := testutil.InitialBoardStub("news4test")
-	env := &SysEnv{StartedTime: testutil.NewTimeJST(t, "2020-01-18 18:16:51.345")}
-	sv := NewBoardService(RepoConf(repo), EnvConf(env))
-
 	stng := testutil.NewSettingStub()
 
-	threadKey, err := sv.CreateThread(stng, "news4test", "name1", "mail1", testutil.NewTimeJST(t, "2020-01-18 12:45:57.123"), "ABCDEFGH01", "message1", "title1")
+	// スレ立て
+	sv := NewBoardService(
+		RepoConf(repo),
+		EnvConf(&SysEnv{StartedTime: testutil.NewTimeJST(t, "2020-01-18 18:16:51.345")}),
+	)
+	threadKey, err := sv.CreateThread(stng, "news4test", "name1", "mail1", "ABCDEFGH01", "message1", "title1")
 	if err != nil {
 		t.Error(err)
 	}
 
+	// 制限まで書き込む
 	for i := 0; i < stng.STUB_WRITE_ENTITY_LIMIT()-1; i++ {
 		sv.WriteDat(stng, "news4test", threadKey, "name2", "", "ABCDEFGH02", "message2")
 	}
 
-	_, err = sv.CreateThread(stng, "news4test", "nameN", "mailN", testutil.NewTimeJST(t, "2020-01-18 12:45:58.123"), "ABCDEFGH0N", "messageN", "titleN")
+	// Error: 書き込み制限
+	sv = NewBoardService(
+		RepoConf(repo),
+		EnvConf(&SysEnv{StartedTime: testutil.NewTimeJST(t, "2020-01-18 12:45:58.123")}),
+	)
+	_, err = sv.CreateThread(stng, "news4test", "nameN", "mailN", "ABCDEFGH0N", "messageN", "titleN")
 	if err == nil {
 		t.Errorf("err is nil, want: %v", fmt.Errorf("%d: 今日はこれ以上スレ立てできません。。。", stng.STUB_WRITE_ENTITY_LIMIT()))
 	}
@@ -317,114 +325,6 @@ func TestAppendSubject(t *testing.T) {
 	}
 	if boardEntity.WriteCount != 3 {
 		t.Errorf("boardEntity.WriteCount = %v, want: %v", boardEntity.WriteCount, 3)
-	}
-}
-
-func TestWriteDat(t *testing.T) {
-	// Setup
-	// ----------------------------------
-	ctx := context.Background()
-
-	// Creates a client.
-	client, err := datastore.NewClient(ctx, config.PROJECT_ID)
-	if err != nil {
-		t.Fatalf("Failed to create client: %v", err)
-	}
-
-	// Clean Datastore
-	testutil.CleanDatastoreBy(t, ctx, client)
-
-	// Sets the kind for the new entity.
-	kind := "Board"
-	// Sets the name/ID for the new entity.
-	name := "news4test"
-	// Creates a Key instance.
-	boardKey := datastore.NameKey(kind, name, nil)
-
-	// Creates a Board instance.
-	boardEntity := board.Entity{
-		Subjects: []board.Subject{},
-	}
-
-	// Saves the new entity.
-	if _, err := client.Put(ctx, boardKey, &boardEntity); err != nil {
-		t.Fatalf("Failed to save board: %v", err)
-	}
-
-	// Injection
-	startedAt, _ := time.ParseInLocation("2006-01-02 15:04:05.000",
-		"2019-11-24 23:26:02.789", time.Local)
-	sv := NewBoardService(
-		RepoConf(repository.NewBoardStore(ctx, client)),
-		EnvConf(&SysEnv{
-			StartedTime:   startedAt,
-			ComputeIdSalt: "1x",
-		}),
-	)
-
-	//
-	stng := testutil.NewSettingStub()
-
-	// Create new thread.
-	date1, _ := time.ParseInLocation("2006-01-02 15:04:05.000",
-		"2019-11-23 22:29:01.123", time.Local)
-	threadKey, err := sv.CreateThread(stng, "news4test",
-		"テスタ", "age", date1, "ABC", "これはテストスレ", "スレ立てテスト")
-
-	// Exercise
-	// ----------------------------------
-	sv.WriteDat(stng, "news4test", threadKey, "名前2", "メール2", "id2", "カキ２")
-
-	// Verify
-	// ----------------------------------
-	if err != nil {
-		t.Errorf("err is %v", err)
-	}
-	// Get Board
-	key := datastore.NameKey("Board", "news4test", nil)
-	e := new(board.Entity)
-	if err := client.Get(ctx, key, e); err != nil {
-		t.Fatalf("Failed to get board  %v", err)
-	}
-	if len(e.Subjects) != 1 {
-		t.Fatalf("subject count  %d", len(e.Subjects))
-	}
-	// Verify Board
-	subject := e.Subjects[0]
-	expectedSubject := board.Subject{
-		ThreadKey:    threadKey,
-		ThreadTitle:  "スレ立てテスト",
-		MessageCount: 2,
-		LastModified: sv.StartedAt(),
-	}
-	if subject != expectedSubject {
-		t.Errorf("Fail: contents of subject. actual %v", subject)
-		t.Fatalf("Fail: contents of subject. expect %v", expectedSubject)
-	}
-	// Get Dat
-	ancestor := datastore.NameKey("Board", "news4test", nil)
-	query := datastore.NewQuery("Dat").Ancestor(ancestor)
-	var datList []*dat.Entity
-	if _, err := client.GetAll(ctx, query, &datList); err != nil {
-		t.Fatalf("Failed to get dat  %v", err)
-	}
-	if len(datList) != 1 {
-		t.Fatalf("dat count  %d", len(datList))
-	}
-	// Verify Dat
-	dateStr := fmt.Sprintf("%s(%s) %s",
-		sv.StartedAt().Format(dat_date_layout),
-		week_days_jp[sv.StartedAt().Weekday()],
-		sv.StartedAt().Format(dat_time_layout),
-	)
-	if bytes.Equal(datList[0].Bytes,
-		[]byte("名前<>メール<>2019/11/23(土) 22:29:01.123 ID:ABC<> 本文 <>スレタイ"+
-			"\n名前2<>メール2<>"+dateStr+" ID:id2<> カキ２ <>")) {
-		t.Fatalf("content of dat  %v", datList[0].Bytes)
-	}
-	startedAtStr := sv.StartedAt().Format("2006-01-02 15:04:05.000")
-	if datList[0].LastModified.Format("2006-01-02 15:04:05.000") != startedAtStr {
-		t.Errorf("last modified: %v", datList[0].LastModified)
 	}
 }
 

@@ -138,12 +138,11 @@ func (sv *BoardService) MakeSubjectTxt(boardName string) (_ []byte, err error) {
 
 // Creates a Thread
 func (sv *BoardService) CreateThread(stng bbscfg.Setting, boardName string,
-	name string, mail string, now time.Time, id string, message string,
-	title string) (threadKey string, err error) {
+	name, mail, id, message, title string) (threadKey string, err error) {
 
 	// New Thread
-	subject := createSubject(now, title)
-	dat := createDat(name, mail, now, id, message, title)
+	subject := createSubject(sv.StartedAt(), title)
+	dat := createDat(name, mail, sv.StartedAt(), id, message, title)
 	threadKey = subject.ThreadKey
 
 	// Key

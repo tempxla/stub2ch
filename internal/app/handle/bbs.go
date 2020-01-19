@@ -220,7 +220,7 @@ func handleCreateThread(w http.ResponseWriter, r *http.Request, sv *service.Boar
 	}
 	// スレ立て
 	id := sv.ComputeId(ipAddr, boardName)
-	threadKey, err := sv.CreateThread(setting, boardName, name, mail, sv.StartedAt(), id, message, title)
+	threadKey, err := sv.CreateThread(setting, boardName, name, mail, id, message, title)
 	if err != nil {
 		// スレ立て失敗
 		executeCreateThreadErrorTmpl(w, r, sv.StartedAt())
