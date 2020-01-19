@@ -7,7 +7,6 @@ import (
 	"github.com/tempxla/stub2ch/configs/app/bbscfg"
 	"github.com/tempxla/stub2ch/internal/app/service"
 	"github.com/tempxla/stub2ch/internal/app/types/errors"
-	mstring "github.com/tempxla/stub2ch/internal/app/types/maybe/string"
 	"github.com/tempxla/stub2ch/internal/app/util"
 	"log"
 	"net/http"
@@ -88,7 +87,7 @@ func handleWriteDat(w http.ResponseWriter, r *http.Request, sv *service.BoardSer
 
 	// クッキー確認
 	if executeWriteDatConfirmTmpl(w, r, ipAddr,
-		boardName, name, mail, message, sv.StartedAt(), mstring.Nothing(), mstring.Just(threadKey)) {
+		boardName, name, mail, message, sv.StartedAt(), "", threadKey) {
 		return
 	}
 	// 書き込み
@@ -142,7 +141,7 @@ func executeWriteDatNotFoundTmpl(w http.ResponseWriter, r *http.Request,
 
 // Returns false if Cookie Found.
 func executeWriteDatConfirmTmpl(w http.ResponseWriter, r *http.Request, ipAddr string,
-	boardName, name, mail, message string, startedAt time.Time, title, threadKey *mstring.Maybe) bool {
+	boardName, name, mail, message string, startedAt time.Time, title, threadKey string) bool {
 
 	if c, err := r.Cookie("PON"); err == nil && c.Value == ipAddr {
 		if c, err := r.Cookie("yuki"); err == nil && c.Value == "akari" {
@@ -160,15 +159,15 @@ func executeWriteDatConfirmTmpl(w http.ResponseWriter, r *http.Request, ipAddr s
 
 	// Body
 	view := map[string]string{
-		"Title":     util.UTF8toSJISString(title.FromMaybe("")),
+		"Title":     util.UTF8toSJISString(title),
 		"Name":      util.UTF8toSJISString(name),
 		"Mail":      util.UTF8toSJISString(mail),
 		"Message":   util.UTF8toSJISString(message),
 		"BoardName": boardName,
 		"Time":      strconv.FormatInt(startedAt.Unix(), 10),
 	}
-	if threadKey.IsJust() {
-		view["ThreadKey"] = threadKey.FromMaybe("")
+	if threadKey != "" {
+		view["ThreadKey"] = threadKey
 	}
 	if err := writeDatConfirmTmpl.Execute(w, view); err != nil {
 		log.Printf("Error executing template: %v", err)
@@ -215,7 +214,7 @@ func handleCreateThread(w http.ResponseWriter, r *http.Request, sv *service.Boar
 
 	// クッキー確認
 	if executeWriteDatConfirmTmpl(w, r, ipAddr,
-		boardName, name, mail, message, sv.StartedAt(), mstring.Just(title), mstring.Nothing()) {
+		boardName, name, mail, message, sv.StartedAt(), title, "") {
 		return
 	}
 	// スレ立て
