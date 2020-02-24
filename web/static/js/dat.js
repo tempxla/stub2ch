@@ -1,4 +1,8 @@
-function BodyOnload(title, messages, precure, boardName, threadKey) {
+function BodyOnload(boardName, threadKey) {
+
+    var title = document.getElementById('title');
+    var messages = document.getElementById('messages');
+    var precure = document.getElementById('precure');
 
     if (localStorage == undefined) {
         precure.innerHTML = "X";
@@ -46,7 +50,12 @@ function BodyOnload(title, messages, precure, boardName, threadKey) {
     }
 }
 
-function GetDat(btn, messages, message, last_load_time, precure, boardName, threadKey) {
+function GetDat(btn, boardName, threadKey) {
+
+    var messages = document.getElementById('messages');
+    var message = document.getElementById('message');
+    var last_load_time = document.getElementById('last_load_time');
+    var precure = document.getElementById('precure');
 
     var top_load_delay     = 10; // seconds
 

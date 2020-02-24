@@ -31,11 +31,7 @@
   <script type="text/javascript" src="/test/_static/js/board.js"></script>
 
 </head>
-<body onload="BodyOnload(
-              document.getElementById('subjects'),
-              document.getElementById('precure'),
-              '{{ .BoardName }}'
-              )">
+<body onload="BodyOnload('{{ .BoardName }}')">
 
   <!-- Primary Page Layout
   ================================================== -->
@@ -59,14 +55,7 @@
     </table>
     <div class="row">
       <a class="button three columns" href="#"
-         onclick="GetSubject(
-                  this,
-                  document.getElementById('subjects'),
-                  document.getElementById('message'),
-                  document.getElementById('last_load_time'),
-                  document.getElementById('precure'),
-                  '{{ .BoardName }}'
-                  )">LOAD</a>
+         onclick="GetSubject(this,'{{ .BoardName }}')">LOAD</a>
     </div>
     <div class="row">
       <div id="message" class="twelve columns"></div>

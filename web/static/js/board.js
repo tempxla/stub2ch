@@ -1,4 +1,7 @@
-function BodyOnload(subjects, precure, boardName) {
+function BodyOnload(boardName) {
+
+    var subjects = document.getElementById('subjects');
+    var precure = document.getElementById('precure');
 
     if (localStorage == undefined) {
         precure.innerHTML = "X";
@@ -21,7 +24,12 @@ function BodyOnload(subjects, precure, boardName) {
     precure.innerHTML = obj.precure;
 }
 
-function GetSubject(btn, subjects, message,  last_load_time,  precure, boardName) {
+function GetSubject(btn, boardName) {
+
+    var subjects = document.getElementById('subjects');
+    var message = document.getElementById('message');
+    var last_load_time = document.getElementById('last_load_time');
+    var precure = document.getElementById('precure');
 
     var top_load_delay     = 10; // seconds
 
